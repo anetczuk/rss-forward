@@ -30,14 +30,13 @@ from bs4 import BeautifulSoup
 
 _LOGGER = logging.getLogger(__name__)
 
-SCRIPT_DIR = os.path.dirname( os.path.abspath(__file__) )
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 ## ===================================================================
 
 
 class FileChecker:
-
     def __init__(self, md_path):
         self.md_file = md_path
         md_dir = os.path.dirname(md_path)
@@ -48,12 +47,12 @@ class FileChecker:
         self._load()
 
     def _load(self):
-        with open(self.md_file, 'r', encoding="utf-8") as file:
+        with open(self.md_file, "r", encoding="utf-8") as file:
             file_content = file.read()
-        html_content = markdown.markdown( file_content )
-        with open("/tmp/page.txt", 'w', encoding="utf-8") as file:
-            file.write(html_content)
-        self.soup = BeautifulSoup(html_content, 'html.parser')
+        html_content = markdown.markdown(file_content)
+        # with tempfile.TemporaryFile() as file:
+        #     file.write(html_content)
+        self.soup = BeautifulSoup(html_content, "html.parser")
         self.local_targets = get_targets(self.soup)
 
     # return 'True' is everything ok, otherwise 'False'
@@ -65,22 +64,22 @@ class FileChecker:
 
     def checkA(self):
         valid = True
-        for link in self.soup.find_all('a'):
+        for link in self.soup.find_all("a"):
             # link_name = link.get('name')
-            link_href = link.get('href')
+            link_href = link.get("href")
             if self._checkHref(link_href):
                 continue
-            _LOGGER.warning( "invalid link: %s in %s", link_href, self.md_file )
+            _LOGGER.warning("invalid link: %s in %s", link_href, self.md_file)
             valid = False
         return valid
 
     def checkImg(self):
         valid = True
-        for img in self.soup.find_all('img'):
-            img_src = img.get('src')
+        for img in self.soup.find_all("img"):
+            img_src = img.get("src")
             if self._checkFile(img_src):
                 continue
-            _LOGGER.warning( "invalid path: %s in %s", img_src, self.md_file )
+            _LOGGER.warning("invalid path: %s in %s", img_src, self.md_file)
             valid = False
         return valid
 
@@ -100,7 +99,7 @@ class FileChecker:
         if self._checkFile(link_href):
             # valid file
             return True
-        local_path = os.path.join( self.md_dir, link_href )
+        local_path = os.path.join(self.md_dir, link_href)
         if os.path.isdir(local_path):
             # valid directory
             return True
@@ -120,9 +119,9 @@ class FileChecker:
                 return True
 
         # external file
-        local_path = os.path.join( self.md_dir, target_url )
+        local_path = os.path.join(self.md_dir, target_url)
         if os.path.isdir(local_path):
-            local_path = os.path.join( local_path, "README.md" )
+            local_path = os.path.join(local_path, "README.md")
         if not os.path.isfile(local_path):
             # invalid file
             return False
@@ -133,7 +132,7 @@ class FileChecker:
         if validators.url(file_href):
             # valid link
             return True
-        local_path = os.path.join( self.md_dir, file_href )
+        local_path = os.path.join(self.md_dir, file_href)
         if os.path.isfile(local_path):
             # valid file
             return True
@@ -146,70 +145,79 @@ def get_targets(soup):
     header_labels = extract_header_labels(soup)
 
     anchor_targets = set()
-    for link in soup.find_all('a'):
-        link_id = link.get('id')
+    for link in soup.find_all("a"):
+        link_id = link.get("id")
         if link_id:
             anchor_targets.add(link_id)
-        link_name = link.get('name')
+        link_name = link.get("name")
         if link_name:
             anchor_targets.add(link_name)
 
     ret_data = set()
-    ret_data.update( header_labels )
-    ret_data.update( anchor_targets )
+    ret_data.update(header_labels)
+    ret_data.update(anchor_targets)
     return ret_data
 
 
 def extract_header_labels(soup):
     header_items = set()
-    header_items.update( soup.find_all('h1') )
-    header_items.update( soup.find_all('h2') )
-    header_items.update( soup.find_all('h3') )
-    header_items.update( soup.find_all('h4') )
-    header_items.update( soup.find_all('h5') )
-    header_items.update( soup.find_all('h6') )
-    return { item.text for item in header_items }
+    header_items.update(soup.find_all("h1"))
+    header_items.update(soup.find_all("h2"))
+    header_items.update(soup.find_all("h3"))
+    header_items.update(soup.find_all("h4"))
+    header_items.update(soup.find_all("h5"))
+    header_items.update(soup.find_all("h6"))
+    return {item.text for item in header_items}
 
 
 ## ===================================================================
 
 
-def find_md_files( search_dir ):
+def find_md_files(search_dir):
     ret_list = []
-    for filename in glob(f'{search_dir}/**/*.md', recursive=True):
+    for filename in glob(f"{search_dir}/**/*.md", recursive=True):
         ret_list.append(filename)
     return ret_list
 
 
 def filter_items(items_list, ignore_patterns_list):
-    _LOGGER.info( "ignore patterns: %s", ignore_patterns_list )
+    _LOGGER.info("ignore patterns: %s", ignore_patterns_list)
     ignored_list = []
     for item in items_list:
         for ignore_pattern in ignore_patterns_list:
-            pattern = re.compile( ignore_pattern )
+            pattern = re.compile(ignore_pattern)
             item_match = pattern.match(item)
             if item_match:
                 # matched
-                ignored_list.append( item )
+                ignored_list.append(item)
                 break
     return ignored_list
 
 
 def main():
-    parser = argparse.ArgumentParser(description='dump tools')
-    parser.add_argument( '-la', '--logall', action='store_true', help='Log all messages' )
-    parser.add_argument( '-d', '--dir', action='store', help='Path to directory to search .md files and check' )
-    parser.add_argument( '-i', '--ignore', action='store',
-                         help='Semicolon separated list of regex expressions to ignore items' )
-    parser.add_argument( '-f', '--file', action='store', help='Path to file to check' )
+    parser = argparse.ArgumentParser(description="dump tools")
+    parser.add_argument("-la", "--logall", action="store_true", help="Log all messages")
+    parser.add_argument(
+        "-d",
+        "--dir",
+        action="store",
+        help="Path to directory to search .md files and check",
+    )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        action="store",
+        help="Semicolon separated list of regex expressions to ignore items",
+    )
+    parser.add_argument("-f", "--file", action="store", help="Path to file to check")
 
     args = parser.parse_args()
 
     logging.basicConfig()
     if args.logall is True:
-        logging.getLogger().setLevel( logging.DEBUG )
+        logging.getLogger().setLevel(logging.DEBUG)
     else:
-        logging.getLogger().setLevel( logging.INFO )
+        logging.getLogger().setLevel(logging.INFO)
 
     if not args.file and not args.dir:
         _LOGGER.error("argument required")
@@ -222,10 +230,10 @@ def main():
     if args.ignore:
         ignore_patterns = args.ignore.split(";")
         ignored_list = filter_items(md_files, ignore_patterns)
-        _LOGGER.info("ignored files:\n%s", '\n'.join(ignored_list))
-        md_files = list( set(md_files) - set(ignored_list) )
+        _LOGGER.info("ignored files:\n%s", "\n".join(ignored_list))
+        md_files = list(set(md_files) - set(ignored_list))
 
-    _LOGGER.info("files to check:\n%s", '\n'.join(md_files))
+    _LOGGER.info("files to check:\n%s", "\n".join(md_files))
 
     valid = True
     for md_file in md_files:
@@ -243,6 +251,6 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit_code = main()
-    sys.exit( exit_code )
+    sys.exit(exit_code)

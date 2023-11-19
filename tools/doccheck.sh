@@ -29,3 +29,19 @@ if [ $exit_code -ne 0 ]; then
 fi
 
 echo "pydocstyle -- no warnings found"
+
+
+echo "running darglint"
+
+src_files=$(find $src_dir -name "*.py")
+examples_files=$(find $examples_dir -name "*.py")
+local_files=$(find $SCRIPT_DIR -name "*.py")
+
+darglint $src_files $examples_files $local_files
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+
+echo "darglint -- no warnings found"

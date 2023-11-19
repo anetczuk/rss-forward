@@ -12,6 +12,17 @@ src_dir=$SCRIPT_DIR/../src
 examples_dir=$SCRIPT_DIR/../examples
 
 
+echo "running black"
+black --line-length=120 $src_dir $examples_dir $SCRIPT_DIR
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+
+echo "black -- no warnings found"
+
+
 ## E115 intend of comment
 ## E126 continuation line over-indented for hanging indent
 ## E201 whitespace after '('
@@ -74,3 +85,14 @@ if [ $exit_code -ne 0 ]; then
     exit $exit_code
 fi
 echo "pylint3 -- no warnings found"
+
+
+echo "running bandit"
+#echo "to ignore warning for module put following line on top of file: # pylint: disable=<check_id>"
+#echo "to ignore warning for one line put following comment in end of line: # pylint: disable=<check_id>"
+bandit -r $src_dir $example_files $SCRIPT_DIR
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+echo "bandit -- no warnings found"

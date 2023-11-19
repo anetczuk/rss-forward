@@ -10,9 +10,9 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 cd $SCRIPT_DIR
 
 
-./typecheck.sh
 ./codecheck.sh
 ./doccheck.sh
+./typecheck.sh
 
 echo "checking links in MD files"
 ./md_check_links.py -d ..
