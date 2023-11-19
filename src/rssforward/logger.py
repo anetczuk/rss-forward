@@ -18,9 +18,9 @@ log_file = None
 
 def get_logging_output_file():
     logDir = os.path.join(script_dir, "../../tmp/log")
-    logDir = os.path.abspath( logDir )
-    os.makedirs( logDir, exist_ok=True )
-    if os.path.isdir( logDir ) is False:
+    logDir = os.path.abspath(logDir)
+    os.makedirs(logDir, exist_ok=True)
+    if os.path.isdir(logDir) is False:
         ## something bad happened (or unable to create directory)
         logDir = os.getcwd()
 
@@ -28,7 +28,7 @@ def get_logging_output_file():
     return logFile
 
 
-def configure( logFile=None, logLevel=None ):
+def configure(logFile=None, logLevel=None):
     # pylint: disable=W0603
     global log_file
     log_file = logFile
@@ -39,22 +39,23 @@ def configure( logFile=None, logLevel=None ):
         logLevel = logging.DEBUG
 
     ## rotation of log files, 1048576 equals to 1MB
-    fileHandler    = handlers.RotatingFileHandler( filename=log_file, mode="a+", maxBytes=1048576, backupCount=999 )
+    fileHandler = handlers.RotatingFileHandler(filename=log_file, mode="a+", maxBytes=1048576, backupCount=999)
     ## fileHandler    = logging.FileHandler( filename=log_file, mode="a+" )
-    consoleHandler = logging.StreamHandler( stream=sys.stdout )
+    consoleHandler = logging.StreamHandler(stream=sys.stdout)
 
     formatter = create_formatter()
 
-    fileHandler.setFormatter( formatter )
-    consoleHandler.setFormatter( formatter )
+    fileHandler.setFormatter(formatter)
+    consoleHandler.setFormatter(formatter)
 
-    logging.root.addHandler( consoleHandler )
-    logging.root.addHandler( fileHandler )
-    logging.root.setLevel( logLevel )
+    logging.root.addHandler(consoleHandler)
+    logging.root.addHandler(fileHandler)
+    logging.root.setLevel(logLevel)
 
-    logging.getLogger('matplotlib').setLevel( logging.WARNING )
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
-    logging.getLogger("urllib3").setLevel( logging.INFO )
+    logging.getLogger("urllib3").setLevel(logging.INFO)
+
 
 ##     loggerFormat   = '%(asctime)s,%(msecs)-3d %(levelname)-8s %(threadName)s [%(filename)s:%(lineno)d] %(message)s'
 ##     dateFormat     = '%Y-%m-%d %H:%M:%S'
@@ -65,34 +66,36 @@ def configure( logFile=None, logLevel=None ):
 ##                        )
 
 
-def configure_console( logLevel=None ):
+def configure_console(logLevel=None):
     if logLevel is None:
         logLevel = logging.DEBUG
 
-    consoleHandler = logging.StreamHandler( stream=sys.stdout )
+    consoleHandler = logging.StreamHandler(stream=sys.stdout)
 
     formatter = create_formatter()
 
-    consoleHandler.setFormatter( formatter )
+    consoleHandler.setFormatter(formatter)
 
-    logging.root.addHandler( consoleHandler )
-    logging.root.setLevel( logLevel )
+    logging.root.addHandler(consoleHandler)
+    logging.root.setLevel(logLevel)
 
 
 def create_stdout_handler():
     formatter = create_formatter()
-    consoleHandler = logging.StreamHandler( stream=sys.stdout )
-    consoleHandler.setFormatter( formatter )
+    consoleHandler = logging.StreamHandler(stream=sys.stdout)
+    consoleHandler.setFormatter(formatter)
     return consoleHandler
 
 
 def create_formatter(loggerFormat=None):
     if loggerFormat is None:
         ## loggerFormat = '%(asctime)s,%(msecs)-3d %(levelname)-8s %(threadName)s [%(filename)s:%(lineno)d] %(message)s'
-        loggerFormat = ('%(asctime)s,%(msecs)-3d %(levelname)-8s %(threadName)s %(name)s:%(funcName)s '
-                        '[%(filename)s:%(lineno)d] %(message)s')
-    dateFormat = '%Y-%m-%d %H:%M:%S'
-    return EmptyLineFormatter( loggerFormat, dateFormat )
+        loggerFormat = (
+            "%(asctime)s,%(msecs)-3d %(levelname)-8s %(threadName)s %(name)s:%(funcName)s "
+            "[%(filename)s:%(lineno)d] %(message)s"
+        )
+    dateFormat = "%Y-%m-%d %H:%M:%S"
+    return EmptyLineFormatter(loggerFormat, dateFormat)
     ## return logging.Formatter( loggerFormat, dateFormat )
 
 
@@ -102,9 +105,9 @@ class EmptyLineFormatter(logging.Formatter):
     ## override base class method
     def format(self, record):
         msg = record.getMessage()
-        clearMsg = msg.replace('\n', '')
-        clearMsg = clearMsg.replace('\r', '')
+        clearMsg = msg.replace("\n", "")
+        clearMsg = clearMsg.replace("\r", "")
         if not clearMsg:
             # empty
             return msg
-        return super().format( record )
+        return super().format(record)

@@ -10,6 +10,6 @@
 import os
 
 
-SCRIPT_DIR = os.path.dirname( os.path.realpath(__file__) )
-TMP_DIR    = os.path.abspath( os.path.join(SCRIPT_DIR, "..", "..", "tmp") )
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+TMP_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "tmp"))
 # DATA_DIR   = os.path.abspath( os.path.join(TMP_DIR, "data") )

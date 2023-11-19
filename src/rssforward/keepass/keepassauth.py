@@ -7,8 +7,10 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import os
 import logging
 import time
+import tempfile
 from pathlib import Path
 
 from keepassxc_browser import Connection, Identity, ProtocolError
@@ -18,17 +20,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class KeepassxcAuth:
-
     def __init__(self):
-        self.client_id = 'rss-forward'
-        self.state_file = Path('/tmp/.assoc')        # state file reduces number of authentications
-        #self.state_file = Path('.assoc')        # state file reduces number of authentications
+        self.client_id = "rss-forward"
+        tmp_dir = tempfile.gettempdir()
+        state_path = os.path.join(tmp_dir, ".assoc")
+        self.state_file = Path(state_path)  # state file reduces number of authentications
+        # self.state_file = Path('.assoc')        # state file reduces number of authentications
         self.connection = None
         self.connection = Connection()
         self.id = None
 
         if self.state_file and self.state_file.exists():
-            with self.state_file.open('r', encoding="utf-8") as f:
+            with self.state_file.open("r", encoding="utf-8") as f:
                 data = f.read()
             self.id = Identity.unserialize(self.client_id, data)
         else:
@@ -46,10 +49,11 @@ class KeepassxcAuth:
 
         if not self.connection.test_associate(self.id):
             _LOGGER.info("Associating application")
-            assert self.connection.associate(self.id)
+            if not self.connection.associate(self.id):
+                raise RuntimeError("could not associate")
             if self.state_file:
                 data = self.id.serialize()
-                with self.state_file.open('w', encoding="utf-8") as f:
+                with self.state_file.open("w", encoding="utf-8") as f:
                     f.write(data)
                 del data
 
@@ -70,9 +74,10 @@ class KeepassxcAuth:
         login = {}
         try:
             logins = self.connection.get_logins(self.id, url=access_url)
-            assert len(logins) == 1, logins
+            if len(logins) != 1:
+                raise RuntimeError("could not get login data")
             data = logins[0]
-            login = { "login": data.get("login"), "password": data.get("password") }
+            login = {"login": data.get("login"), "password": data.get("password")}
         except ProtocolError as exc:
             _LOGGER.warning("failed to get auth data: %s", exc)
         return login
@@ -85,9 +90,8 @@ auth = None
 
 
 def get_auth_data(access_url):
-    global auth
+    global auth  # pylint: disable=W0603
     if not auth:
         auth = KeepassxcAuth()
         auth.connect()
-        
     return auth.getAuthData(access_url)

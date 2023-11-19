@@ -9,10 +9,12 @@
 # pylint: disable=E0401
 
 import pprint
+
 # from datetime import datetime
 
 from librus_apix.get_token import get_token
 from librus_apix.grades import get_grades
+
 # from librus_apix.announcements import get_announcements
 # from librus_apix.attendance import get_attendance
 # from librus_apix.homework import get_homework, homework_detail
@@ -23,14 +25,14 @@ from librus_apix.grades import get_grades
 from rssforward.keepass.keepassauth import get_auth_data
 
 
-def write_data( file_path, content ):
-    with open(file_path, 'w', encoding='utf8' ) as fp:
-        fp.write( content )
+def write_data(file_path, content):
+    with open(file_path, "w", encoding="utf8") as fp:
+        fp.write(content)
 
 
 def librus_api():
     # #TODO: extract URL to config file or config settings
-    auth_data = get_auth_data( "https://portal.librus.pl/rodzina/synergia/loguj" )
+    auth_data = get_auth_data("https://portal.librus.pl/rodzina/synergia/loguj")
 
     username = auth_data.get("login")
     password = auth_data.get("password")
