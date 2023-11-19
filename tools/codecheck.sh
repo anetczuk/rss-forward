@@ -96,3 +96,12 @@ if [ $exit_code -ne 0 ]; then
     exit $exit_code
 fi
 echo "bandit -- no warnings found"
+
+
+echo "running safety"
+safety check -r $src_dir/requirements.txt
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+echo "safety -- no warnings found"
