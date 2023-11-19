@@ -1,0 +1,2 @@
+## quite old commit, but works with keepassxc 2.4.1
+keepassxc-browser==0.1.5
