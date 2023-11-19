@@ -19,9 +19,13 @@ Then channels provided by the application can be used for example in *Thunderbir
 - [rss-bridge](https://github.com/RSS-Bridge/rss-bridge)
 - [feedbridge](https://github.com/dewey/feedbridge)
 
-Articles:
+
+## References
+
 - [Building an RSS feed scraper with Python](https://codeburst.io/building-an-rss-feed-scraper-with-python-73715ca06e1f)
 - [How to build a RSS from scraping using Python](https://medium.com/@pescadordigital/how-to-build-a-rss-from-scraping-using-python-a8ba798aac84)
+- [keepassxc-browser](https://github.com/hrehfeld/python-keepassxc-browser)
+- [librus-apix](https://github.com/RustySnek/librus-apix)
 
 
 ## License
