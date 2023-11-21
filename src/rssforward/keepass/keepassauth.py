@@ -19,6 +19,10 @@ from keepassxc_browser import Connection, Identity, ProtocolError
 _LOGGER = logging.getLogger(__name__)
 
 
+class LockedKPXCException(Exception):
+    pass
+
+
 class KeepassxcAuth:
     def __init__(self):
         self.client_id = "rss-forward"
@@ -80,6 +84,10 @@ class KeepassxcAuth:
             login = {"login": data.get("login"), "password": data.get("password")}
         except ProtocolError as exc:
             _LOGGER.warning("failed to get auth data: %s", exc)
+            raise LockedKPXCException()
+        except AssertionError as exc:
+            _LOGGER.warning("failed to get auth data: %s", exc)
+            raise LockedKPXCException()
         return login
 
     def disconnect(self):
@@ -94,4 +102,14 @@ def get_auth_data(access_url):
     if not auth:
         auth = KeepassxcAuth()
         auth.connect()
-    return auth.getAuthData(access_url)
+
+    while True:
+        try:
+            login_data = auth.getAuthData(access_url)
+            if login_data:
+                return login_data
+        except LockedKPXCException as exc:
+            _LOGGER.warning("failed to get auth data: %s", exc)
+            time.sleep(1)
+
+    return {}
