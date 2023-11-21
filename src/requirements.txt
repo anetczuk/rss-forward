@@ -4,3 +4,5 @@ keepassxc-browser==0.1.5
 librus_apix>=0.4.2
 
 feedgen>=0.9.0
+
+appdirs

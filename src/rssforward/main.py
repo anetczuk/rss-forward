@@ -13,6 +13,7 @@ from rssforward import logger
 from rssforward import DATA_DIR
 from rssforward.rss.rssserver import RSSServerManager
 
+from rssforward.utils import save_recent_date
 from rssforward.site.librus import generate_feed
 
 
@@ -23,6 +24,8 @@ def main():
     logger.configure()
 
     generate_feed()
+
+    save_recent_date()
 
     try:
         server = RSSServerManager()

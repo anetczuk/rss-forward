@@ -11,9 +11,8 @@
 import os
 import logging
 import datetime
-import pytz
 
-# import pprint
+import pprint
 
 from feedgen.feed import FeedGenerator
 
@@ -23,13 +22,14 @@ from librus_apix.grades import get_grades
 from librus_apix.announcements import get_announcements
 from librus_apix.attendance import get_attendance
 from librus_apix.homework import get_homework, homework_detail
-from librus_apix.messages import get_recieved, message_content
+from librus_apix.messages import get_recieved, message_content, get_max_page_number
 from librus_apix.schedule import get_schedule
 
 # from librus_apix.schedule import schedule_detail
 # from librus_apix.timetable import get_timetable
 
 from rssforward import DATA_DIR
+from rssforward.utils import read_recent_date, add_timezone
 from rssforward.keepass.keepassauth import get_auth_data
 
 
@@ -47,23 +47,49 @@ def authenticate():
     return token
 
 
+def get_messages_by_date( token, start_datetime=None ):
+    ret_messages = []
+    max_page_index = get_max_page_number(token)
+    for pi in range(0, max_page_index + 1):
+        messages = get_recieved(token, page=pi)
+        for item in messages:
+            item_date = string_to_datetime(item.date)
+            if start_datetime and item_date < start_datetime:
+                return ret_messages
+            ret_messages.append(item)
+    return ret_messages
+
+
+def get_announcements_by_date( token, start_datetime=None ):
+    ret_announcements = []
+    announcements = get_announcements(token)
+    for item in announcements:
+        item_date = string_to_date(item.date)
+        if start_datetime and item_date < start_datetime:
+            return ret_announcements
+        ret_announcements.append(item)
+    return ret_announcements
+
+
 def generate_content(token):
+    recent_datetime = read_recent_date()
+    _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
+
     _LOGGER.info("accessing grades")
     grades, average_grades, grades_desc = get_grades(token)
     generate_grades_feed(grades, average_grades, grades_desc)
 
     _LOGGER.info("accessing attendance")
-    # #TODO: fix semester number in Attendence item
     first_semester, second_semester = get_attendance(token)
     attendence = first_semester + second_semester
     generate_attendance_feed(attendence)
 
     _LOGGER.info("accessing messages")
-    messages = get_recieved(token, page=0)
+    messages = get_messages_by_date(token, recent_datetime)
     generate_messages_feed(messages, token)
 
     _LOGGER.info("accessing announcements")
-    announcements = get_announcements(token)
+    announcements = get_announcements_by_date(token, recent_datetime)
     generate_announcements_feed(announcements)
 
     # ========= schedule =========
@@ -87,17 +113,7 @@ def generate_content(token):
     end_dt = end_dt - datetime.timedelta(days=end_dt.day)
     end_dt = str(end_dt.date())
     _LOGGER.info("accessing homework: %s %s", start_dt, end_dt)
-    homework = []
-    try:
-        # #TODO: handle no homework
-        homework = get_homework(token, start_dt, end_dt)
-        # for h in homework:
-        #     print(h.lesson, h.completion_date)
-        #     href = h.href
-        #     details = homework_detail(token, href)
-        #     print(details)
-    except ParseError:
-        _LOGGER.exception("could not get homework")
+    homework = get_homework(token, start_dt, end_dt)
     generate_homework_feed(homework, token)
 
     # print("========= timetable =========")
@@ -161,7 +177,6 @@ def generate_attendance_feed(attendence):
     feed_gen.description("frekwencja")
 
     for item in attendence:
-        # pprint.pprint(item)
         feed_item = feed_gen.add_entry()
         feed_item.id(item.href)
         feed_item.title(f"{item.type} {item.subject}")
@@ -315,11 +330,6 @@ def string_to_date(date_string):
 def string_to_datetime(datetime_string):
     item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
     return add_timezone(item_date)
-
-
-def add_timezone(dt: datetime.datetime):
-    tz_info = pytz.timezone("Europe/Warsaw")
-    return tz_info.localize(dt)
 
 
 def write_data(file_path, content):
