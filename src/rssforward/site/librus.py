@@ -49,8 +49,8 @@ def authenticate():
 
 def generate_content(token):
     _LOGGER.info("accessing grades")
-    grades, average_grades = get_grades(token)
-    generate_grades_feed(grades, average_grades)
+    grades, average_grades, grades_desc = get_grades(token)
+    generate_grades_feed(grades, average_grades, grades_desc)
 
     _LOGGER.info("accessing attendance")
     # #TODO: fix semester number in Attendence item
@@ -111,14 +111,30 @@ def generate_content(token):
     # organizacja -> dyzury
 
 
-def generate_grades_feed(grades, _):
-    # #TODO: parse/handle "oceny opisowe"
-
+def generate_grades_feed(grades, _, grades_desc):
     feed_gen = init_feed_gen()
     feed_gen.title("Oceny")
     feed_gen.description("oceny")
 
     for subjects in grades.values():
+        for subject_grades in subjects.values():
+            for item in subject_grades:
+                feed_item = feed_gen.add_entry()
+                feed_item.id(item.href)
+                feed_item.title(f"Nowa ocena {item.grade} z przedmiotu {item.title}")
+                feed_item.author({"name": item.teacher, "email": item.teacher})
+                # fill description
+                item_desc = f"""\
+Semestr: {item.semester}
+{item.desc}
+"""
+                item_desc = convert_to_html(item_desc)
+                feed_item.content(item_desc)
+                # fill publish date
+                item_date = string_to_date(item.date)
+                feed_item.pubDate(item_date)
+
+    for subjects in grades_desc.values():
         for subject_grades in subjects.values():
             for item in subject_grades:
                 feed_item = feed_gen.add_entry()
