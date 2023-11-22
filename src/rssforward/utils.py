@@ -37,16 +37,19 @@ def read_recent_date():
     return rssforward.persist.load_object_simple(recentdate_path)
 
 
-def save_recent_date():
+def get_recent_date():
     today_date = datetime.date.today()
     midnight = datetime.datetime.combine(today_date, datetime.time())
     # move back 1 day to prevent short time window where data could be skipped
     midnight = midnight - datetime.timedelta(days=1)
     today_datetime = add_timezone(midnight)
-    _LOGGER.info("storing recent date: %s", today_datetime)
+    return today_datetime
 
+
+def save_recent_date(recent_datetime):
+    _LOGGER.info("storing recent date: %s", recent_datetime)
     recentdate_path = get_recentdate_path()
-    rssforward.persist.store_object_simple(today_datetime, recentdate_path)
+    rssforward.persist.store_object_simple(recent_datetime, recentdate_path)
 
 
 def add_timezone(dt: datetime.datetime) -> datetime.datetime:

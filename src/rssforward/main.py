@@ -13,23 +13,17 @@ import time
 from rssforward import logger
 from rssforward import DATA_DIR
 from rssforward.rss.rssserver import RSSServerManager
-
-from rssforward.utils import save_recent_date
-from rssforward.site.librus import generate_feed
+from rssforward.rssmanager import RSSManager
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def generate_data():
-    generate_feed()
-    save_recent_date()
-
-
 def main():
     logger.configure()
 
-    generate_data()
+    manager = RSSManager()
+    manager.generate_data()
 
     # async start of RSS server
     server = RSSServerManager()
@@ -41,7 +35,7 @@ def main():
         while True:
             # time.sleep( 10 )
             time.sleep( 60 * 60 )     # generate data every 1h
-            generate_data()
+            manager.generate_data()
 
     except KeyboardInterrupt:
         _LOGGER.info("stopping the server")

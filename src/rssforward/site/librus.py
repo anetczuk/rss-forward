@@ -31,9 +31,24 @@ from librus_apix.schedule import get_schedule
 from rssforward import DATA_DIR
 from rssforward.utils import read_recent_date, add_timezone
 from rssforward.keepass.keepassauth import get_auth_data
+from rssforward.rssgenerator import RSSGenerator
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+#
+class LibusGenerator(RSSGenerator):
+    
+    def __init__(self):
+        super().__init__()
+        self._token = authenticate()
+
+    def generate(self):
+        generate_content(self._token)
+
+
+# ============================================
 
 
 def authenticate():
@@ -341,5 +356,5 @@ def write_data(file_path, content):
 
 
 def generate_feed():
-    token = authenticate()
-    generate_content(token)
+    generator = LibusGenerator()
+    generator.generate()
