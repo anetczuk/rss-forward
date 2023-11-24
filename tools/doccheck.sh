@@ -31,6 +31,12 @@ fi
 echo "pydocstyle -- no warnings found"
 
 
+disabled() {
+#
+# there is problem with dargling - there is no possiblitiy
+# to skip certain checks through command-line
+#
+
 echo "running darglint"
 
 src_files=$(find $src_dir -name "*.py")
@@ -45,3 +51,4 @@ if [ $exit_code -ne 0 ]; then
 fi
 
 echo "darglint -- no warnings found"
+}
