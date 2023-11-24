@@ -11,7 +11,9 @@ from typing import List
 
 from rssforward.utils import save_recent_date, get_recent_date
 from rssforward.rssgenerator import RSSGenerator
+
 from rssforward.site.librus import LibusGenerator
+from rssforward.site.earlystage import EarlyStageGenerator
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,3 +36,4 @@ class RSSManager:
 
     def _initializeGenerators(self):
         self._generators.append(LibusGenerator())
+        self._generators.append(EarlyStageGenerator())
