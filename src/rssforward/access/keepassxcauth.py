@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -84,10 +83,10 @@ class KeepassxcAuth:
             login = {"login": data.get("login"), "password": data.get("password")}
         except ProtocolError as exc:
             _LOGGER.warning("failed to get auth data: %s", exc)
-            raise LockedKPXCException()
+            raise LockedKPXCException() from exc
         except AssertionError as exc:
             _LOGGER.warning("failed to get auth data: %s", exc)
-            raise LockedKPXCException()
+            raise LockedKPXCException() from exc
         return login
 
     def disconnect(self):

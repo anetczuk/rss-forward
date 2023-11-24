@@ -30,7 +30,7 @@ from librus_apix.schedule import get_schedule
 
 from rssforward import DATA_DIR
 from rssforward.utils import read_recent_date, add_timezone
-from rssforward.keepass.keepassauth import get_auth_data
+from rssforward.access.keepassxcauth import get_auth_data
 from rssforward.rssgenerator import RSSGenerator
 
 
