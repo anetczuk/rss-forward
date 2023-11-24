@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -23,7 +23,7 @@ def main():
     logger.configure()
 
     manager = RSSManager()
-    manager.generate_data()
+    manager.generateData()
 
     # async start of RSS server
     server = RSSServerManager()
@@ -34,12 +34,16 @@ def main():
     try:
         while True:
             # time.sleep( 10 )
-            time.sleep( 60 * 60 )     # generate data every 1h
-            manager.generate_data()
+            time.sleep(60 * 60)  # generate data every 1h
+            manager.generateData()
 
     except KeyboardInterrupt:
-        _LOGGER.info("stopping the server")
+        _LOGGER.info("keyboard interrupt detected - stopping")
         server.stop()
+    except:  # noqa
+        _LOGGER.error("unhandled exception detected - exiting")
+        server.stop()
+        raise
 
     return 0
 

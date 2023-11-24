@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -52,6 +51,25 @@ def save_recent_date(recent_datetime):
     rssforward.persist.store_object_simple(recent_datetime, recentdate_path)
 
 
+def string_to_date(date_string):
+    item_date = datetime.datetime.strptime(date_string, "%Y-%m-%d")
+    return add_timezone(item_date)
+
+
+def string_to_datetime(datetime_string):
+    item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
+    return add_timezone(item_date)
+
+
 def add_timezone(dt: datetime.datetime) -> datetime.datetime:
     tz_info = pytz.timezone("Europe/Warsaw")
     return tz_info.localize(dt)
+
+
+def convert_to_html(content: str) -> str:
+    return content.replace("\n", "<br/>")
+
+
+def write_data(file_path, content):
+    with open(file_path, "w", encoding="utf8") as fp:
+        fp.write(content)

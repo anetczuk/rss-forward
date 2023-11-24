@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.

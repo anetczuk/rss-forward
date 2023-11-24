@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -17,7 +16,6 @@ _LOGGER = logging.getLogger(__name__)
 
 #
 class RSSGenerator(ABC):
-
     @abstractmethod
     def generate(self):
-        raise NotImplementedError('method not implemented')
+        raise NotImplementedError("method not implemented")

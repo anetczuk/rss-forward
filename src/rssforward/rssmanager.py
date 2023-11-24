@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -20,18 +19,18 @@ _LOGGER = logging.getLogger(__name__)
 
 #
 class RSSManager:
-
     def __init__(self):
         self._generators: List[RSSGenerator] = []
-        self._initialize_generators()
+        self._initializeGenerators()
 
-    def generate_data(self):
+    def generateData(self):
+        _LOGGER.info("generating RSS data")
         recent_datetime = get_recent_date()
 
         for gen in self._generators:
             gen.generate()
 
         save_recent_date(recent_datetime)
-    
-    def _initialize_generators(self):
+
+    def _initializeGenerators(self):
         self._generators.append(LibusGenerator())

@@ -146,23 +146,28 @@ class RSSServerManager:
             self._run()
 
     def _run(self):
-        with RSSServer(("", self.port), RSSServerManager.Handler) as httpd:
-            #         with socketserver.TCPServer(("", self.port), RSSServerManager.Handler) as httpd:
-            os.makedirs(self._rootDir, exist_ok=True)
-            self._service = httpd
-            self._service.base_path = self._rootDir
-            try:
-                _LOGGER.info("serving at port %s", self.port)
-                httpd.allow_reuse_address = True
-                self._notifyStarted()
-                httpd.serve_forever()
-            #             httpd.handle_request()
-            finally:
-                self._service.server_close()
-                self._service = None
-                self._thread = None
-                self._notifyStopped()
-        _LOGGER.info("server thread ended")
+        try:
+            with RSSServer(("", self.port), RSSServerManager.Handler) as httpd:
+                #         with socketserver.TCPServer(("", self.port), RSSServerManager.Handler) as httpd:
+                os.makedirs(self._rootDir, exist_ok=True)
+                self._service = httpd
+                self._service.base_path = self._rootDir
+                try:
+                    _LOGGER.info("serving at port %s", self.port)
+                    httpd.allow_reuse_address = True
+                    self._notifyStarted()
+                    httpd.serve_forever()
+                #             httpd.handle_request()
+                finally:
+                    _LOGGER.exception("unhandled exception occur - stopping server thread")
+                    self._service.server_close()
+                    self._service = None
+                    self._thread = None
+                    self._notifyStopped()
+            _LOGGER.info("server thread ended")
+        except:  # noqa
+            _LOGGER.exception("unhandled exception occur - terminating server thread")
+            raise
 
     def _shutdownService(self):
         if self._service is None:

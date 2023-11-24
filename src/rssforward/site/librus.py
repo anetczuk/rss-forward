@@ -12,11 +12,11 @@ import os
 import logging
 import datetime
 
-import pprint
+# import pprint
 
 from feedgen.feed import FeedGenerator
 
-from librus_apix.exceptions import ParseError
+from librus_apix.exceptions import MaintananceError
 from librus_apix.get_token import get_token
 from librus_apix.grades import get_grades
 from librus_apix.announcements import get_announcements
@@ -29,7 +29,7 @@ from librus_apix.schedule import get_schedule
 # from librus_apix.timetable import get_timetable
 
 from rssforward import DATA_DIR
-from rssforward.utils import read_recent_date, add_timezone
+from rssforward.utils import read_recent_date, add_timezone, convert_to_html, string_to_date, string_to_datetime
 from rssforward.access.keepassxcauth import get_auth_data
 from rssforward.rssgenerator import RSSGenerator
 
@@ -39,13 +39,17 @@ _LOGGER = logging.getLogger(__name__)
 
 #
 class LibusGenerator(RSSGenerator):
-    
     def __init__(self):
         super().__init__()
-        self._token = authenticate()
+        self._token = None
+        try:
+            self._token = authenticate()
+        except MaintananceError as exc:
+            _LOGGER.warning("librus system under maintenance: %s", exc)
 
     def generate(self):
-        generate_content(self._token)
+        if self._token:
+            generate_content(self._token)
 
 
 # ============================================
@@ -62,7 +66,7 @@ def authenticate():
     return token
 
 
-def get_messages_by_date( token, start_datetime=None ):
+def get_messages_by_date(token, start_datetime=None):
     ret_messages = []
     max_page_index = get_max_page_number(token)
     for pi in range(0, max_page_index + 1):
@@ -75,7 +79,7 @@ def get_messages_by_date( token, start_datetime=None ):
     return ret_messages
 
 
-def get_announcements_by_date( token, start_datetime=None ):
+def get_announcements_by_date(token, start_datetime=None):
     ret_announcements = []
     announcements = get_announcements(token)
     for item in announcements:
@@ -151,7 +155,8 @@ def generate_grades_feed(grades, _, grades_desc):
         for subject_grades in subjects.values():
             for item in subject_grades:
                 feed_item = feed_gen.add_entry()
-                feed_item.id(item.href)
+                # do not set id() - thunderbird will skip message if something changes
+                # feed_item.id(item.href)
                 feed_item.title(f"Nowa ocena {item.grade} z przedmiotu {item.title}")
                 feed_item.author({"name": item.teacher, "email": item.teacher})
                 # fill description
@@ -169,7 +174,8 @@ Semestr: {item.semester}
         for subject_grades in subjects.values():
             for item in subject_grades:
                 feed_item = feed_gen.add_entry()
-                feed_item.id(item.href)
+                # do not set id() - thunderbird will skip message if something changes
+                # feed_item.id(item.href)
                 feed_item.title(f"Nowa ocena {item.grade} z przedmiotu {item.title}")
                 feed_item.author({"name": item.teacher, "email": item.teacher})
                 # fill description
@@ -193,7 +199,8 @@ def generate_attendance_feed(attendence):
 
     for item in attendence:
         feed_item = feed_gen.add_entry()
-        feed_item.id(item.href)
+        # do not set id() - thunderbird will skip message if something changes
+        # feed_item.id(item.href)
         feed_item.title(f"{item.type} {item.subject}")
         feed_item.author({"name": item.teacher, "email": item.teacher})
         # fill description
@@ -221,7 +228,8 @@ def generate_messages_feed(messages, token):
     for item in messages:
         # pprint.pprint(item)
         feed_item = feed_gen.add_entry()
-        feed_item.id(item.href)
+        # do not set id() - thunderbird will skip message if something changes
+        # feed_item.id(item.href)
         feed_item.title(item.title)
         feed_item.author({"name": item.author, "email": item.author})
         # fill description
@@ -298,7 +306,8 @@ def generate_homework_feed(homework, token):
     for item in homework:
         # pprint.pprint(item)
         feed_item = feed_gen.add_entry()
-        feed_item.id(item.href)
+        # do not set id() - thunderbird will skip message if something changes
+        # feed_item.id(item.href)
         feed_item.title(f"{item.lesson}: {item.subject}")
         feed_item.author({"name": item.teacher, "email": item.teacher})
         # fill description
@@ -317,6 +326,9 @@ def generate_homework_feed(homework, token):
     execute_generator(feed_gen, "homework.xml")
 
 
+# ============================================================
+
+
 def init_feed_gen() -> FeedGenerator:
     feed_gen = FeedGenerator()
     feed_gen.link(href="https://synergia.librus.pl/")
@@ -331,25 +343,6 @@ def execute_generator(feed_gen: FeedGenerator, out_file):
     feed_path = os.path.join(out_dir, out_file)
     _LOGGER.info("generating %s feed items to file: %s", items_num, feed_path)
     feed_gen.rss_file(feed_path, pretty=True)
-
-
-def convert_to_html(content: str) -> str:
-    return content.replace("\n", "<br/>")
-
-
-def string_to_date(date_string):
-    item_date = datetime.datetime.strptime(date_string, "%Y-%m-%d")
-    return add_timezone(item_date)
-
-
-def string_to_datetime(datetime_string):
-    item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
-    return add_timezone(item_date)
-
-
-def write_data(file_path, content):
-    with open(file_path, "w", encoding="utf8") as fp:
-        fp.write(content)
 
 
 # ============================================================
