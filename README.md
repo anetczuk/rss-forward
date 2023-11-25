@@ -12,6 +12,23 @@ should not discourage us from receiving desired information.
 Then channels provided by the application can be used for example in *Thunderbird* or other feed reader.
 
 
+## How can I prepare scraper?
+
+Every webpage is different and uses different authentication protocol. Simple way is to use *Web Developer Tools*
+(*Network Monitor*) with *Firefox* or *Chrome* and look for endpoints and authentication steps. Moreover every 
+request can be exported as *cURL* request.
+There can be problem if website requires *JavaScript* to operate. To determine is *JS* is required to authenticate or
+scrap data execute earlier mentioned *cURL* requests (in command line). If they succees then it means that JS is not
+required and just `requests` library can be used.
+
+
+## How to add new generator/scraper?
+
+It's quite easy. Just put scraper module inside `rssforward.site` package. The module have to contain free function
+`get_generator()` returning instance/object of the scraper. Moreover scraper class have to inherit from `RSSGenerator`
+class.
+
+
 ## Similar projects
 
 - [web_scraping_example](https://github.com/mattdood/web_scraping_example)

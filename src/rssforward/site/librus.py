@@ -365,7 +365,7 @@ def execute_generator(feed_gen: FeedGenerator, out_file):
 # ============================================================
 
 
-def get_generator():
+def get_generator() -> RSSGenerator:
     return LibusGenerator()
 
 
