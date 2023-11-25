@@ -19,7 +19,7 @@ except ImportError:
 
 
 from rssforward import logger
-from rssforward.site.earlystage import generate_feed
+from rssforward.site.librus import generate_feed
 
 
 def main():
