@@ -7,6 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import sys
 import logging
 import time
 
@@ -40,12 +41,12 @@ def main():
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
         server.stop()
-    except:  # noqa
-        _LOGGER.error("unhandled exception detected - exiting")
+    except:  # noqa pylint: disable=W0702
+        _LOGGER.exception("unhandled exception detected - exiting")
         server.stop()
-        raise
+        sys.exit(1)
 
-    return 0
+    sys.exit(0)
 
 
 if __name__ == "__main__":

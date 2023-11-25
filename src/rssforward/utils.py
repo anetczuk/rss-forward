@@ -51,12 +51,12 @@ def save_recent_date(recent_datetime):
     rssforward.persist.store_object_simple(recent_datetime, recentdate_path)
 
 
-def string_to_date(date_string):
+def string_to_date(date_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(date_string, "%Y-%m-%d")
     return add_timezone(item_date)
 
 
-def string_to_datetime(datetime_string):
+def string_to_datetime(datetime_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
     return add_timezone(item_date)
 

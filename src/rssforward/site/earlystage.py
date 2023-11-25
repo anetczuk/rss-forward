@@ -28,21 +28,31 @@ _LOGGER = logging.getLogger(__name__)
 class EarlyStageGenerator(RSSGenerator):
     def __init__(self):
         super().__init__()
+        self._token = None
+        self._student_id = None
 
+    def authenticate(self):
         auth_data = authenticate()
-        self.token = auth_data[0]
-        self.student_id = auth_data[1][0]
+        self._token = auth_data[0]
+        self._student_id = auth_data[1][0]
 
     def generate(self):
-        _LOGGER.info("accessing grades")
+        _LOGGER.info("========== running earlystage scraper ==========")
 
-        attendances = get_attendances(self.token, self.student_id)
+        if not self._token:
+            _LOGGER.warning("unable to generate content, because generator is not authenticated")
+            return
+
+        _LOGGER.info("accessing attendances")
+        attendances = get_attendances(self._token, self._student_id)
         generate_attendances_feed(attendances)
 
-        homeworks, incoming = get_homeworks(self.token, self.student_id)
+        _LOGGER.info("accessing homeworks")
+        homeworks, incoming = get_homeworks(self._token, self._student_id)
         generate_homeworks_feed(homeworks, incoming)
 
-        grades = get_grades(self.token, self.student_id)
+        _LOGGER.info("accessing homeworks")
+        grades = get_grades(self._token, self._student_id)
         generate_grades_feed(grades)
 
 
@@ -271,6 +281,11 @@ def execute_generator(feed_gen: FeedGenerator, out_file):
 # ============================================================
 
 
+def get_generator():
+    return EarlyStageGenerator()
+
+
 def generate_feed():
-    generator = EarlyStageGenerator()
+    generator = get_generator()
+    generator.authenticate()
     generator.generate()

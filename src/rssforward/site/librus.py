@@ -16,7 +16,7 @@ import datetime
 
 from feedgen.feed import FeedGenerator
 
-from librus_apix.exceptions import MaintananceError
+from librus_apix.exceptions import MaintananceError, TokenError
 from librus_apix.get_token import get_token
 from librus_apix.grades import get_grades
 from librus_apix.announcements import get_announcements
@@ -41,29 +41,39 @@ _LOGGER = logging.getLogger(__name__)
 class LibusGenerator(RSSGenerator):
     def __init__(self):
         super().__init__()
+        self._username = None
+        self._password = None
+        self._token = None
+
+    def authenticate(self):
+        # #TODO: extract URL to config file or config settings
+        auth_data = get_auth_data("https://portal.librus.pl/rodzina/synergia/loguj")
+
+        self._username = auth_data.get("login")
+        self._password = auth_data.get("password")
+        self._getToken()
+
+    def generate(self):
+        _LOGGER.info("========== running librus scraper ==========")
+
+        try:
+            generate_content(self._token)
+            return
+        except TokenError as exc:
+            _LOGGER.warning("token error - try one more time with new token (%s)", exc)
+
+        self._getToken()
+        generate_content(self._token)
+
+    def _getToken(self):
         self._token = None
         try:
-            self._token = authenticate()
+            self._token = get_token(self._username, self._password)
         except MaintananceError as exc:
             _LOGGER.warning("librus system under maintenance: %s", exc)
 
-    def generate(self):
-        if self._token:
-            generate_content(self._token)
-
 
 # ============================================
-
-
-def authenticate():
-    # #TODO: extract URL to config file or config settings
-    auth_data = get_auth_data("https://portal.librus.pl/rodzina/synergia/loguj")
-
-    username = auth_data.get("login")
-    password = auth_data.get("password")
-
-    token = get_token(username, password)
-    return token
 
 
 def get_messages_by_date(token, start_datetime=None):
@@ -71,6 +81,7 @@ def get_messages_by_date(token, start_datetime=None):
     max_page_index = get_max_page_number(token)
     for pi in range(0, max_page_index + 1):
         messages = get_recieved(token, page=pi)
+        _LOGGER.info("received %s messages from page %s", len(messages), pi)
         for item in messages:
             item_date = string_to_datetime(item.date)
             if start_datetime and item_date < start_datetime:
@@ -82,6 +93,7 @@ def get_messages_by_date(token, start_datetime=None):
 def get_announcements_by_date(token, start_datetime=None):
     ret_announcements = []
     announcements = get_announcements(token)
+    _LOGGER.info("received %s announcements", len(announcements))
     for item in announcements:
         item_date = string_to_date(item.date)
         if start_datetime and item_date < start_datetime:
@@ -91,6 +103,9 @@ def get_announcements_by_date(token, start_datetime=None):
 
 
 def generate_content(token):
+    if token is None:
+        _LOGGER.warning("unable to generate content, because generator is not authenticated")
+
     recent_datetime = read_recent_date()
     _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
 
@@ -105,10 +120,12 @@ def generate_content(token):
 
     _LOGGER.info("accessing messages")
     messages = get_messages_by_date(token, recent_datetime)
+    _LOGGER.info("got %s messages since reference date %s", len(messages), recent_datetime)
     generate_messages_feed(messages, token)
 
     _LOGGER.info("accessing announcements")
     announcements = get_announcements_by_date(token, recent_datetime)
+    _LOGGER.info("got %s announcements since reference date %s", len(announcements), recent_datetime)
     generate_announcements_feed(announcements)
 
     # ========= schedule =========
@@ -348,6 +365,11 @@ def execute_generator(feed_gen: FeedGenerator, out_file):
 # ============================================================
 
 
+def get_generator():
+    return LibusGenerator()
+
+
 def generate_feed():
-    generator = LibusGenerator()
+    generator = get_generator()
+    generator.authenticate()
     generator.generate()

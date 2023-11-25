@@ -17,5 +17,9 @@ _LOGGER = logging.getLogger(__name__)
 #
 class RSSGenerator(ABC):
     @abstractmethod
+    def authenticate(self):
+        raise NotImplementedError("method not implemented")
+
+    @abstractmethod
     def generate(self):
         raise NotImplementedError("method not implemented")
