@@ -45,7 +45,8 @@ def get_generators() -> Dict[str, RSSGenerator]:
 
 #
 class RSSManager:
-    def __init__(self):
+    def __init__(self, parameters):
+        self._params = parameters.copy()
         self._generators: Dict[str, RSSGenerator] = {}
         self._initializeGenerators()
 
@@ -61,5 +62,10 @@ class RSSManager:
 
     def _initializeGenerators(self):
         self._generators = get_generators()
+        gen_id_list = list(self._generators.keys())
+        for gen_id in gen_id_list:
+            gen_params = self._params.get(gen_id, {})
+            if not gen_params.get("enabled", True):
+                del self._generators[gen_id]
         for gen in self._generators.values():
             gen.authenticate()
