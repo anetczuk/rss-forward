@@ -9,10 +9,12 @@
 import os
 import logging
 import time
-import tempfile
+# import tempfile
 from pathlib import Path
 
 from keepassxc_browser import Connection, Identity, ProtocolError
+
+from rssforward.utils import get_app_datadir
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,21 +26,22 @@ class LockedKPXCException(Exception):
 
 class KeepassxcAuth:
     def __init__(self):
-        self.client_id = "rss-forward"
-        tmp_dir = tempfile.gettempdir()
-        state_path = os.path.join(tmp_dir, ".assoc")
+        assoc_dir = get_app_datadir()
+        # assoc_dir = tempfile.gettempdir()
+        state_path = os.path.join(assoc_dir, ".assoc")
+        self.state_file = None
         self.state_file = Path(state_path)  # state file reduces number of authentications
-        # self.state_file = Path('.assoc')        # state file reduces number of authentications
         self.connection = None
         self.connection = Connection()
         self.id = None
 
+        client_id = "rss-forward"
         if self.state_file and self.state_file.exists():
             with self.state_file.open("r", encoding="utf-8") as f:
                 data = f.read()
-            self.id = Identity.unserialize(self.client_id, data)
+            self.id = Identity.unserialize(client_id, data)
         else:
-            self.id = Identity(self.client_id)
+            self.id = Identity(client_id)
             _LOGGER.info("Initializing new state")
 
     def connect(self):

@@ -50,13 +50,14 @@ class RSSManager:
         self._initializeGenerators()
 
     def generateData(self):
-        _LOGGER.info("generating RSS data")
+        _LOGGER.info("========== generating RSS data ==========")
         recent_datetime = get_recent_date()
 
         for gen in self._generators.values():
             gen.generate()
 
         save_recent_date(recent_datetime)
+        _LOGGER.info("========== generation ended ==========")
 
     def _initializeGenerators(self):
         self._generators = get_generators()

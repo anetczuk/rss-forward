@@ -183,7 +183,7 @@ def print_file_content(filePath):
     # return ''.join('{:02x} '.format(x) for x in byteList)
     bSize = len(byteList)
     for i in range(bSize):
-        print(f"{i:06d}: {byteList[i]:02x}")
+        print(f"byte {i:06d}: {byteList[i]:02x}")
         # print( ''.join( '{:06d}: {:02x}'.format( i, byteList[i] ) ) )
 
 

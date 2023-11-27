@@ -83,7 +83,7 @@ class RSSServerManager:
     def __init__(self):
         socketserver.TCPServer.allow_reuse_address = True
         self.port = RSSServerManager.DEFAULT_PORT
-        self._service = None
+        self._service: RSSServer = None
         self._thread = None
         self._rootDir = None
         self.startedCallback: Callable = None
