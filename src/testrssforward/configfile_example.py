@@ -17,21 +17,20 @@ except ImportError:
     ## in this case __init__ is already loaded
     pass
 
+import os
+import pprint
 
-from rssforward import logger
-from rssforward.site.librus import get_generator
-from rssforward.rssmanager import get_auth_data
+from rssforward import logger, PKG_DIR
+from rssforward.configfile import load_config
+
+EXAMPLES_DIR = os.path.join(PKG_DIR, os.pardir, os.pardir, "examples")
 
 
 def main():
     logger.configure()
-
-    auth_params = {"type": "KEEPASSXC", "itemurl": "https://portal.librus.pl/rodzina/synergia/loguj"}
-    login, password = get_auth_data(auth_params)
-
-    generator = get_generator()
-    generator.authenticate(login, password)
-    generator.generate()
+    config_path = os.path.join(EXAMPLES_DIR, "config_example.toml")
+    config_dir = load_config(config_path)
+    pprint.pprint(config_dir)
 
 
 if __name__ == "__main__":

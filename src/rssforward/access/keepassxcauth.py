@@ -9,7 +9,7 @@
 import os
 import logging
 import time
-# import tempfile
+
 from pathlib import Path
 
 from keepassxc_browser import Connection, Identity, ProtocolError

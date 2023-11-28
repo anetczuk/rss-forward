@@ -8,13 +8,8 @@
 
 # pylint: disable=E0401
 
-import os
 import logging
 import datetime
-
-# import pprint
-
-from feedgen.feed import FeedGenerator
 
 from librus_apix.exceptions import MaintananceError, TokenError
 from librus_apix.get_token import get_token
@@ -28,13 +23,15 @@ from librus_apix.schedule import get_schedule
 # from librus_apix.schedule import schedule_detail
 # from librus_apix.timetable import get_timetable
 
-from rssforward import DATA_DIR
 from rssforward.utils import read_recent_date, add_timezone, convert_to_html, string_to_date, string_to_datetime
-from rssforward.access.keepassxcauth import get_auth_data
 from rssforward.rssgenerator import RSSGenerator
+from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+MAIN_URL = "https://synergia.librus.pl/"
 
 
 #
@@ -45,25 +42,21 @@ class LibusGenerator(RSSGenerator):
         self._password = None
         self._token = None
 
-    def authenticate(self):
-        # #TODO: extract URL to config file or config settings
-        auth_data = get_auth_data("https://portal.librus.pl/rodzina/synergia/loguj")
-
-        self._username = auth_data.get("login")
-        self._password = auth_data.get("password")
+    def authenticate(self, login, password):
+        self._username = login
+        self._password = password
         self._getToken()
 
     def generate(self):
         _LOGGER.info("========== running librus scraper ==========")
 
         try:
-            generate_content(self._token)
-            return
+            return generate_content(self._token)
         except TokenError as exc:
             _LOGGER.warning("token error - try one more time with new token (%s)", exc)
 
         self._getToken()
-        generate_content(self._token)
+        return generate_content(self._token)
 
     def _getToken(self):
         self._token = None
@@ -106,27 +99,33 @@ def generate_content(token):
     if token is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
 
+    ret_list = []
+
     recent_datetime = read_recent_date()
     _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
 
     _LOGGER.info("accessing grades")
     grades, average_grades, grades_desc = get_grades(token)
-    generate_grades_feed(grades, average_grades, grades_desc)
+    gen_data = generate_grades_feed(grades, average_grades, grades_desc)
+    ret_list.append(gen_data)
 
     _LOGGER.info("accessing attendance")
     first_semester, second_semester = get_attendance(token)
     attendence = first_semester + second_semester
-    generate_attendance_feed(attendence)
+    gen_data = generate_attendance_feed(attendence)
+    ret_list.append(gen_data)
 
     _LOGGER.info("accessing messages")
     messages = get_messages_by_date(token, recent_datetime)
     _LOGGER.info("got %s messages since reference date %s", len(messages), recent_datetime)
-    generate_messages_feed(messages, token)
+    gen_data = generate_messages_feed(messages, token)
+    ret_list.append(gen_data)
 
     _LOGGER.info("accessing announcements")
     announcements = get_announcements_by_date(token, recent_datetime)
     _LOGGER.info("got %s announcements since reference date %s", len(announcements), recent_datetime)
-    generate_announcements_feed(announcements)
+    gen_data = generate_announcements_feed(announcements)
+    ret_list.append(gen_data)
 
     # ========= schedule =========
     curr_dt = datetime.datetime.today()
@@ -134,7 +133,8 @@ def generate_content(token):
     month = curr_dt.month
     _LOGGER.info("accessing schedule in %s-%s", year, month)
     schedule = get_schedule(token, month, year)
-    generate_schedule_feed(schedule, year, month)
+    gen_data = generate_schedule_feed(schedule, year, month)
+    ret_list.append(gen_data)
 
     # ========= homework =========
     # date from-to up to 1 month
@@ -150,7 +150,8 @@ def generate_content(token):
     end_dt = str(end_dt.date())
     _LOGGER.info("accessing homework: %s %s", start_dt, end_dt)
     homework = get_homework(token, start_dt, end_dt)
-    generate_homework_feed(homework, token)
+    gen_data = generate_homework_feed(homework, token)
+    ret_list.append(gen_data)
 
     # print("========= timetable =========")
     # monday_date = '2023-11-6'
@@ -162,9 +163,11 @@ def generate_content(token):
 
     # organizacja -> dyzury
 
+    return ret_list
+
 
 def generate_grades_feed(grades, _, grades_desc):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Oceny")
     feed_gen.description("oceny")
 
@@ -206,11 +209,12 @@ Semestr: {item.semester}
                 item_date = string_to_date(item.date)
                 feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "grade.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"grade.xml": content}
 
 
 def generate_attendance_feed(attendence):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Frekwencja")
     feed_gen.description("frekwencja")
 
@@ -234,11 +238,12 @@ Czy wycieczka: {item.excursion}
         item_date = string_to_date(item.date)
         feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "attendence.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"attendence.xml": content}
 
 
 def generate_messages_feed(messages, token):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Wiadomości")
     feed_gen.description("wiadomości")
 
@@ -258,11 +263,12 @@ def generate_messages_feed(messages, token):
         item_date = string_to_datetime(item.date)
         feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "message.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"message.xml": content}
 
 
 def generate_announcements_feed(announcements):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Ogłoszenia")
     feed_gen.description("ogłoszenia")
 
@@ -278,11 +284,12 @@ def generate_announcements_feed(announcements):
         item_date = string_to_date(item.date)
         feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "announcement.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"announcement.xml": content}
 
 
 def generate_schedule_feed(schedule, year, month):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Terminarz")
     feed_gen.description("terminarz")
 
@@ -312,11 +319,12 @@ Opis:
             # fill publish date
             feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "schedule.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"schedule.xml": content}
 
 
 def generate_homework_feed(homework, token):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Prace domowe")
     feed_gen.description("prace domowe")
 
@@ -340,26 +348,8 @@ def generate_homework_feed(homework, token):
         item_date = string_to_date(task_date)
         feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "homework.xml")
-
-
-# ============================================================
-
-
-def init_feed_gen() -> FeedGenerator:
-    feed_gen = FeedGenerator()
-    feed_gen.link(href="https://synergia.librus.pl/")
-    feed_gen.language("pl")
-    return feed_gen
-
-
-def execute_generator(feed_gen: FeedGenerator, out_file):
-    items_num = len(feed_gen._FeedGenerator__feed_entries)  # pylint: disable=W0212
-    out_dir = os.path.join(DATA_DIR, "librus")
-    os.makedirs(out_dir, exist_ok=True)
-    feed_path = os.path.join(out_dir, out_file)
-    _LOGGER.info("generating %s feed items to file: %s", items_num, feed_path)
-    feed_gen.rss_file(feed_path, pretty=True)
+    content = dumps_feed_gen(feed_gen)
+    return {"homework.xml": content}
 
 
 # ============================================================
@@ -367,9 +357,3 @@ def execute_generator(feed_gen: FeedGenerator, out_file):
 
 def get_generator() -> RSSGenerator:
     return LibusGenerator()
-
-
-def generate_feed():
-    generator = get_generator()
-    generator.authenticate()
-    generator.generate()

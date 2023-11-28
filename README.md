@@ -1,18 +1,56 @@
 # rss-forward
 
-Application provides RSS channel for content scrapped from web pages.
+Application provides RSS channel for content scraped from web pages.
+Web pages could require authentication and that do not discourage us from receiving desired information.
+Moreover, by using supported KeePassXC it is simple to mimic *Single Sign-On* authentication to many servces.
 
-Project wes started because of two demanded functionalities:
-- "forwarding" RSS from services
-- scrapping content from web pages.
+RSS provided by the application can be used for example in *Thunderbird* or other feed reader.
 
-In both cases those services and web pages could require authentication and that 
-should not discourage us from receiving desired information.
-
-Then channels provided by the application can be used for example in *Thunderbird* or other feed reader.
+Main motivation to create this project was discouragement towards web services that do not provide any kinds of
+notifications forcing users to constant login and check for new information.
 
 
-## How can I prepare scraper?
+## Running
+
+To run application simply execute `rssforward.py` script with config file as follows:
+```
+rssforward.py -c <apth_to_config.toml>
+```
+
+
+## Config file
+
+There is [example configuration file](examples/config_example.toml) in examples. It has following content:
+```
+#
+# example of configuration file
+#
+
+[general]
+port = 8080             # RSS feed port
+refreshtime = 3600      # time in seconds
+dataroot = "data"       # relative path to current working directory (absolute path possible)
+                        # default value is app dir inside user home directory
+
+[site.librus]
+enabled = true                      # enable or disable scraper
+auth.type = "RAW"                   # authenticate by providing unencrypted user and password
+auth.user = "user123@librus.com"    # login example
+auth.pass = "user_secret"           # password example
+
+[site.earlystage]
+enabled = true                                              # enable or disable scraper
+auth.type = "KEEPASSXC"                                     # authenticate by accessing keepassxc deamon
+auth.itemurl = "https://online.earlystage.pl/logowanie/"    # URL of keepassxc item (proper user/pass is identified by the URL)
+``` 
+Fields are quite self-descriptive. There are two possible methods of authentication:
+- raw data stored inside the file
+- KeePassXC deamon.
+
+For KeePassXC there is `itemurl` field identifying item in the database.
+
+
+## How can I prepare new scraper?
 
 Every webpage is different and uses different authentication protocol. Simple way is to use *Web Developer Tools*
 (*Network Monitor*) with *Firefox* or *Chrome* and look for endpoints and authentication steps. Moreover every 
@@ -26,7 +64,9 @@ required and just `requests` library can be used.
 
 It's quite easy. Just put scraper module inside `rssforward.site` package. The module have to contain free function
 `get_generator()` returning instance/object of the scraper. Moreover scraper class have to inherit from `RSSGenerator`
-class.
+class. Then comes difficult part: implementation of the scraper.
+
+There is `earlystageapi.py` demostrating how to access restricted data using `requests`.
 
 
 ## Similar projects

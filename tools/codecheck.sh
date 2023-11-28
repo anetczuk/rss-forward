@@ -89,6 +89,7 @@ echo "pylint3 -- no warnings found"
 
 
 echo "running bandit"
+echo "to ignore warning for one line put following comment in end of line: # nosec"
 
 ## [B301:blacklist] Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.
 ## [B403:blacklist] Consider possible security implications associated with pickle module.

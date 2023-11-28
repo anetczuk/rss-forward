@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 #
 class RSSGenerator(ABC):
     @abstractmethod
-    def authenticate(self):
+    def authenticate(self, login, password):
         """Authenticate to the system. Usually obtains access token or username/password pair for further use."""
         raise NotImplementedError("method not implemented")
 

@@ -8,20 +8,19 @@
 
 # pylint: disable=E0401
 
-import os
 import logging
 import datetime
 
-from feedgen.feed import FeedGenerator
-
-from rssforward import DATA_DIR
 from rssforward.utils import convert_to_html, string_to_date, add_timezone
 from rssforward.rssgenerator import RSSGenerator
-from rssforward.access.keepassxcauth import get_auth_data as get_keepassxc_auth_data
 from rssforward.access.earlystageapi import get_auth_data, get_attendances, get_homeworks, get_grades
+from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+MAIN_URL = "https://online.earlystage.pl/"
 
 
 #
@@ -31,8 +30,8 @@ class EarlyStageGenerator(RSSGenerator):
         self._token = None
         self._student_id = None
 
-    def authenticate(self):
-        auth_data = authenticate()
+    def authenticate(self, login, password):
+        auth_data = get_auth_data(login, password)
         self._token = auth_data[0]
         self._student_id = auth_data[1][0]
 
@@ -41,32 +40,29 @@ class EarlyStageGenerator(RSSGenerator):
 
         if not self._token:
             _LOGGER.warning("unable to generate content, because generator is not authenticated")
-            return
+            return []
+
+        ret_list = []
 
         _LOGGER.info("accessing attendances")
         attendances = get_attendances(self._token, self._student_id)
-        generate_attendances_feed(attendances)
+        gen_data = generate_attendances_feed(attendances)
+        ret_list.append(gen_data)
 
         _LOGGER.info("accessing homeworks")
         homeworks, incoming = get_homeworks(self._token, self._student_id)
-        generate_homeworks_feed(homeworks, incoming)
+        gen_data = generate_homeworks_feed(homeworks, incoming)
+        ret_list.append(gen_data)
 
         _LOGGER.info("accessing homeworks")
         grades = get_grades(self._token, self._student_id)
-        generate_grades_feed(grades)
+        gen_data = generate_grades_feed(grades)
+        ret_list.append(gen_data)
+
+        return ret_list
 
 
 # ============================================
-
-
-def authenticate():
-    # #TODO: extract URL to config file or config settings
-    auth_data = get_keepassxc_auth_data("https://online.earlystage.pl/logowanie/")
-
-    username = auth_data.get("login")
-    password = auth_data.get("password")
-
-    return get_auth_data(username, password)
 
 
 ATTEND_STATUS_DICT = {
@@ -78,7 +74,7 @@ ATTEND_STATUS_DICT = {
 
 
 def generate_attendances_feed(attendances):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Obecności")
     feed_gen.description("obecności")
 
@@ -110,14 +106,15 @@ Obecność: {status_label}
         item_date = string_to_date(lesson_date)
         feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "attendance.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"attendance.xml": content}
 
 
 HW_STATUS_DICT = {0: "Niesprawdzona", 1: "Odrobione", 2: "Częsciowo odrobione", 3: "<b>Nieodrobione</b>"}
 
 
 def generate_homeworks_feed(homework, incoming):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Prace domowe")
     feed_gen.description("prace domowe")
 
@@ -182,7 +179,8 @@ Na kiedy: {homework_date}
         item_date = string_to_date(homework_date)
         feed_item.pubDate(item_date)
 
-    execute_generator(feed_gen, "homework.xml")
+    content = dumps_feed_gen(feed_gen)
+    return {"homework.xml": content}
 
 
 GRADE_DESC_DICT = {
@@ -214,7 +212,7 @@ def get_grade_meaning(grade, grade_perc):
 
 
 def generate_grades_feed(grades):
-    feed_gen = init_feed_gen()
+    feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Oceny")
     feed_gen.description("oceny")
 
@@ -256,26 +254,8 @@ Objaśnienie: {grade_meaning}
         # fill publish date
         feed_item.pubDate(grade_datetime)
 
-    execute_generator(feed_gen, "grade.xml")
-
-
-# ============================================================
-
-
-def init_feed_gen() -> FeedGenerator:
-    feed_gen = FeedGenerator()
-    feed_gen.link(href="https://online.earlystage.pl/")
-    feed_gen.language("pl")
-    return feed_gen
-
-
-def execute_generator(feed_gen: FeedGenerator, out_file):
-    items_num = len(feed_gen._FeedGenerator__feed_entries)  # pylint: disable=W0212
-    out_dir = os.path.join(DATA_DIR, "earlystage")
-    os.makedirs(out_dir, exist_ok=True)
-    feed_path = os.path.join(out_dir, out_file)
-    _LOGGER.info("generating %s feed items to file: %s", items_num, feed_path)
-    feed_gen.rss_file(feed_path, pretty=True)
+    content = dumps_feed_gen(feed_gen)
+    return {"grade.xml": content}
 
 
 # ============================================================
@@ -283,9 +263,3 @@ def execute_generator(feed_gen: FeedGenerator, out_file):
 
 def get_generator() -> RSSGenerator:
     return EarlyStageGenerator()
-
-
-def generate_feed():
-    generator = get_generator()
-    generator.authenticate()
-    generator.generate()

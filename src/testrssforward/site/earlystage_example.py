@@ -17,14 +17,20 @@ except ImportError:
     ## in this case __init__ is already loaded
     pass
 
-
 from rssforward import logger
-from rssforward.site.earlystage import generate_feed
+from rssforward.site.earlystage import get_generator
+from rssforward.rssmanager import get_auth_data
 
 
 def main():
     logger.configure()
-    generate_feed()
+
+    auth_params = {"type": "KEEPASSXC", "itemurl": "https://online.earlystage.pl/logowanie/"}
+    login, password = get_auth_data(auth_params)
+
+    generator = get_generator()
+    generator.authenticate(login, password)
+    return generator.generate()
 
 
 if __name__ == "__main__":

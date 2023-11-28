@@ -11,48 +11,40 @@ import sys
 import logging
 import time
 import argparse
-import toml
 
 from rssforward import logger
-from rssforward import DATA_DIR
 from rssforward.rss.rssserver import RSSServerManager
 from rssforward.rssmanager import RSSManager
+from rssforward.configfile import load_config, ConfigField, ConfigKey
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def load_config(config_path):
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return toml.load(f)
-    except FileNotFoundError:
-        _LOGGER.warning("could not load config file '%s' - using default configuration", config_path)
-    return {}
-
-
 def main():
-    parser = argparse.ArgumentParser(description='RSS Forward')
-    parser.add_argument('-c', '--config', action='store', required=False, default="", help='Path to TOML config file' )
+    parser = argparse.ArgumentParser(description="RSS Forward")
+    parser.add_argument("-c", "--config", action="store", required=False, default="", help="Path to TOML config file")
 
     args = parser.parse_args()
 
     logger.configure()
 
-    parameters = load_config( args.config )
-    print( parameters )
+    parameters = load_config(args.config)
+
+    general_section = parameters.get(ConfigKey.GENERAL.value, {})
+    data_root = general_section.get(ConfigField.DATAROOT.value)
+    _LOGGER.info("RSS data root dir: %s", data_root)
 
     manager = RSSManager(parameters)
     manager.generateData()
 
     # async start of RSS server
-    general_section = parameters.get("general", {})
-    rss_port = general_section.get("port", 8080)
-    refresh_time = general_section.get("refresh_time", 3600)
+    rss_port = general_section.get(ConfigField.PORT.value, 8080)
+    refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
 
     server = RSSServerManager()
     server.port = rss_port
-    server.start(DATA_DIR)
+    server.start(data_root)
 
     # data generation main loop
     try:
