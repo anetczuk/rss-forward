@@ -50,6 +50,22 @@ Fields are quite self-descriptive. There are two possible methods of authenticat
 For KeePassXC there is `itemurl` field identifying item in the database.
 
 
+## Security concerns
+
+There are some conserns to consider:
+- in case of `RAW` authentication method credentials will be stored in local harddrive as plain text (user still can
+ place config file in encrypted/secure drive)
+- in case of `KEEPASSXC` authentication access token to *KeePassXC* will be stored in plain text (*KeePassXC* still
+ asks for password for database unlock - *rss-forward* does not prompt or have access to the password)
+- username/password or access token to external service will be stored in *RAM* memory
+- extracted data in form of RSS feed will be stored in local harddrive in form of plain text
+- application uses `http.server` library for listeninig on TCP port for incoming connections and as it states in
+ library's [documentation](https://docs.python.org/3/library/http.server.html):
+```
+Warning: http.server is not recommended for production. It only implements basic security checks. 
+```
+
+
 ## How can I prepare new scraper?
 
 Every webpage is different and uses different authentication protocol. Simple way is to use *Web Developer Tools*
