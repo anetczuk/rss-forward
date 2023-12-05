@@ -99,19 +99,9 @@ if __name__ == "__main__":
         help="Module with tests, e.g. module.submodule.test_file.test_class.test_method, wildcard * allowed",
     )
     parser.add_argument(
-        "-r",
-        "--repeat",
-        action="store",
-        type=int,
-        default=0,
-        help="Repeat tests given number of times",
+        "-r", "--repeat", action="store", type=int, default=0, help="Repeat tests given number of times"
     )
-    parser.add_argument(
-        "-ut",
-        "--untilfailure",
-        action="store_true",
-        help="Run tests in loop until failure",
-    )
+    parser.add_argument("-ut", "--untilfailure", action="store_true", help="Run tests in loop until failure")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()

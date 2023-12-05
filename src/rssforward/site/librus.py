@@ -171,8 +171,10 @@ def generate_grades_feed(grades, _, grades_desc):
     feed_gen.title("Oceny")
     feed_gen.description("oceny")
 
-    for subjects in grades.values():
-        for subject_grades in subjects.values():
+    # grades: List of semesters
+    for sem_grades in grades:
+        # sem_grades: Dict of subject and list of grades
+        for subject_grades in sem_grades.values():
             for item in subject_grades:
                 feed_item = feed_gen.add_entry()
                 # do not set id() - thunderbird will skip message if something changes
@@ -190,8 +192,10 @@ Semestr: {item.semester}
                 item_date = string_to_date(item.date)
                 feed_item.pubDate(item_date)
 
-    for subjects in grades_desc.values():
-        for subject_grades in subjects.values():
+    # grades: List of semesters
+    for sem_grades in grades_desc:
+        # sem_grades: Dict of subject and list of grades
+        for subject_grades in sem_grades.values():
             for item in subject_grades:
                 feed_item = feed_gen.add_entry()
                 # do not set id() - thunderbird will skip message if something changes

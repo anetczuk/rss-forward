@@ -23,6 +23,7 @@ import pprint
 from rssforward import logger, PKG_DIR
 from rssforward.configfile import load_config
 
+
 EXAMPLES_DIR = os.path.join(PKG_DIR, os.pardir, os.pardir, "examples")
 
 

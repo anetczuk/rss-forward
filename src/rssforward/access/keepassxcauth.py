@@ -31,8 +31,11 @@ class KeepassxcAuth:
         state_path = os.path.join(assoc_dir, ".assoc")
         self.state_file = None
         self.state_file = Path(state_path)  # state file reduces number of authentications
-        self.connection = None
-        self.connection = Connection()
+        try:
+            self.connection = Connection("kpxc_server")
+        except OSError:
+            _LOGGER.error("Unable to find keepassxc socket. Try different or default value of 'socket_name'.")
+            raise
         self.id = None
 
         client_id = "rss-forward"
