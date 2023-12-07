@@ -27,8 +27,9 @@ There is [example configuration file](examples/config_example.toml) in examples.
 #
 
 [general]
-port = 8080             # RSS feed port
-refreshtime = 3600      # time in seconds
+startserver = true      # set 'false' to prevent starting RSS server (just store data to local files), default: true
+port = 8080             # RSS feed port, default 8080
+refreshtime = 3600      # time in seconds, default 3600
 dataroot = "data"       # relative path to current working directory (absolute path possible)
                         # default value is app dir inside user home directory
 

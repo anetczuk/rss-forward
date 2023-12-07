@@ -24,6 +24,12 @@ _LOGGER = logging.getLogger(__name__)
 def main():
     parser = argparse.ArgumentParser(description="RSS Forward")
     parser.add_argument("-c", "--config", action="store", required=False, default="", help="Path to TOML config file")
+    parser.add_argument(
+        "--no-server",
+        action="store_true",
+        required=False,
+        help="Do not run RSS server (overrides config 'startserver' option)",
+    )
 
     args = parser.parse_args()
 
@@ -39,26 +45,37 @@ def main():
     manager.generateData()
 
     # async start of RSS server
-    rss_port = general_section.get(ConfigField.PORT.value, 8080)
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
+    start_server = general_section.get(ConfigField.STARTSERVER.value, True)
 
-    server = RSSServerManager()
-    server.port = rss_port
-    server.start(data_root)
+    if args.no_server:
+        start_server = False
+
+    rss_server: RSSServerManager = None
+    if start_server:
+        rss_port = general_section.get(ConfigField.PORT.value, 8080)
+        rss_server = RSSServerManager()
+        rss_server.port = rss_port
+        rss_server.start(data_root)
+    else:
+        _LOGGER.info("starting RSS server disabled")
 
     # data generation main loop
     try:
         while True:
             # time.sleep( 10 )
+            _LOGGER.info("waiting %s seconds before next fetch", refresh_time)
             time.sleep(refresh_time)
             manager.generateData()
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
-        server.stop()
+        if rss_server:
+            rss_server.stop()
     except:  # noqa pylint: disable=W0702
         _LOGGER.exception("unhandled exception detected - exiting")
-        server.stop()
+        if rss_server:
+            rss_server.stop()
         sys.exit(1)
 
     sys.exit(0)

@@ -114,6 +114,7 @@ class KeepassxcAuth:
         if self.connection is None:
             raise Exception("not connected")
 
+
 auth = None
 
 
