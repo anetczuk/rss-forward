@@ -9,7 +9,7 @@
 # pylint: disable=E0401
 
 import logging
-from typing import List, Dict
+from typing import Dict
 import datetime
 
 from rssforward.utils import convert_to_html, string_to_date, add_timezone, calculate_dict_hash
@@ -36,31 +36,31 @@ class EarlyStageGenerator(RSSGenerator):
         self._token = auth_data[0]
         self._student_id = auth_data[1][0]
 
-    def generate(self) -> List[Dict[str, str]]:
+    def generate(self) -> Dict[str, str]:
         _LOGGER.info("========== running earlystage scraper ==========")
 
         if not self._token:
             _LOGGER.warning("unable to generate content, because generator is not authenticated")
-            return []
+            return {}
 
-        ret_list = []
+        ret_dict: Dict[str, str] = {}
 
         _LOGGER.info("accessing attendances")
         attendances = get_attendances(self._token, self._student_id)
         gen_data = generate_attendances_feed(attendances)
-        ret_list.append(gen_data)
+        ret_dict.update(gen_data)
 
         _LOGGER.info("accessing homeworks")
         homeworks, incoming = get_homeworks(self._token, self._student_id)
         gen_data = generate_homeworks_feed(homeworks, incoming)
-        ret_list.append(gen_data)
+        ret_dict.update(gen_data)
 
         _LOGGER.info("accessing homeworks")
         grades = get_grades(self._token, self._student_id)
         gen_data = generate_grades_feed(grades)
-        ret_list.append(gen_data)
+        ret_dict.update(gen_data)
 
-        return ret_list
+        return ret_dict
 
 
 # ============================================

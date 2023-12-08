@@ -8,7 +8,7 @@
 
 import os
 import logging
-from typing import List, Dict
+from typing import Dict
 
 import pkgutil
 
@@ -77,7 +77,7 @@ class RSSManager:
         recent_datetime = get_recent_date()
 
         for gen_id, gen in self._generators.items():
-            gen_data: List[Dict[str, str]] = gen.generate()
+            gen_data: Dict[str, str] = gen.generate()
             self._writeData(gen_id, gen_data)
 
         save_recent_date(recent_datetime)
@@ -99,13 +99,11 @@ class RSSManager:
             login, password = get_auth_data(auth_params)
             gen.authenticate(login, password)
 
-    def _writeData(self, generator_id, generator_data: List[Dict[str, str]]):
+    def _writeData(self, generator_id, generator_data: Dict[str, str]):
         data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
-        for gen_item in generator_data:
-            # feed_gen: FeedGenerator
-            for rss_out, content in gen_item.items():
-                out_dir = os.path.join(data_root_dir, generator_id)
-                os.makedirs(out_dir, exist_ok=True)
-                feed_path = os.path.join(out_dir, rss_out)
-                _LOGGER.info("writing %s content to file: %s", generator_id, feed_path)
-                write_data(feed_path, content)
+        for rss_out, content in generator_data.items():
+            out_dir = os.path.join(data_root_dir, generator_id)
+            os.makedirs(out_dir, exist_ok=True)
+            feed_path = os.path.join(out_dir, rss_out)
+            _LOGGER.info("writing %s content to file: %s", generator_id, feed_path)
+            write_data(feed_path, content)

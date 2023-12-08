@@ -9,7 +9,7 @@
 # pylint: disable=E0401
 
 import logging
-from typing import List, Dict
+from typing import Dict
 import datetime
 
 from librus_apix.exceptions import MaintananceError, TokenError
@@ -48,7 +48,7 @@ class LibusGenerator(RSSGenerator):
         self._password = password
         self._getToken()
 
-    def generate(self) -> List[Dict[str, str]]:
+    def generate(self) -> Dict[str, str]:
         _LOGGER.info("========== running librus scraper ==========")
 
         try:
@@ -96,11 +96,11 @@ def get_announcements_by_date(token, start_datetime=None):
     return ret_announcements
 
 
-def generate_content(token) -> List[Dict[str, str]]:
+def generate_content(token) -> Dict[str, str]:
     if token is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
 
-    ret_list = []
+    ret_dict: Dict[str, str] = {}
 
     recent_datetime = read_recent_date()
     _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
@@ -108,25 +108,25 @@ def generate_content(token) -> List[Dict[str, str]]:
     _LOGGER.info("accessing grades")
     grades, average_grades, grades_desc = get_grades(token)
     gen_data = generate_grades_feed(grades, average_grades, grades_desc)
-    ret_list.append(gen_data)
+    ret_dict.update(gen_data)
 
     _LOGGER.info("accessing attendance")
     first_semester, second_semester = get_attendance(token)
     attendence = first_semester + second_semester
     gen_data = generate_attendance_feed(attendence)
-    ret_list.append(gen_data)
+    ret_dict.update(gen_data)
 
     _LOGGER.info("accessing messages")
     messages = get_messages_by_date(token, recent_datetime)
     _LOGGER.info("got %s messages since reference date %s", len(messages), recent_datetime)
     gen_data = generate_messages_feed(messages, token)
-    ret_list.append(gen_data)
+    ret_dict.update(gen_data)
 
     _LOGGER.info("accessing announcements")
     announcements = get_announcements_by_date(token, recent_datetime)
     _LOGGER.info("got %s announcements since reference date %s", len(announcements), recent_datetime)
     gen_data = generate_announcements_feed(announcements)
-    ret_list.append(gen_data)
+    ret_dict.update(gen_data)
 
     # ========= schedule =========
     curr_dt = datetime.datetime.today()
@@ -135,7 +135,7 @@ def generate_content(token) -> List[Dict[str, str]]:
     _LOGGER.info("accessing schedule in %s-%s", year, month)
     schedule = get_schedule(token, month, year)
     gen_data = generate_schedule_feed(schedule, year, month)
-    ret_list.append(gen_data)
+    ret_dict.update(gen_data)
 
     # ========= homework =========
     # date from-to up to 1 month
@@ -154,7 +154,7 @@ def generate_content(token) -> List[Dict[str, str]]:
     _LOGGER.info("accessing homework: %s %s", start_dt_str, end_dt_str)
     homework = get_homework(token, start_dt_str, end_dt_str)  # dates in format %Y-%m-%d
     gen_data = generate_homework_feed(homework, token)
-    ret_list.append(gen_data)
+    ret_dict.update(gen_data)
 
     # print("========= timetable =========")
     # monday_date = '2023-11-6'
@@ -166,7 +166,7 @@ def generate_content(token) -> List[Dict[str, str]]:
 
     # organizacja -> dyzury
 
-    return ret_list
+    return ret_dict
 
 
 def generate_grades_feed(grades, _, grades_desc):

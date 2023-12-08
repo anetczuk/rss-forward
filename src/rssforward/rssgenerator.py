@@ -7,6 +7,7 @@
 #
 
 import logging
+from typing import Dict
 
 from abc import ABC, abstractmethod
 
@@ -22,6 +23,6 @@ class RSSGenerator(ABC):
         raise NotImplementedError("method not implemented")
 
     @abstractmethod
-    def generate(self):
+    def generate(self) -> Dict[str, str]:
         """Grab data and generate RSS feed."""
         raise NotImplementedError("method not implemented")
