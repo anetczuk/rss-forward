@@ -64,8 +64,7 @@ class KeepassxcAuth:
 
         if not self.isDatabaseOpen():
             _LOGGER.info("Waiting for database open")
-            while not self.isDatabaseOpen():
-                time.sleep(1)
+            self.connection.wait_for_unlock()
 
         if not self.connection.test_associate(self.id):
             _LOGGER.info("Associating application")
