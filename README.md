@@ -85,6 +85,10 @@ class. Then comes difficult part: implementation of the scraper.
 
 There is `earlystageapi.py` demostrating how to access restricted data using `requests`.
 
+During generation of RSS it's highly recomended to set `id`/`Message-Id` of items, because *Thunderbird* concatenates
+title and beginning of body of message, so it can lead to loss of new messages (because of collision of ids). One can
+use hash of raw data to generate identifier.
+
 
 ## Similar projects
 

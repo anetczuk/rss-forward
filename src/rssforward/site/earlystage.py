@@ -9,9 +9,10 @@
 # pylint: disable=E0401
 
 import logging
+from typing import List, Dict
 import datetime
 
-from rssforward.utils import convert_to_html, string_to_date, add_timezone
+from rssforward.utils import convert_to_html, string_to_date, add_timezone, calculate_dict_hash
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.access.earlystageapi import get_auth_data, get_attendances, get_homeworks, get_grades
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
@@ -35,7 +36,7 @@ class EarlyStageGenerator(RSSGenerator):
         self._token = auth_data[0]
         self._student_id = auth_data[1][0]
 
-    def generate(self):
+    def generate(self) -> List[Dict[str, str]]:
         _LOGGER.info("========== running earlystage scraper ==========")
 
         if not self._token:
@@ -80,34 +81,48 @@ def generate_attendances_feed(attendances):
 
     att_list = attendances.get("results", [])
     for item in att_list:
+        # pprint.pprint(item)
         lesson = item.get("lesson", {})
         lesson_name = lesson.get("name")
         lesson_date = lesson.get("date")
         lesson_subject = lesson.get("subject")
         attend_status = item.get("status")
         status_label = ATTEND_STATUS_DICT.get(attend_status, attend_status)
-        # pprint.pprint(item)
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(f"Obecność w dniu {lesson_date}: {status_label}")
-        feed_item.author({"name": "earlystage", "email": "earlystage"})
 
-        # fill description
-        item_desc = f"""\
+        data_dict = {"item_date": lesson_date, "name": lesson_name, "subject": lesson_subject, "status": status_label}
+        add_atendence(feed_gen, data_dict)
+
+    content = dumps_feed_gen(feed_gen)
+    return {"attendance.xml": content}
+
+
+def add_atendence(feed_gen, data_dict):
+    lesson_date = data_dict["item_date"]
+    lesson_name = data_dict["name"]
+    lesson_subject = data_dict["subject"]
+    status_label = data_dict["status"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{lesson_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"Obecność w dniu {lesson_date}: {status_label}")
+    feed_item.author({"name": "earlystage", "email": "earlystage"})
+
+    # fill description
+    item_desc = f"""\
 Lekcja: {lesson_name}
 Temat lekcji: {lesson_subject}
 Data: {lesson_date}
 Obecność: {status_label}
 """
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        item_date = string_to_date(lesson_date)
-        feed_item.pubDate(item_date)
-
-    content = dumps_feed_gen(feed_gen)
-    return {"attendance.xml": content}
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(lesson_date)
+    feed_item.pubDate(item_date)
 
 
 HW_STATUS_DICT = {0: "Niesprawdzona", 1: "Odrobione", 2: "Częsciowo odrobione", 3: "<b>Nieodrobione</b>"}
@@ -120,6 +135,7 @@ def generate_homeworks_feed(homework, incoming):
 
     hw_list = homework.get("results", [])
     for item in hw_list:
+        # pprint.pprint(item)
         lesson = item.get("lesson", {})
         homework_subject = lesson.get("homeworkSubject")
         if not homework_subject:
@@ -130,57 +146,87 @@ def generate_homeworks_feed(homework, incoming):
         homework_checked = lesson.get("homeworkChecked")
         homework_status = item.get("status")
 
-        # pprint.pprint(item)
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(f"Status pracy domowej na {lesson_date}: {homework_subject}")
-        feed_item.author({"name": "earlystage", "email": "earlystage"})
-
-        # fill description
-        status_label = HW_STATUS_DICT.get(homework_status, homework_status)
-
-        item_desc = f"""\
-Zadanie: {homework_subject}
-Temat lekcji: {lesson_subject}
-Na kiedy: {lesson_date}
-Czy praca sprawdzona: {homework_checked}
-Status: {status_label}
-"""
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        item_date = string_to_date(lesson_date)
-        feed_item.pubDate(item_date)
+        data_dict = {
+            "item_date": lesson_date,
+            "lesson_subject": lesson_subject,
+            "homework_subject": homework_subject,
+            "checked": homework_checked,
+            "status": homework_status,
+        }
+        add_homework(feed_gen, data_dict)
 
     hw_list = incoming.get("results", [])
     for item in hw_list:
+        # pprint.pprint(item)
         homework_subject = item.get("homeworkSubject")
         if not homework_subject:
             # no homework to do - skip
             continue
         homework_date = item.get("date")
 
-        # pprint.pprint(item)
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(f"Nowa praca domowa na {homework_date}: {homework_subject}")
-        feed_item.author({"name": "earlystage", "email": "earlystage"})
-        # fill description
-
-        item_desc = f"""\
-Zadanie: {homework_subject}
-Na kiedy: {homework_date}
-"""
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        item_date = string_to_date(homework_date)
-        feed_item.pubDate(item_date)
+        data_dict = {"item_date": homework_date, "subject": homework_subject}
+        add_homework_incoming(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"homework.xml": content}
+
+
+def add_homework(feed_gen, data_dict):
+    lesson_date = data_dict["item_date"]
+    lesson_subject = data_dict["lesson_subject"]
+    homework_subject = data_dict["homework_subject"]
+    homework_checked = data_dict["checked"]
+    homework_status = data_dict["status"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{lesson_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"Status pracy domowej na {lesson_date}: {homework_subject}")
+    feed_item.author({"name": "earlystage", "email": "earlystage"})
+
+    # fill description
+    status_label = HW_STATUS_DICT.get(homework_status, homework_status)
+
+    item_desc = f"""\
+Zadanie: {homework_subject}
+Temat lekcji: {lesson_subject}
+Na kiedy: {lesson_date}
+Czy praca sprawdzona: {homework_checked}
+Status: {status_label}
+"""
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(lesson_date)
+    feed_item.pubDate(item_date)
+
+
+def add_homework_incoming(feed_gen, data_dict):
+    homework_date = data_dict["item_date"]
+    homework_subject = data_dict["subject"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{homework_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"Nowa praca domowa na {homework_date}: {homework_subject}")
+    feed_item.author({"name": "earlystage", "email": "earlystage"})
+    # fill description
+
+    item_desc = f"""\
+Zadanie: {homework_subject}
+Na kiedy: {homework_date}
+"""
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(homework_date)
+    feed_item.pubDate(item_date)
 
 
 GRADE_DESC_DICT = {
@@ -218,12 +264,16 @@ def generate_grades_feed(grades):
 
     grades_list = grades.get("results", [])
     for item in grades_list:
+        # pprint.pprint(item)
         grade_desc = item.get("gradeDescription", {})
         description = grade_desc.get("description")
         grade_type = grade_desc.get("gradeCategory", {}).get("namePl")
         month = grade_desc.get("month")
         year = grade_desc.get("year")
-        grade_month = grade_desc.get("lesson", {}).get("date")
+        # grade_month = grade_desc.get("lesson", {}).get("date")
+        grade_date = datetime.datetime(year=year, month=month, day=1).date()
+        grade_date_str = grade_date.strftime("%Y-%m-%d")
+
         grade_datetime = datetime.datetime(year=year, month=month, day=1)
         grade_datetime = add_timezone(grade_datetime)
         grade = item.get("grades", {}).get("_gradeFormat")
@@ -234,28 +284,50 @@ def generate_grades_feed(grades):
             grade_perc = grade_points / grade_points_max
         grade_meaning = get_grade_meaning(grade, grade_perc)
 
-        # pprint.pprint(item)
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(f"Nowa ocena w miesiącu {grade_month}: {grade_type} {grade}")
-        feed_item.author({"name": "earlystage", "email": "earlystage"})
+        data_dict = {
+            "item_date": grade_date_str,
+            "type": grade_type,
+            "grade": grade,
+            "description": description,
+            "meaning": grade_meaning,
+        }
+        add_grade(feed_gen, data_dict)
 
-        # fill description
-        item_desc = f"""\
+    content = dumps_feed_gen(feed_gen)
+    return {"grade.xml": content}
+
+
+def add_grade(feed_gen, data_dict):
+    grade_date = data_dict["item_date"]
+    grade_type = data_dict["type"]
+    grade = data_dict["grade"]
+    description = data_dict["description"]
+    grade_meaning = data_dict["meaning"]
+
+    grade_datetime = string_to_date(grade_date)
+    grade_month = grade_datetime.month
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{grade_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"Nowa ocena w miesiącu {grade_month}: {grade_type} {grade}")
+    feed_item.author({"name": "earlystage", "email": "earlystage"})
+
+    # fill description
+    item_desc = f"""\
 Typ: {grade_type}
 Opis: {description}
 Miesiąc: {grade_month}
 Ocena: {grade}
 Objaśnienie: {grade_meaning}
 """
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        feed_item.pubDate(grade_datetime)
-
-    content = dumps_feed_gen(feed_gen)
-    return {"grade.xml": content}
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    feed_item.pubDate(grade_datetime)
 
 
 # ============================================================

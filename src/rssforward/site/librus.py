@@ -9,6 +9,7 @@
 # pylint: disable=E0401
 
 import logging
+from typing import List, Dict
 import datetime
 
 from librus_apix.exceptions import MaintananceError, TokenError
@@ -23,7 +24,7 @@ from librus_apix.schedule import get_schedule
 # from librus_apix.schedule import schedule_detail
 # from librus_apix.timetable import get_timetable
 
-from rssforward.utils import read_recent_date, add_timezone, convert_to_html, string_to_date, string_to_datetime
+from rssforward.utils import read_recent_date, convert_to_html, string_to_date, string_to_datetime, calculate_dict_hash
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
@@ -47,7 +48,7 @@ class LibusGenerator(RSSGenerator):
         self._password = password
         self._getToken()
 
-    def generate(self):
+    def generate(self) -> List[Dict[str, str]]:
         _LOGGER.info("========== running librus scraper ==========")
 
         try:
@@ -95,7 +96,7 @@ def get_announcements_by_date(token, start_datetime=None):
     return ret_announcements
 
 
-def generate_content(token):
+def generate_content(token) -> List[Dict[str, str]]:
     if token is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
 
@@ -142,14 +143,16 @@ def generate_content(token):
     # date_to = '2023-09-30'
     start_dt = datetime.datetime.today()
     start_dt = start_dt.replace(day=1)
-    start_dt = str(start_dt.date())
     end_dt = datetime.datetime.today()
     end_dt = end_dt.replace(day=28) + datetime.timedelta(days=4)
     # subtracting the number of the current day brings us back one month
     end_dt = end_dt - datetime.timedelta(days=end_dt.day)
-    end_dt = str(end_dt.date())
-    _LOGGER.info("accessing homework: %s %s", start_dt, end_dt)
-    homework = get_homework(token, start_dt, end_dt)
+    start_dt_str = start_dt.date().strftime("%Y-%m-%d")
+    # start_dt_str = str(start_dt.date())
+    end_dt_str = end_dt.date().strftime("%Y-%m-%d")
+    # end_dt = str(end_dt.date())
+    _LOGGER.info("accessing homework: %s %s", start_dt_str, end_dt_str)
+    homework = get_homework(token, start_dt_str, end_dt_str)  # dates in format %Y-%m-%d
     gen_data = generate_homework_feed(homework, token)
     ret_list.append(gen_data)
 
@@ -176,45 +179,89 @@ def generate_grades_feed(grades, _, grades_desc):
         # sem_grades: Dict of subject and list of grades
         for subject_grades in sem_grades.values():
             for item in subject_grades:
-                feed_item = feed_gen.add_entry()
-                # do not set id() - thunderbird will skip message if something changes
-                # feed_item.id(item.href)
-                feed_item.title(f"Nowa ocena {item.grade} z przedmiotu {item.title}")
-                feed_item.author({"name": item.teacher, "email": item.teacher})
-                # fill description
-                item_desc = f"""\
-Semestr: {item.semester}
-{item.desc}
-"""
-                item_desc = convert_to_html(item_desc)
-                feed_item.content(item_desc)
-                # fill publish date
-                item_date = string_to_date(item.date)
-                feed_item.pubDate(item_date)
+                data_dict = {
+                    "item_date": item.date,
+                    "teacher": item.teacher,
+                    "title": item.title,
+                    "grade": item.grade,
+                    "semester": item.semester,
+                    "description": item.desc,
+                }
+                add_grade_numeric(feed_gen, data_dict)
 
     # grades: List of semesters
     for sem_grades in grades_desc:
         # sem_grades: Dict of subject and list of grades
         for subject_grades in sem_grades.values():
             for item in subject_grades:
-                feed_item = feed_gen.add_entry()
-                # do not set id() - thunderbird will skip message if something changes
-                # feed_item.id(item.href)
-                feed_item.title(f"Nowa ocena {item.grade} z przedmiotu {item.title}")
-                feed_item.author({"name": item.teacher, "email": item.teacher})
-                # fill description
-                item_desc = f"""\
-Semestr: {item.semester}
-{item.desc}
-"""
-                item_desc = convert_to_html(item_desc)
-                feed_item.content(item_desc)
-                # fill publish date
-                item_date = string_to_date(item.date)
-                feed_item.pubDate(item_date)
+                data_dict = {
+                    "item_date": item.date,
+                    "teacher": item.teacher,
+                    "title": item.title,
+                    "grade": item.grade,
+                    "semester": item.semester,
+                    "description": item.desc,
+                }
+                add_grade_descriptive(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"grade.xml": content}
+
+
+def add_grade_numeric(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    teacher = data_dict["teacher"]
+    title = data_dict["title"]
+    grade = data_dict["grade"]
+    semester = data_dict["semester"]
+    description = data_dict["description"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"Nowa ocena {grade} z przedmiotu {title}")
+    feed_item.author({"name": teacher, "email": teacher})
+    # fill description
+    item_desc = f"""\
+Semestr: {semester}
+{description}
+"""
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(item_date)
+    feed_item.pubDate(item_date)
+
+
+def add_grade_descriptive(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    teacher = data_dict["teacher"]
+    title = data_dict["title"]
+    grade = data_dict["grade"]
+    semester = data_dict["semester"]
+    description = data_dict["description"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"Nowa ocena {grade} z przedmiotu {title}")
+    feed_item.author({"name": teacher, "email": teacher})
+    # fill description
+    item_desc = f"""\
+Semestr: {semester}
+{description}
+"""
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(item_date)
+    feed_item.pubDate(item_date)
 
 
 def generate_attendance_feed(attendence):
@@ -223,27 +270,49 @@ def generate_attendance_feed(attendence):
     feed_gen.description("frekwencja")
 
     for item in attendence:
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(f"{item.type} {item.subject}")
-        feed_item.author({"name": item.teacher, "email": item.teacher})
-        # fill description
-        item_desc = f"""\
-Przedmiot: {item.subject}
-Typ: {item.type}
-Nr lekcji: {item.period}
-Nauczyciel: {item.teacher}
-Czy wycieczka: {item.excursion}
-"""
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        item_date = string_to_date(item.date)
-        feed_item.pubDate(item_date)
+        data_dict = {
+            "item_date": item.date,
+            "teacher": item.teacher,
+            "subject": item.subject,
+            "type": item.type,
+            "period": item.period,
+            "excursion": item.excursion,
+        }
+        add_attendance(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"attendence.xml": content}
+
+
+def add_attendance(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    teacher = data_dict["teacher"]
+    subject = data_dict["subject"]
+    item_type = data_dict["type"]
+    period = data_dict["period"]
+    excursion = data_dict["excursion"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"{item_type} {subject}")
+    feed_item.author({"name": teacher, "email": teacher})
+    # fill description
+    item_desc = f"""\
+Przedmiot: {subject}
+Typ: {item_type}
+Nr lekcji: {period}
+Nauczyciel: {teacher}
+Czy wycieczka: {excursion}
+"""
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(item_date)
+    feed_item.pubDate(item_date)
 
 
 def generate_messages_feed(messages, token):
@@ -253,22 +322,35 @@ def generate_messages_feed(messages, token):
 
     for item in messages:
         # pprint.pprint(item)
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(item.title)
-        feed_item.author({"name": item.author, "email": item.author})
-        # fill description
-        href = item.href
-        item_desc = message_content(token, href)
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        item_date = string_to_datetime(item.date)
-        feed_item.pubDate(item_date)
+        item_desc = message_content(token, item.href)
+        data_dict = {"item_date": item.date, "title": item.title, "author": item.author, "content": item_desc}
+        add_message(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"message.xml": content}
+
+
+def add_message(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    title = data_dict["title"]
+    author = data_dict["author"]
+    item_desc = data_dict["content"]
+
+    feed_item = feed_gen.add_entry()
+
+    item_date = string_to_datetime(item_date)
+    item_date_str = item_date.strftime("%Y-%m-%d")
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date_str}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(title)
+    feed_item.author({"name": author, "email": author})
+    # fill description
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    feed_item.pubDate(item_date)
 
 
 def generate_announcements_feed(announcements):
@@ -277,19 +359,39 @@ def generate_announcements_feed(announcements):
     feed_gen.description("ogłoszenia")
 
     for item in reversed(announcements):
-        feed_item = feed_gen.add_entry()
-        feed_item.title(item.title)
-        feed_item.author({"name": item.author, "email": item.author})
-        # fill description
-        item_desc = item.description
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        item_date = string_to_date(item.date)
-        feed_item.pubDate(item_date)
+        data_dict = {
+            "item_date": item.date,
+            "title": item.title,
+            "author": item.author,
+            "description": item.description,
+        }
+        add_announcement(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"announcement.xml": content}
+
+
+def add_announcement(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    title = data_dict["title"]
+    author = data_dict["author"]
+    description = data_dict["description"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(title)
+    feed_item.author({"name": author, "email": author})
+    # fill description
+    item_desc = description
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(item_date)
+    feed_item.pubDate(item_date)
 
 
 def generate_schedule_feed(schedule, year, month):
@@ -304,27 +406,52 @@ def generate_schedule_feed(schedule, year, month):
             #     prefix, href = item.href.split('/')
             #     details = schedule_detail(token, prefix, href)
             #     pprint.pprint(details)
+
             item_date = datetime.datetime(year, month, int(item.day))
-            item_date = add_timezone(item_date)
-            feed_item = feed_gen.add_entry()
-            feed_item.title(item.title)
-            feed_item.author({"name": "Librus", "email": "Librus"})
-            # fill description
-            description = "\n".join(item.data)
-            item_desc = f"""\
-Data: {item_date}
-Przedmiot: {item.subject}
-Nr lekcji: {item.number}
-Opis:
-{description}
-"""
-            item_desc = convert_to_html(item_desc)
-            feed_item.content(item_desc)
-            # fill publish date
-            feed_item.pubDate(item_date)
+            item_date_str = item_date.strftime("%Y-%m-%d")
+
+            data_dict = {
+                "item_date": item_date_str,
+                "title": item.title,
+                "subject": item.subject,
+                "number": item.number,
+                "description": item.data,
+            }
+            add_schedule(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"schedule.xml": content}
+
+
+def add_schedule(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    title = data_dict["title"]
+    subject = data_dict["subject"]
+    number = data_dict["number"]
+    description = data_dict["description"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(title)
+    feed_item.author({"name": "Librus", "email": "Librus"})
+    # fill description
+    description = "\n".join(description)
+    item_desc = f"""\
+Data: {item_date}
+Przedmiot: {subject}
+Nr lekcji: {number}
+Opis:
+{description}
+"""
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    item_date = string_to_date(item_date)
+    feed_item.pubDate(item_date)
 
 
 def generate_homework_feed(homework, token):
@@ -334,26 +461,47 @@ def generate_homework_feed(homework, token):
 
     for item in homework:
         # pprint.pprint(item)
-        feed_item = feed_gen.add_entry()
-        # do not set id() - thunderbird will skip message if something changes
-        # feed_item.id(item.href)
-        feed_item.title(f"{item.lesson}: {item.subject}")
-        feed_item.author({"name": item.teacher, "email": item.teacher})
-        # fill description
-        href = item.href
-        item_details = homework_detail(token, href)
+        item_details = homework_detail(token, item.href)
+        task_date = item_details["Data udostępnienia"]
+        item_date = string_to_date(task_date)
+
         item_desc = ""
         for key, val in item_details.items():
             item_desc += f"{key}: {val}\n"
-        item_desc = convert_to_html(item_desc)
-        feed_item.content(item_desc)
-        # fill publish date
-        task_date = item_details["Data udostępnienia"]
-        item_date = string_to_date(task_date)
-        feed_item.pubDate(item_date)
+
+        data_dict = {
+            "item_date": item_date,
+            "title": item.title,
+            "subject": item.subject,
+            "number": item.number,
+            "description": item_desc,
+        }
+        add_homework(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
     return {"homework.xml": content}
+
+
+def add_homework(feed_gen, data_dict):
+    item_date = data_dict["item_date"]
+    teacher = data_dict["teacher"]
+    subject = data_dict["subject"]
+    lesson = data_dict["lesson"]
+    item_desc = data_dict["description"]
+
+    feed_item = feed_gen.add_entry()
+
+    data_hash = calculate_dict_hash(data_dict)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    feed_item.id(item_id)
+
+    feed_item.title(f"{lesson}: {subject}")
+    feed_item.author({"name": teacher, "email": teacher})
+    # fill description
+    item_desc = convert_to_html(item_desc)
+    feed_item.content(item_desc)
+    # fill publish date
+    feed_item.pubDate(item_date)
 
 
 # ============================================================

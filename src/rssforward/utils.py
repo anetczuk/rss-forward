@@ -9,6 +9,8 @@
 import os
 import logging
 import datetime
+import hashlib
+import json
 import pytz
 
 from appdirs import user_data_dir
@@ -73,3 +75,10 @@ def convert_to_html(content: str) -> str:
 def write_data(file_path, content):
     with open(file_path, "w", encoding="utf8") as fp:
         fp.write(content)
+
+
+def calculate_dict_hash(data_dict):
+    data_str = json.dumps(data_dict, sort_keys=True)
+    data_bytes = data_str.encode("utf-8")
+    hash_value = hashlib.md5(data_bytes).hexdigest()  # nosec
+    return hash_value

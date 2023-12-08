@@ -8,7 +8,7 @@
 
 import os
 import logging
-from typing import Dict
+from typing import List, Dict
 
 import pkgutil
 
@@ -77,7 +77,7 @@ class RSSManager:
         recent_datetime = get_recent_date()
 
         for gen_id, gen in self._generators.items():
-            gen_data = gen.generate()
+            gen_data: List[Dict[str, str]] = gen.generate()
             self._writeData(gen_id, gen_data)
 
         save_recent_date(recent_datetime)
@@ -99,7 +99,7 @@ class RSSManager:
             login, password = get_auth_data(auth_params)
             gen.authenticate(login, password)
 
-    def _writeData(self, generator_id, generator_data):
+    def _writeData(self, generator_id, generator_data: List[Dict[str, str]]):
         data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
         for gen_item in generator_data:
             # feed_gen: FeedGenerator
