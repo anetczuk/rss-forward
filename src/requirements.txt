@@ -10,3 +10,5 @@ toml>=0.10.2
 pytz>=2021.3
 
 requests>=2.31.0
+
+pystray==0.19.5

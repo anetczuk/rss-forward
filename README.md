@@ -27,6 +27,7 @@ There is [example configuration file](examples/config_example.toml) in examples.
 #
 
 [general]
+trayicon = true         # enable or disable tray icon
 startserver = true      # set 'false' to prevent starting RSS server (just store data to local files), default: true
 port = 8080             # RSS feed port, default 8080
 refreshtime = 3600      # time in seconds, default 3600
@@ -104,6 +105,7 @@ use hash of raw data to generate identifier.
 - [How to build a RSS from scraping using Python](https://medium.com/@pescadordigital/how-to-build-a-rss-from-scraping-using-python-a8ba798aac84)
 - [keepassxc-browser](https://github.com/hrehfeld/python-keepassxc-browser)
 - [librus-apix](https://github.com/RustySnek/librus-apix)
+- [pystray](https://github.com/moses-palmer/pystray)
 
 
 ## License
@@ -136,3 +138,22 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+## Icons License
+
+Icons are downloaded from [https://dryicons.com](https://dryicons.com) under following license:
+
+> Terms of Use:
+>     Requires Author Attribution
+>     Allowed Commercial Use
+>     Allowed Personal and Educational Use
+
+and
+
+> In order to use this file you must credit the author with the a link back to this page
+> Click to copy the code, then paste it on your website.
+
+Blue icon: <a href='https://dryicons.com/free-icons/rss-forward'> Icon by Dryicons </a>
+
+Red icon: <a href='https://dryicons.com/icon/rss-forward-494'> Icon by Dryicons </a>

@@ -30,6 +30,7 @@ class ConfigKey(Enum):
 
 @unique
 class ConfigField(Enum):
+    TRAYICON = "trayicon"
     STARTSERVER = "startserver"
     PORT = "port"
     REFRESHTIME = "refreshtime"

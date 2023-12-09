@@ -83,9 +83,9 @@ class RSSServerManager:
     def __init__(self):
         socketserver.TCPServer.allow_reuse_address = True
         self.port = RSSServerManager.DEFAULT_PORT
+        self.rootDir = None
         self._service: RSSServer = None
         self._thread = None
-        self._rootDir = None
         self.startedCallback: Callable = None
         self.stoppedCallback: Callable = None
         self.lock = threading.RLock()
@@ -115,6 +115,14 @@ class RSSServerManager:
                 return RSSServerManager.Status.STARTED
             return RSSServerManager.Status.STOPPED
 
+    def switchState(self, new_state):
+        if new_state:
+            _LOGGER.info("starting server")
+            self.start()
+        else:
+            _LOGGER.info("stopping server")
+            self.stop()
+
     # asynchronous call
     # 'rootDir' - path to directory containing RSS feeds (feeds can be in any subfolder)
     # relative path will be reflected in URL address of the feed
@@ -123,8 +131,9 @@ class RSSServerManager:
             if self._service is not None:
                 ## already started
                 return
-            self._rootDir = rootDir
-            self._thread = threading.Thread(target=self._run, args=())
+            if rootDir:
+                self.rootDir = rootDir
+            self._thread = threading.Thread(target=self._run, args=[])
             self._thread.start()
 
     def stop(self):
@@ -133,25 +142,26 @@ class RSSServerManager:
                 ## not started
                 return
             _LOGGER.info("stopping feed server")
-            serverThread = self._thread  ## self._thread will be null-ed soon
             self._shutdownService()
-            serverThread.join()
+            self._thread.join()
+            self._thread = None
 
-    # busy execution
+    # blocking execution
     # 'rootDir' - path to directory containing RSS feeds (feeds can be in any subfolder)
     # relative path will be reflected in URL address of the feed
     def execute(self, rootDir=None):
         with self.lock:
-            self._rootDir = rootDir
+            if rootDir:
+                self.rootDir = rootDir
             self._run()
 
     def _run(self):
         try:
             with RSSServer(("", self.port), RSSServerManager.Handler) as httpd:
                 #         with socketserver.TCPServer(("", self.port), RSSServerManager.Handler) as httpd:
-                os.makedirs(self._rootDir, exist_ok=True)
+                os.makedirs(self.rootDir, exist_ok=True)
                 self._service = httpd
-                self._service.base_path = self._rootDir
+                self._service.base_path = self.rootDir
                 try:
                     _LOGGER.info("serving at port %s", self.port)
                     httpd.allow_reuse_address = True
@@ -162,7 +172,6 @@ class RSSServerManager:
                     _LOGGER.exception("unhandled exception occur - stopping server thread")
                     self._service.server_close()
                     self._service = None
-                    self._thread = None
                     self._notifyStopped()
             _LOGGER.info("server thread ended")
         except:  # noqa

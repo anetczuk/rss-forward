@@ -3,6 +3,7 @@
 #
 
 [general]
+trayicon = true         # enable or disable tray icon
 startserver = true      # set 'false' to prevent starting RSS server (just store data to local files), default: true
 port = 8080             # RSS feed port, default 8080
 refreshtime = 3600      # time in seconds, default 3600

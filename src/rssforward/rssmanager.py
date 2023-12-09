@@ -9,7 +9,6 @@
 import os
 import logging
 from typing import Dict
-import time
 import threading
 
 import pkgutil
@@ -69,7 +68,9 @@ def get_auth_data(auth_params):
 
 #
 class RSSManager:
-    def __init__(self, parameters):
+    def __init__(self, parameters=None):
+        if parameters is None:
+            parameters = {}
         self._params = parameters.copy()
         self._generators: Dict[str, RSSGenerator] = {}
         self._initializeGenerators()
@@ -113,17 +114,15 @@ class RSSManager:
 
 #
 class ThreadedRSSManager:
-
-    def __init__(self, manager=None):
+    def __init__(self, manager):
         self._manager = manager
-        if self._manager is None:
-            self._manager = RSSManager()
         self._execute_loop = False
         self._lock = threading.RLock()
         self._wait_object = threading.Condition()
         self._thread = None
 
     def start(self, refresh_time):
+        """Start thread."""
         with self._lock:
             if self._execute_loop:
                 _LOGGER.warning("thread already running")
@@ -148,9 +147,20 @@ class ThreadedRSSManager:
                 _LOGGER.info("thread does not wait")
 
     def executeLoop(self, refresh_time):
+        """Start run loop without additional threads."""
         with self._lock:
             self._execute_loop = True
         self._runLoop(refresh_time)
+
+    def executeSingle(self):
+        """Trigger single generation."""
+        with self._lock:
+            try:
+                with self._wait_object:
+                    self._wait_object.notifyAll()
+            except RuntimeError:
+                # no threads wait for notification
+                _LOGGER.info("thread does not wait")
 
     def _runLoop(self, refresh_time):
         try:
