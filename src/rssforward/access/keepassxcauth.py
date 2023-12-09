@@ -62,9 +62,11 @@ class KeepassxcAuth:
     def unlockDatabase(self):
         self._checkConnection()
 
-        if not self.isDatabaseOpen():
+        while not self.isDatabaseOpen():
             _LOGGER.info("Waiting for database open")
             self.connection.wait_for_unlock()
+            time.sleep(1)
+            _LOGGER.info("database unlocked")
 
         if not self.connection.test_associate(self.id):
             _LOGGER.info("Associating application")
@@ -94,6 +96,7 @@ class KeepassxcAuth:
 
     def getAuthData(self, access_url):
         self._checkConnection()
+        self.unlockDatabase()
         login = {}
         try:
             logins = self.connection.get_logins(self.id, url=access_url)

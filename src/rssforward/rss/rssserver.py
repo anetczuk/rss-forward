@@ -159,7 +159,8 @@ class RSSServerManager:
         try:
             with RSSServer(("", self.port), RSSServerManager.Handler) as httpd:
                 #         with socketserver.TCPServer(("", self.port), RSSServerManager.Handler) as httpd:
-                os.makedirs(self.rootDir, exist_ok=True)
+                if self.rootDir:
+                    os.makedirs(self.rootDir, exist_ok=True)
                 self._service = httpd
                 self._service.base_path = self.rootDir
                 try:

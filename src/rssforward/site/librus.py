@@ -99,6 +99,7 @@ def get_announcements_by_date(token, start_datetime=None):
 def generate_content(token) -> Dict[str, str]:
     if token is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
+        return {}
 
     ret_dict: Dict[str, str] = {}
 

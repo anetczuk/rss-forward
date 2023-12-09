@@ -76,6 +76,9 @@ class RSSManager:
         self._initializeGenerators()
 
     def generateData(self):
+        if not self._generators:
+            return
+
         _LOGGER.info("========== generating RSS data ==========")
         recent_datetime = get_recent_date()
 
@@ -95,14 +98,20 @@ class RSSManager:
             if not gen_params.get(ConfigField.ENABLED.value, True):
                 del self._generators[gen_id]
 
-        # gen: RSSGenerator
-        for gen_id, gen in self._generators.items():
-            gen_params = scrapers_params.get(gen_id, {})
-            auth_params = gen_params.get(ConfigKey.AUTH.value)
-            login, password = get_auth_data(auth_params)
-            gen.authenticate(login, password)
+            # try authenticate
+            gen: RSSGenerator = self._generators[gen_id]
+            auth_params = gen_params.get(ConfigKey.AUTH.value, {})
+            try:
+                login, password = get_auth_data(auth_params)
+                gen.authenticate(login, password)
+            except Exception as exc:  # pylint: disable=W0703
+                _LOGGER.warning("error during authentication of %s: %s", gen_id, exc)
+                # unable to authenticate - will not be possible to generate content, so remove the generator
+                del self._generators[gen_id]
 
     def _writeData(self, generator_id, generator_data: Dict[str, str]):
+        if not generator_data:
+            return
         data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
         for rss_out, content in generator_data.items():
             out_dir = os.path.join(data_root_dir, generator_id)
