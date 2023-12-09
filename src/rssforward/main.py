@@ -14,7 +14,7 @@ import argparse
 
 from rssforward import logger
 from rssforward.rss.rssserver import RSSServerManager
-from rssforward.rssmanager import RSSManager
+from rssforward.rssmanager import RSSManager, ThreadedRSSManager
 from rssforward.configfile import load_config, ConfigField, ConfigKey
 
 
@@ -41,9 +41,6 @@ def main():
     data_root = general_section.get(ConfigField.DATAROOT.value)
     _LOGGER.info("RSS data root dir: %s", data_root)
 
-    manager = RSSManager(parameters)
-    manager.generateData()
-
     # async start of RSS server
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
     start_server = general_section.get(ConfigField.STARTSERVER.value, True)
@@ -60,25 +57,30 @@ def main():
     else:
         _LOGGER.info("starting RSS server disabled")
 
+    manager = RSSManager(parameters)
+    threaded_manager = ThreadedRSSManager(manager)
+    exit_code = 0
+
     # data generation main loop
     try:
-        while True:
-            # time.sleep( 10 )
-            _LOGGER.info("waiting %s seconds before next fetch", refresh_time)
-            time.sleep(refresh_time)
-            manager.generateData()
+        threaded_manager.start(refresh_time)
+        threaded_manager.join()
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
-        if rss_server:
-            rss_server.stop()
+        threaded_manager.stop()
+        threaded_manager.join()
+
     except:  # noqa pylint: disable=W0702
         _LOGGER.exception("unhandled exception detected - exiting")
-        if rss_server:
-            rss_server.stop()
-        sys.exit(1)
+        threaded_manager.stop()
+        threaded_manager.join()
+        exit_code = 1
 
-    sys.exit(0)
+    if rss_server:
+        rss_server.stop()
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

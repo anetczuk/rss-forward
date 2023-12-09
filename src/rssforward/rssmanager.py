@@ -9,6 +9,8 @@
 import os
 import logging
 from typing import Dict
+import time
+import threading
 
 import pkgutil
 
@@ -107,3 +109,88 @@ class RSSManager:
             feed_path = os.path.join(out_dir, rss_out)
             _LOGGER.info("writing %s content to file: %s", generator_id, feed_path)
             write_data(feed_path, content)
+
+
+#
+class ThreadedRSSManager:
+
+    def __init__(self, manager=None):
+        self._manager = manager
+        if self._manager is None:
+            self._manager = RSSManager()
+        self._execute_loop = False
+        self._lock = threading.RLock()
+        self._wait_object = threading.Condition()
+        self._thread = None
+
+    def start(self, refresh_time):
+        with self._lock:
+            if self._execute_loop:
+                _LOGGER.warning("thread already running")
+                return
+            self._execute_loop = True
+            self._thread = threading.Thread(target=self._runLoop, args=[refresh_time])
+            _LOGGER.warning("starting thread")
+            self._thread.start()
+
+    def stop(self):
+        with self._lock:
+            if not self._execute_loop:
+                _LOGGER.warning("thread already stopped")
+                return
+            _LOGGER.info("stopping thread")
+            self._execute_loop = False
+            try:
+                with self._wait_object:
+                    self._wait_object.notifyAll()
+            except RuntimeError:
+                # no threads wait for notification
+                _LOGGER.info("thread does not wait")
+
+    def executeLoop(self, refresh_time):
+        with self._lock:
+            self._execute_loop = True
+        self._runLoop(refresh_time)
+
+    def _runLoop(self, refresh_time):
+        try:
+            while True:
+                with self._lock:
+                    if not self._execute_loop:
+                        break
+
+                self._manager.generateData()
+
+                with self._wait_object:
+                    with self._lock:
+                        if not self._execute_loop:
+                            break
+                    _LOGGER.info("waiting %s seconds before next fetch", refresh_time)
+                    self._wait_object.wait(refresh_time)
+
+            _LOGGER.info("thread loop ended")
+            return
+
+        except KeyboardInterrupt:
+            _LOGGER.error("keyboard interrupt")
+            # executed in case of exception
+            raise
+
+        except BaseException as exc:
+            _LOGGER.error("exception occurred in thread loop: %s", exc)
+            # executed in case of exception
+            raise
+
+        finally:
+            with self._lock:
+                self._execute_loop = False
+
+    def join(self):
+        with self._lock:
+            if not self._thread:
+                return
+            _LOGGER.info("joining thread")
+        self._thread.join()
+        with self._lock:
+            self._thread = None
+        _LOGGER.info("thread terminated")
