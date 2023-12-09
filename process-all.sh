@@ -7,6 +7,8 @@ set -eu
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
+$SCRIPT_DIR/doc/generate-doc.sh
+
 # run tests in venv (it verifies required packages)
 $SCRIPT_DIR/tools/installvenv.sh --no-prompt
 $SCRIPT_DIR/venv/runtests.py

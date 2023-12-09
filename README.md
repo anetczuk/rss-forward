@@ -12,10 +12,25 @@ notifications forcing users to constant login and check for new information.
 
 ## Running
 
+[There](doc/cmdargs.md) is description of command line arguments.
 To run application simply execute `rssforward.py` script with config file as follows:
 ```
 rssforward.py -c <apth_to_config.toml>
 ```
+
+Application can operate in two modes:
+- pure command-line
+- in system tray with basic control options as shown below
+
+[![Application in system tray](doc/sys-tray-example.png "Application in system tray")](doc/sys-tray-example.png)
+
+Then depnding on operation mode RSS data can be imported to any feed reader using file directly or URL, e.g:
+- `file:///<path-to-data-root>/<site-id>/<feed-file>` 
+- `http://<server-address>/<site-id>/<feed-file>`
+
+where `<path-to-data-root>` is configurable in config file, `<site-id>` and 
+`<feed-file>` are defined for each `RSSGenerator` (web-scraper) and `<server-address>` is IP or hostname of machine with 
+running application.
 
 
 ## Config file
@@ -51,6 +66,8 @@ Fields are quite self-descriptive. There are two possible methods of authenticat
 
 For KeePassXC there is `itemurl` field identifying item in the database.
 
+Moreover application can be executed without RSS server (`startserver = false`) or detached from system tray (`trayicon = true`).
+
 
 ## Security concerns
 
@@ -62,7 +79,7 @@ There are some conserns to consider:
 - username/password or access token to external service will be stored in *RAM* memory
 - extracted data in form of RSS feed will be stored in local harddrive in form of plain text
 - application uses `http.server` library for listeninig on TCP port for incoming connections and as it states in
- library's [documentation](https://docs.python.org/3/library/http.server.html):
+ library's [documentation](https://docs.python.org/3/library/http.server.html) (service can be disabled):
 ```
 Warning: http.server is not recommended for production. It only implements basic security checks. 
 ```
