@@ -37,6 +37,7 @@ class ConfigField(Enum):
     REFRESHTIME = "refreshtime"
     DATAROOT = "dataroot"
     LOGDIR = "logdir"
+    LOGVIEWER = "logviewer"
     ENABLED = "enabled"
 
     AUTH_TYPE = "type"

@@ -25,6 +25,7 @@ class TrayManager:
         self._server_state = server_state
         self.server_callback = None
         self.refresh_callback = None
+        self.open_log_callback = None
 
         red_icon_path = os.path.join(SCRIPT_DIR, "rss-forward-red-64.png")
         red_icon_path = os.path.abspath(red_icon_path)
@@ -39,9 +40,10 @@ class TrayManager:
         )
 
         rss_refresh_item = pystray.MenuItem("Refresh RSS", self._onRefreshClicked)
+        open_log_item = pystray.MenuItem("Open log", self._onOpenLogClicked)
         quit_item = pystray.MenuItem("Quit", self._onQuitClicked)
 
-        menu = pystray.Menu(rss_server_item, rss_refresh_item, quit_item)
+        menu = pystray.Menu(rss_server_item, rss_refresh_item, open_log_item, quit_item)
 
         self.tray_icon = pystray.Icon(name="rss-forward", title="RSS Forward", menu=menu)
         self._setIcon()
@@ -74,6 +76,9 @@ class TrayManager:
     def setRefreshCallback(self, callback):
         self.refresh_callback = callback
 
+    def setOpenLogCallback(self, callback):
+        self.open_log_callback = callback
+
     # =================================================
 
     def _onRSSServerClicked(self, icon, item):  # pylint: disable=W0613
@@ -89,6 +94,12 @@ class TrayManager:
         # icon.notify("refresh clicked")
         if self.refresh_callback:
             self.refresh_callback()
+
+    def _onOpenLogClicked(self, icon, item):  # pylint: disable=W0613
+        _LOGGER.info("open log clicked")
+        # icon.notify("refresh clicked")
+        if self.open_log_callback:
+            self.open_log_callback()
 
     def _onQuitClicked(self, icon, item):  # pylint: disable=W0613
         _LOGGER.info("quit clicked")

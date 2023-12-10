@@ -8,8 +8,10 @@
 #
 
 import sys
+import os
 import logging
 import argparse
+import subprocess
 
 from rssforward import logger
 from rssforward.rss.rssserver import RSSServerManager
@@ -24,6 +26,8 @@ _LOGGER = logging.getLogger(__name__)
 def start_with_tray(parameters):
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     data_root = general_section.get(ConfigField.DATAROOT.value)
+    log_dir = general_section.get(ConfigField.LOGDIR.value)
+    log_viewer = general_section.get(ConfigField.LOGVIEWER.value)
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
     start_server = general_section.get(ConfigField.STARTSERVER.value, True)
     rss_port = general_section.get(ConfigField.PORT.value, 8080)
@@ -46,6 +50,9 @@ def start_with_tray(parameters):
 
     tray_manager.setRSSServerCallback(rss_server.switchState)
     tray_manager.setRefreshCallback(threaded_manager.executeSingle)
+    
+    log_path = os.path.join(log_dir, "log.txt")
+    tray_manager.setOpenLogCallback(lambda: open_log(log_viewer, log_path))
 
     # data generation main loop
     exit_code = 0
@@ -141,6 +148,16 @@ def start_raw(parameters):
         exit_code = 1
 
     return exit_code
+
+
+def open_log(log_viewer, log_path):
+    try:
+        command = log_viewer % log_path
+    except TypeError:
+        _LOGGER.exception("unable to run logger, command: %s log path: %s", log_viewer, log_path)
+        return
+    _LOGGER.info("opening log viewer: %s", command)
+    subprocess.Popen(command, shell=True)
 
 
 # ============================================================
