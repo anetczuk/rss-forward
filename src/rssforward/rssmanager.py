@@ -72,10 +72,11 @@ class RSSManager:
         if parameters is None:
             parameters = {}
         self._params = parameters.copy()
-        self._generators: Dict[str, RSSGenerator] = {}
-        self._initializeGenerators()
+        self._generators: Dict[str, RSSGenerator] = None
 
     def generateData(self):
+        if self._generators is None:
+            self._initializeGenerators()
         if not self._generators:
             return
 
