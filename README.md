@@ -7,7 +7,7 @@ Moreover, by using supported KeePassXC it is simple to mimic *Single Sign-On* au
 RSS provided by the application can be used for example in *Thunderbird* or other feed reader.
 
 Main motivation to create this project was discouragement towards web services that do not provide any kinds of
-notifications forcing users to constant login and check for new information.
+notifications forcing users to repetitive login and check for new information.
 
 
 ## Running
@@ -15,7 +15,7 @@ notifications forcing users to constant login and check for new information.
 [There](doc/cmdargs.md) is description of command line arguments.
 To run application simply execute `rssforward.py` script with config file as follows:
 ```
-rssforward.py -c <apth_to_config.toml>
+rssforward.py -c <apth-to-config.toml>
 ```
 
 Application can operate in two modes:
@@ -32,6 +32,11 @@ where `<path-to-data-root>` is configurable in config file, `<site-id>` and
 `<feed-file>` are defined for each `RSSGenerator` (web-scraper) and `<server-address>` is IP or hostname of machine with 
 running application.
 
+If use case is to just grab and store data then execute following:
+```
+rssforward.py -c <apth-to-config.toml> --trayicon=False --startserver=False --genloop=False
+```
+
 
 ## Config file
 
@@ -45,7 +50,8 @@ There is [example configuration file](examples/config_example.toml) in examples.
 trayicon = true         # enable or disable tray icon
 startserver = true      # set 'false' to prevent starting RSS server (just store data to local files), default: true
 port = 8080             # RSS feed port, default 8080
-refreshtime = 3600      # time in seconds, default 3600
+genloop = true          # enable or disable RSS generation loop
+refreshtime = 3600      # time in seconds between consecutive RSS generator loop iterations, default 3600
 dataroot = "data"       # relative path to current working directory (absolute path possible)
                         # default value is app dir inside user home directory
 
@@ -67,6 +73,9 @@ Fields are quite self-descriptive. There are two possible methods of authenticat
 For KeePassXC there is `itemurl` field identifying item in the database.
 
 Moreover application can be executed without RSS server (`startserver = false`) or detached from system tray (`trayicon = true`).
+
+Some fields are common for config file and command-line arguments. In such cases command-line version has precedence 
+over values in the file (overrides values taken from config file).
 
 
 ## Security concerns
@@ -103,9 +112,9 @@ class. Then comes difficult part: implementation of the scraper.
 
 There is `earlystageapi.py` demostrating how to access restricted data using `requests`.
 
-During generation of RSS it's highly recomended to set `id`/`Message-Id` of items, because *Thunderbird* concatenates
-title and beginning of body of message, so it can lead to loss of new messages (because of collision of ids). One can
-use hash of raw data to generate identifier.
+During generation of RSS it's highly recomended to set `id`/`Message-Id` of items, because *Thunderbird* in case of 
+missing identificator concatenates title and beginning of body of message, so it can lead to loss of new messages 
+(because of collision of ids). One can use hash of raw data to generate identifier.
 
 
 ## Similar projects
@@ -162,15 +171,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Icons are downloaded from [https://dryicons.com](https://dryicons.com) under following license:
 
 > Terms of Use:
->     Requires Author Attribution
->     Allowed Commercial Use
->     Allowed Personal and Educational Use
+> - Requires Author Attribution
+> - Allowed Commercial Use
+> - Allowed Personal and Educational Use
 
 and
 
 > In order to use this file you must credit the author with the a link back to this page
 > Click to copy the code, then paste it on your website.
 
-Blue icon: <a href='https://dryicons.com/free-icons/rss-forward'> Icon by Dryicons </a>
+Blue icon: <a href='https://dryicons.com/icon/rss-forward-2771'> Icon by Dryicons </a>
 
 Red icon: <a href='https://dryicons.com/icon/rss-forward-494'> Icon by Dryicons </a>

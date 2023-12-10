@@ -24,14 +24,14 @@ _LOGGER = logging.getLogger(__name__)
 def start_with_tray(parameters):
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     data_root = general_section.get(ConfigField.DATAROOT.value)
-
-    # async start of RSS server
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
     start_server = general_section.get(ConfigField.STARTSERVER.value, True)
+    rss_port = general_section.get(ConfigField.PORT.value, 8080)
+    genloop = general_section.get(ConfigField.GENLOOP.value, True)
 
     tray_manager = TrayManager(server_state=start_server)
 
-    rss_port = general_section.get(ConfigField.PORT.value, 8080)
+    # async start of RSS server
     rss_server = RSSServerManager()
     rss_server.port = rss_port
     rss_server.rootDir = data_root
@@ -47,11 +47,15 @@ def start_with_tray(parameters):
     tray_manager.setRSSServerCallback(rss_server.switchState)
     tray_manager.setRefreshCallback(threaded_manager.executeSingle)
 
-    exit_code = 0
-
     # data generation main loop
+    exit_code = 0
     try:
-        threaded_manager.start(refresh_time)
+        if genloop:
+            threaded_manager.start(refresh_time)
+        else:
+            # generate data
+            _LOGGER.info("generating RSS data only once")
+            manager.generateData()
 
         tray_manager.runLoop()  # run tray main loop
 
@@ -74,22 +78,28 @@ def start_no_tray(parameters):
     """Start generation with RSS server."""
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     data_root = general_section.get(ConfigField.DATAROOT.value)
+    refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
+    rss_port = general_section.get(ConfigField.PORT.value, 8080)
+    genloop = general_section.get(ConfigField.GENLOOP.value, True)
 
     # async start of RSS server
-    refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
-
-    rss_port = general_section.get(ConfigField.PORT.value, 8080)
     rss_server = RSSServerManager()
     rss_server.port = rss_port
     rss_server.start(data_root)
 
     manager = RSSManager(parameters)
     threaded_manager = ThreadedRSSManager(manager)
-    exit_code = 0
 
     # data generation main loop
+    exit_code = 0
     try:
-        threaded_manager.executeLoop(refresh_time)
+        if genloop:
+            threaded_manager.executeLoop(refresh_time)
+        else:
+            # generate data and keep server running
+            _LOGGER.info("generating RSS data only once")
+            manager.generateData()
+            rss_server.join()
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
@@ -107,19 +117,21 @@ def start_no_tray(parameters):
 def start_raw(parameters):
     """Start raw generation loop."""
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
-
-    # async start of RSS server
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
-
-    _LOGGER.info("starting RSS server disabled")
+    genloop = general_section.get(ConfigField.GENLOOP.value, True)
 
     manager = RSSManager(parameters)
     threaded_manager = ThreadedRSSManager(manager)
-    exit_code = 0
 
     # data generation main loop
+    exit_code = 0
     try:
-        threaded_manager.executeLoop(refresh_time)
+        if genloop:
+            threaded_manager.executeLoop(refresh_time)
+        else:
+            # generate data and exit
+            _LOGGER.info("generating RSS data only once")
+            manager.generateData()
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
@@ -134,20 +146,40 @@ def start_raw(parameters):
 # ============================================================
 
 
+def str_to_bool(value):
+    if value.lower() in ("true", "t", "yes", "y"):
+        return True
+    if value.lower() in ("false", "f", "no", "n"):
+        return False
+    raise argparse.ArgumentTypeError("boolean value expected")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="RSS Forward")
-    parser.add_argument("-c", "--config", action="store", required=False, default="", help="Path to TOML config file")
+    parser = argparse.ArgumentParser(description="RSS Forward", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-c", "--config", action="store", required=False, help="Path to TOML config file")
     parser.add_argument(
-        "--no-tray",
-        action="store_true",
+        "--trayicon",
+        choices=["True", "False"],
+        type=str_to_bool,
+        default=None,
         required=False,
-        help="Do not use system tray icon (overrides config 'trayicon' option)",
+        help="Use system tray icon (overrides config 'trayicon' option)",
     )
     parser.add_argument(
-        "--no-server",
-        action="store_true",
+        "--startserver",
+        choices=["True", "False"],
+        type=str_to_bool,
+        default=None,
         required=False,
-        help="Do not run RSS server (overrides config 'startserver' option)",
+        help="Enable RSS server at startup (overrides config 'startserver' option)",
+    )
+    parser.add_argument(
+        "--genloop",
+        choices=["True", "False"],
+        type=str_to_bool,
+        default=None,
+        required=False,
+        help="Use RSS generator loop or scrap RSS data only once at startup (overrides config 'genloop' option)",
     )
 
     args = parser.parse_args()
@@ -161,10 +193,12 @@ def main():
     data_root = general_section.get(ConfigField.DATAROOT.value)
     _LOGGER.info("RSS data root dir: %s", data_root)
 
-    if args.no_tray:
-        general_section[ConfigField.TRAYICON.value] = False
-    if args.no_server:
-        general_section[ConfigField.STARTSERVER.value] = False
+    if args.trayicon is not None:
+        general_section[ConfigField.TRAYICON.value] = args.trayicon
+    if args.startserver is not None:
+        general_section[ConfigField.STARTSERVER.value] = args.startserver
+    if args.genloop is not None:
+        general_section[ConfigField.GENLOOP.value] = args.genloop
 
     tray_icon = general_section.get(ConfigField.TRAYICON.value, True)
 

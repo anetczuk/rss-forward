@@ -164,6 +164,10 @@ class ThreadedRSSManager:
     def executeSingle(self):
         """Trigger single generation."""
         with self._lock:
+            if not self._thread:
+                self._manager.generateData()
+                return
+
             try:
                 with self._wait_object:
                     self._wait_object.notifyAll()

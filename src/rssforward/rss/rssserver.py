@@ -146,6 +146,9 @@ class RSSServerManager:
             self._thread.join()
             self._thread = None
 
+    def join(self):
+        self._thread.join()
+
     # blocking execution
     # 'rootDir' - path to directory containing RSS feeds (feeds can be in any subfolder)
     # relative path will be reflected in URL address of the feed
