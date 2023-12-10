@@ -36,6 +36,7 @@ class ConfigField(Enum):
     PORT = "port"
     REFRESHTIME = "refreshtime"
     DATAROOT = "dataroot"
+    LOGDIR = "logdir"
     ENABLED = "enabled"
 
     AUTH_TYPE = "type"
@@ -64,13 +65,26 @@ def load_config(config_path):
     # set default value of data directory if not set
     general_section = config_dict.get(ConfigKey.GENERAL.value, {})
     data_root = general_section.get(ConfigField.DATAROOT.value)
-    if data_root is None:
-        data_dir = get_app_datadir()
-        data_root = os.path.join(data_dir, "data")
-    data_root = os.path.abspath(data_root)
+    data_root = specify_dir(data_root, config_path, "data")
     general_section[ConfigField.DATAROOT.value] = data_root
 
+    log_dir = general_section.get(ConfigField.LOGDIR.value)
+    log_dir = specify_dir(log_dir, config_path, "log")
+    general_section[ConfigField.LOGDIR.value] = log_dir
+
     return config_dict
+
+
+def specify_dir(dir_value, config_path, default_dir):
+    if dir_value is None:
+        data_dir = get_app_datadir()
+        dir_value = os.path.join(data_dir, default_dir)
+    elif not os.path.isabs(dir_value):
+        # relative path - make it relative to config file
+        config_dir = os.path.dirname(config_path)
+        dir_value = os.path.join(config_dir, dir_value)
+    dir_value = os.path.abspath(dir_value)
+    return dir_value
 
 
 def load_raw(config_path):

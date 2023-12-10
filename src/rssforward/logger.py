@@ -16,8 +16,10 @@ script_dir = os.path.dirname(__file__)
 log_file = None
 
 
-def get_logging_output_file():
-    logDir = os.path.join(script_dir, "../../tmp/log")
+def get_logging_output_file(log_dir=None):
+    logDir = log_dir
+    if not logDir:
+        logDir = os.path.join(script_dir, "../../tmp/log")
     logDir = os.path.abspath(logDir)
     os.makedirs(logDir, exist_ok=True)
     if os.path.isdir(logDir) is False:
@@ -28,12 +30,12 @@ def get_logging_output_file():
     return logFile
 
 
-def configure(logFile=None, logLevel=None):
+def configure(logFile=None, logDir=None, logLevel=None):
     # pylint: disable=W0603
     global log_file
     log_file = logFile
     if log_file is None:
-        log_file = get_logging_output_file()
+        log_file = get_logging_output_file(logDir)
 
     if logLevel is None:
         logLevel = logging.DEBUG

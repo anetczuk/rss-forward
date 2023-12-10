@@ -184,11 +184,12 @@ def main():
 
     args = parser.parse_args()
 
-    logger.configure()
-
     parameters = load_config(args.config)
 
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
+    log_dir = general_section.get(ConfigField.LOGDIR.value)
+    logger.configure(logDir=log_dir)
+    _LOGGER.info("Log output dir: %s", log_dir)
 
     data_root = general_section.get(ConfigField.DATAROOT.value)
     _LOGGER.info("RSS data root dir: %s", data_root)

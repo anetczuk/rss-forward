@@ -3,13 +3,16 @@
 #
 
 [general]
-trayicon = true         # enable or disable tray icon
-genloop = true          # enable or disable RSS generation loop
-startserver = true      # set 'false' to prevent starting RSS server (just store data to local files), default: true
-port = 8080             # RSS feed port, default 8080
-refreshtime = 3600      # time in seconds between consecutive RSS generator loop iterations, default 3600
-dataroot = "data"       # relative path to current working directory (absolute path possible)
-                        # default value is app dir inside user home directory
+trayicon = true             # enable or disable tray icon
+genloop = true              # enable or disable RSS generation loop
+startserver = true          # set 'false' to prevent starting RSS server (just store data to local files), default: true
+port = 8080                 # RSS feed port, default 8080
+refreshtime = 3600          # time in seconds between consecutive RSS generator loop iterations, default 3600
+dataroot = "data"           # path to store data; path absolute or relative to config directory
+                            # default value is app dir inside user home directory
+logdir = "log"              # path to store logs; path absolute or relative to config directory
+                            # default value is app dir inside user home directory
+logviewer = "mousepad %s"   # command line to view log file, %s will be replaced with log path
 
 [site.librus]
 enabled = true                      # enable or disable scraper
