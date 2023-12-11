@@ -11,7 +11,7 @@ import sys
 import os
 import logging
 import argparse
-import subprocess
+import subprocess  # nosec
 
 from rssforward import logger
 from rssforward.rss.rssserver import RSSServerManager
@@ -50,7 +50,7 @@ def start_with_tray(parameters):
 
     tray_manager.setRSSServerCallback(rss_server.switchState)
     tray_manager.setRefreshCallback(threaded_manager.executeSingle)
-    
+
     log_path = os.path.join(log_dir, "log.txt")
     tray_manager.setOpenLogCallback(lambda: open_log(log_viewer, log_path))
 
@@ -157,7 +157,8 @@ def open_log(log_viewer, log_path):
         _LOGGER.exception("unable to run logger, command: %s log path: %s", log_viewer, log_path)
         return
     _LOGGER.info("opening log viewer: %s", command)
-    subprocess.Popen(command, shell=True)
+    with subprocess.Popen(command, shell=True):  # nosec
+        pass
 
 
 # ============================================================

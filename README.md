@@ -41,31 +41,41 @@ rssforward.py -c <apth-to-config.toml> --trayicon=False --startserver=False --ge
 ## Config file
 
 There is [example configuration file](examples/config_example.toml) in examples. It has following content:
+
+<!-- insertstart include="examples/config_example.toml" pre="\n\n```\n" post="\n```\n\n" -->
+
 ```
 #
 # example of configuration file
 #
 
 [general]
-trayicon = true         # enable or disable tray icon
-startserver = true      # set 'false' to prevent starting RSS server (just store data to local files), default: true
-port = 8080             # RSS feed port, default 8080
-genloop = true          # enable or disable RSS generation loop
-refreshtime = 3600      # time in seconds between consecutive RSS generator loop iterations, default 3600
-dataroot = "data"       # relative path to current working directory (absolute path possible)
-                        # default value is app dir inside user home directory
+trayicon = true             # enable or disable tray icon
+genloop = true              # enable or disable RSS generation loop
+startserver = true          # set 'false' to prevent starting RSS server (just store data to local files), default: true
+port = 8080                 # RSS feed port, default 8080
+refreshtime = 3600          # time in seconds between consecutive RSS generator loop iterations, default 3600
+dataroot = "data"           # path to store data; path absolute or relative to config directory
+                            # default value is app dir inside user home directory
+logdir = "log"              # path to store logs; path absolute or relative to config directory
+                            # default value is app dir inside user home directory
+logviewer = "mousepad %s"   # command line to view log file, %s will be replaced with log path
 
 [site.librus]
 enabled = true                      # enable or disable scraper
 auth.type = "RAW"                   # authenticate by providing unencrypted user and password
-auth.user = "user123@librus.com"    # login example
+auth.user = "12345678"    			# login example (librus id)
 auth.pass = "user_secret"           # password example
 
 [site.earlystage]
 enabled = true                                              # enable or disable scraper
 auth.type = "KEEPASSXC"                                     # authenticate by accessing keepassxc deamon
 auth.itemurl = "https://online.earlystage.pl/logowanie/"    # URL of keepassxc item (proper user/pass is identified by the URL)
-``` 
+
+```
+
+<!-- insertend -->
+
 Fields are quite self-descriptive. There are two possible methods of authentication:
 - raw data stored inside the file
 - KeePassXC deamon.
@@ -87,6 +97,7 @@ There are some conserns to consider:
  asks for password for database unlock - *rss-forward* does not prompt or have access to the password)
 - username/password or access token to external service will be stored in *RAM* memory
 - extracted data in form of RSS feed will be stored in local harddrive in form of plain text
+- for log preview app executes in shell command taken in form of string form config file - this can lead to *OS* injection  
 - application uses `http.server` library for listeninig on TCP port for incoming connections and as it states in
  library's [documentation](https://docs.python.org/3/library/http.server.html) (service can be disabled):
 ```
