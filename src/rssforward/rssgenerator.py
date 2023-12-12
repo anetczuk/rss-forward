@@ -28,7 +28,7 @@ class RSSGenerator(ABC):
     @abstractmethod
     def generate(self) -> Dict[str, str]:
         """Grab data and generate RSS feed.
-        
+
         Returns None if there was problem with generator.
         """
         raise NotImplementedError("method not implemented")

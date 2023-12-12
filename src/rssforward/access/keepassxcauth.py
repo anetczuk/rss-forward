@@ -142,7 +142,7 @@ def get_auth_data(access_url):
 
 
 def close():
-    global auth
+    global auth  # pylint: disable=W0602
     if auth:
         _LOGGER.info("closing keepass connection")
         auth.disconnect()

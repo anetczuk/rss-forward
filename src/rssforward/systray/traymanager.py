@@ -63,7 +63,7 @@ class TrayManager:
         self._is_error = new_state
         self._setIcon()
 
-    def set_error(self, new_error_state: bool):
+    def setError(self, new_error_state: bool):
         self.is_error = new_error_state
 
     def _setIcon(self):

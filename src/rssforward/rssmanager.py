@@ -68,13 +68,13 @@ def get_auth_data(auth_params):
 
 #
 class RSSManager:
-
     class State:
-        
+        """Container for generator and it's state."""
+
         def __init__(self, generator: RSSGenerator = None):
             self.generator: RSSGenerator = generator
-            self.valid = True                       # is problem with generator?
-        
+            self.valid = True  # is problem with generator?
+
     def __init__(self, parameters=None):
         if parameters is None:
             parameters = {}
@@ -82,7 +82,7 @@ class RSSManager:
         self._generators: Dict[str, RSSManager.State] = None
 
     def isGenValid(self):
-        """Are generators valid?"""
+        """Check if all generators are valid."""
         if not self._generators:
             # not initialized
             return False
@@ -158,7 +158,7 @@ class RSSManager:
 class ThreadedRSSManager:
     def __init__(self, manager):
         self._manager = manager
-        self._execute_loop = False          # flag to stop thread loop
+        self._execute_loop = False  # flag to stop thread loop
         self._state_callback = None
         self._lock = threading.RLock()
         self._wait_object = threading.Condition()

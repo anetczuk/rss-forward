@@ -51,7 +51,7 @@ def start_with_tray(parameters):
     tray_manager.setRSSServerCallback(rss_server.switchState)
     tray_manager.setRefreshCallback(threaded_manager.executeSingle)
 
-    threaded_manager.setStateCallback( lambda valid: tray_manager.set_error(valid) )
+    threaded_manager.setStateCallback(tray_manager.setError)
 
     log_path = os.path.join(log_dir, "log.txt")
     tray_manager.setOpenLogCallback(lambda: open_log(log_viewer, log_path))
