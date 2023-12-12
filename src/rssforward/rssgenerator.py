@@ -18,11 +18,21 @@ _LOGGER = logging.getLogger(__name__)
 #
 class RSSGenerator(ABC):
     @abstractmethod
-    def authenticate(self, login, password):
-        """Authenticate to the system. Usually obtains access token or username/password pair for further use."""
+    def authenticate(self, login, password) -> bool:
+        """Authenticate to the system. Usually obtains access token or username/password pair for further use.
+
+        Returns 'True' if succeed, otherwise False.
+        """
         raise NotImplementedError("method not implemented")
 
     @abstractmethod
     def generate(self) -> Dict[str, str]:
-        """Grab data and generate RSS feed."""
+        """Grab data and generate RSS feed.
+        
+        Returns None if there was problem with generator.
+        """
         raise NotImplementedError("method not implemented")
+
+    # override if needed
+    def close(self):
+        """Request close on any open resources."""

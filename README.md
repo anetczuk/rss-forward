@@ -194,3 +194,5 @@ and
 Blue icon: <a href='https://dryicons.com/icon/rss-forward-2771'> Icon by Dryicons </a>
 
 Red icon: <a href='https://dryicons.com/icon/rss-forward-494'> Icon by Dryicons </a>
+
+Grey icon is grayscale of following icon: <a href='https://dryicons.com/icon/rss-2882'> Icon by Dryicons </a>

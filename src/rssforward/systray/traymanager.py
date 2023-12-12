@@ -23,17 +23,14 @@ _LOGGER = logging.getLogger(__name__)
 class TrayManager:
     def __init__(self, server_state=True):
         self._server_state = server_state
+        self._is_error = True
         self.server_callback = None
         self.refresh_callback = None
         self.open_log_callback = None
 
-        red_icon_path = os.path.join(SCRIPT_DIR, "rss-forward-red-64.png")
-        red_icon_path = os.path.abspath(red_icon_path)
-        self.red_icon_image = Image.open(red_icon_path)
-
-        blue_icon_path = os.path.join(SCRIPT_DIR, "rss-forward-blue-64.png")
-        blue_icon_path = os.path.abspath(blue_icon_path)
-        self.blue_icon_image = Image.open(blue_icon_path)
+        self.red_icon_image = load_icon("rss-forward-red-64.png")
+        self.blue_icon_image = load_icon("rss-forward-blue-64.png")
+        self.gray_icon_image = load_icon("rss-gray-64.png")
 
         rss_server_item = pystray.MenuItem(
             "Run RSS Server", self._onRSSServerClicked, checked=lambda item: self._server_state
@@ -57,7 +54,22 @@ class TrayManager:
         self._server_state = new_state
         self._setIcon()
 
+    @property
+    def is_error(self):
+        return self._is_error
+
+    @is_error.setter
+    def is_error(self, new_state: bool):
+        self._is_error = new_state
+        self._setIcon()
+
+    def set_error(self, new_error_state: bool):
+        self.is_error = new_error_state
+
     def _setIcon(self):
+        if self._is_error:
+            self.tray_icon.icon = self.gray_icon_image
+            return
         if self._server_state:
             self.tray_icon.icon = self.blue_icon_image
         else:
@@ -105,3 +117,12 @@ class TrayManager:
         _LOGGER.info("quit clicked")
         icon.remove_notification()
         self.tray_icon.stop()
+
+
+# ================================================================
+
+
+def load_icon(icon_name):
+    icon_path = os.path.join(SCRIPT_DIR, icon_name)
+    icon_path = os.path.abspath(icon_path)
+    return Image.open(icon_path)

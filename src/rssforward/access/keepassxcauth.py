@@ -9,6 +9,7 @@
 import os
 import logging
 import time
+import socket
 
 from pathlib import Path
 
@@ -56,6 +57,7 @@ class KeepassxcAuth:
 
     def disconnect(self):
         self._checkConnection()
+        self.connection.connection.sock.shutdown(socket.SHUT_RDWR)
         self.connection.disconnect()
         self.connection = None
 
@@ -117,7 +119,7 @@ class KeepassxcAuth:
             raise Exception("not connected")
 
 
-auth = None
+auth: KeepassxcAuth = None
 
 
 def get_auth_data(access_url):
@@ -137,3 +139,10 @@ def get_auth_data(access_url):
             time.sleep(1)
 
     return {}
+
+
+def close():
+    global auth
+    if auth:
+        _LOGGER.info("closing keepass connection")
+        auth.disconnect()
