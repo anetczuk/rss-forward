@@ -24,7 +24,7 @@ Application can operate in two modes:
 
 [![Application in system tray](doc/sys-tray-example.png "Application in system tray")](doc/sys-tray-example.png)
 
-Then depnding on operation mode RSS data can be imported to any feed reader using file directly or URL, e.g:
+Then depending on operation mode RSS data can be imported to any feed reader using file directly or URL, e.g:
 - `file:///<path-to-data-root>/<site-id>/<feed-file>` 
 - `http://<server-address>/<site-id>/<feed-file>`
 
@@ -36,6 +36,11 @@ If use case is to just grab and store data then execute following:
 ```
 rssforward.py -c <apth-to-config.toml> --trayicon=False --startserver=False --genloop=False
 ```
+
+If executed in tray, then state of application will be indicated by following icons:
+- ![gray](src/rssforward/systray/rss-gray-64.png) meaning indicating undergoing data fetch or problem with generator
+- ![red](src/rssforward/systray/rss-forward-red-64.png) meaning RSS server disabled, generation completed
+- ![blue](src/rssforward/systray/rss-forward-blue-64.png) meaning RSS server enabled, generation completed
 
 
 ## Config file
