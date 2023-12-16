@@ -63,16 +63,19 @@ class TrayManager:
         self._is_error = new_state
         self._setIcon()
 
-    def setError(self, new_error_state: bool):
-        self.is_error = new_error_state
+    def setValid(self, new_state: bool):
+        self.is_error = not new_state
 
     def _setIcon(self):
         if self._is_error:
+            _LOGGER.info("setting gray icon")
             self.tray_icon.icon = self.gray_icon_image
             return
         if self._server_state:
+            _LOGGER.info("setting blue icon")
             self.tray_icon.icon = self.blue_icon_image
         else:
+            _LOGGER.info("setting red icon")
             self.tray_icon.icon = self.red_icon_image
 
     def runLoop(self):

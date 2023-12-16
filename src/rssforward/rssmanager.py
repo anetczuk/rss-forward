@@ -82,13 +82,18 @@ class RSSManager:
         self._generators: Dict[str, RSSManager.State] = None
 
     def isGenValid(self):
-        """Check if all generators are valid."""
+        """Check if all generators are valid.
+
+        Return 'True' if valid, otherwise 'False'.
+        """
         if not self._generators:
             # not initialized
             return False
-        for gen_state in self._generators.values():
+        for gen_id, gen_state in self._generators.items():
             if not gen_state.valid:
+                _LOGGER.info("invalid generator: %s", gen_id)
                 return False
+        # everything ok
         return True
 
     # returns 'True' if everything is OK, otherwise 'False'
@@ -105,7 +110,10 @@ class RSSManager:
             gen = gen_state.generator
             gen_data: Dict[str, str] = gen.generate()
             if not gen_data:
+                _LOGGER.info("generatorion not completed for generator %s", gen_id)
                 gen_state.valid = False
+            else:
+                gen_state.valid = True
             self._writeData(gen_id, gen_data)
 
         save_recent_date(recent_datetime)
@@ -246,11 +254,14 @@ class ThreadedRSSManager:
                 self._execute_loop = False
 
     def _callGen(self):
+        if self._state_callback:
+            self._state_callback(False)
+
         self._manager.generateData()
-        if not self._state_callback:
-            return
-        valid = self._manager.isGenValid()
-        self._state_callback(valid)
+
+        if self._state_callback:
+            valid = self._manager.isGenValid()
+            self._state_callback(valid)
 
     def join(self):
         with self._lock:

@@ -51,7 +51,7 @@ def start_with_tray(parameters):
     tray_manager.setRSSServerCallback(rss_server.switchState)
     tray_manager.setRefreshCallback(threaded_manager.executeSingle)
 
-    threaded_manager.setStateCallback(tray_manager.setError)
+    threaded_manager.setStateCallback(tray_manager.setValid)
 
     log_path = os.path.join(log_dir, "log.txt")
     tray_manager.setOpenLogCallback(lambda: open_log(log_viewer, log_path))
@@ -210,6 +210,8 @@ def main():
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     log_dir = general_section.get(ConfigField.LOGDIR.value)
     logger.configure(logDir=log_dir)
+    
+    _LOGGER.info("============================== starting application ==============================")
     _LOGGER.info("Log output dir: %s", log_dir)
 
     data_root = general_section.get(ConfigField.DATAROOT.value)
@@ -225,6 +227,7 @@ def main():
     tray_icon = general_section.get(ConfigField.TRAYICON.value, True)
 
     if tray_icon:
+        _LOGGER.info("starting with tray")
         exit_code = start_with_tray(parameters)
         sys.exit(exit_code)
         return
