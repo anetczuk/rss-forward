@@ -61,15 +61,14 @@ def start_with_tray(parameters):
     # data generation main loop
     exit_code = 0
     try:
-        if startupdelay > 0:
-            _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
-            time.sleep(startupdelay)
-
         if genloop:
-            threaded_manager.start(refresh_time)
+            threaded_manager.start(refresh_time, startupdelay)
         else:
             # generate data
             _LOGGER.info("generating RSS data only once")
+            if startupdelay > 0:
+                _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+                time.sleep(startupdelay)
             manager.generateData()
 
         tray_manager.runLoop()  # run tray main loop
@@ -110,14 +109,13 @@ def start_no_tray(parameters):
     # data generation main loop
     exit_code = 0
     try:
-        if startupdelay > 0:
-            _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
-            time.sleep(startupdelay)
-
         if genloop:
-            threaded_manager.executeLoop(refresh_time)
+            threaded_manager.executeLoop(refresh_time, startupdelay)
         else:
             # generate data and keep server running
+            if startupdelay > 0:
+                _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+                time.sleep(startupdelay)
             _LOGGER.info("generating RSS data only once")
             manager.generateData()
             rss_server.join()
@@ -148,14 +146,13 @@ def start_raw(parameters):
     # data generation main loop
     exit_code = 0
     try:
-        if startupdelay > 0:
-            _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
-            time.sleep(startupdelay)
-
         if genloop:
-            threaded_manager.executeLoop(refresh_time)
+            threaded_manager.executeLoop(refresh_time, startupdelay)
         else:
             # generate data and exit
+            if startupdelay > 0:
+                _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+                time.sleep(startupdelay)
             _LOGGER.info("generating RSS data only once")
             manager.generateData()
 
@@ -196,7 +193,7 @@ def main():
     parser.add_argument("-c", "--config", action="store", required=False, help="Path to TOML config file")
     parser.add_argument(
         "--trayicon",
-        choices=["True", "False"],
+        choices=[True, False],
         type=str_to_bool,
         default=None,
         required=False,
@@ -204,7 +201,7 @@ def main():
     )
     parser.add_argument(
         "--startserver",
-        choices=["True", "False"],
+        choices=[True, False],
         type=str_to_bool,
         default=None,
         required=False,
@@ -212,7 +209,7 @@ def main():
     )
     parser.add_argument(
         "--genloop",
-        choices=["True", "False"],
+        choices=[True, False],
         type=str_to_bool,
         default=None,
         required=False,

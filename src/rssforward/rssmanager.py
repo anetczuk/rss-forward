@@ -175,14 +175,14 @@ class ThreadedRSSManager:
     def setStateCallback(self, callback):
         self._state_callback = callback
 
-    def start(self, refresh_time):
+    def start(self, refresh_time, startupdelay):
         """Start thread."""
         with self._lock:
             if self._execute_loop:
                 _LOGGER.warning("thread already running")
                 return
             self._execute_loop = True
-            self._thread = threading.Thread(target=self._runLoop, args=[refresh_time])
+            self._thread = threading.Thread(target=self._runLoop, args=[refresh_time, startupdelay])
             _LOGGER.warning("starting thread")
             self._thread.start()
 
@@ -200,11 +200,11 @@ class ThreadedRSSManager:
                 # no threads wait for notification
                 _LOGGER.info("thread does not wait")
 
-    def executeLoop(self, refresh_time):
+    def executeLoop(self, refresh_time, startupdelay):
         """Start run loop without additional threads."""
         with self._lock:
             self._execute_loop = True
-        self._runLoop(refresh_time)
+        self._runLoop(refresh_time, startupdelay)
 
     def executeSingle(self):
         """Trigger single generation."""
@@ -220,8 +220,13 @@ class ThreadedRSSManager:
                 # no threads wait for notification
                 _LOGGER.info("thread does not wait")
 
-    def _runLoop(self, refresh_time):
+    def _runLoop(self, refresh_time, startupdelay):
         try:
+            if startupdelay > 0:
+                _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+                with self._wait_object:
+                    self._wait_object.wait(startupdelay)
+
             while True:
                 with self._lock:
                     if not self._execute_loop:

@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 class TrayManager:
     def __init__(self, server_state=True):
         self._server_state = server_state
-        self._is_error = True
+        self._is_error = False
         self.server_callback = None
         self.refresh_callback = None
         self.open_log_callback = None
