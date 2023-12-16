@@ -1,8 +1,9 @@
-## rssforward.py --help
+## startrssforward.py --help
 ```
-usage: rssforward.py [-h] [-c CONFIG] [--trayicon {True,False}]
-                     [--startserver {True,False}] [--genloop {True,False}]
-                     [--startupdelay STARTUPDELAY]
+usage: startrssforward.py [-h] [-c CONFIG] [--trayicon {True,False}]
+                          [--startserver {True,False}]
+                          [--genloop {True,False}]
+                          [--startupdelay STARTUPDELAY]
 
 RSS Forward
 

@@ -146,14 +146,16 @@ set -eu
 
 
 ### creating project start script
-create_venv_shortcut "$VENV_DIR/activatevenv.sh \"$SRC_DIR/rssforward.py \$@; exit\"" "$VENV_DIR/rssforward.py"
+create_venv_shortcut "$VENV_DIR/activatevenv.sh \"startrssforward.py \$@; exit\"" "$VENV_DIR/startrssforward.py"
+# create_venv_shortcut "$VENV_DIR/activatevenv.sh \"$SRC_DIR/startrssforward.py \$@; exit\"" "$VENV_DIR/startrssforward.py"
 
-create_venv_shortcut "$VENV_DIR/activatevenv.sh \"$SRC_DIR/testrssforward/runtests.py \$@; exit\"" "$VENV_DIR/runtests.py"
+create_venv_shortcut "$VENV_DIR/activatevenv.sh \"$SRC_DIR/testrssforward/runtests.py \$@; exit\"" "$VENV_DIR/runtests.sh"
 
 
 ### install required packages
 echo "Installing dependencies"
-$START_VENV_SCRIPT_PATH "$SCRIPT_DIR/../src/install-deps.sh; exit"
+# $START_VENV_SCRIPT_PATH "$SCRIPT_DIR/../src/install-deps.sh; exit"
+$START_VENV_SCRIPT_PATH "$SCRIPT_DIR/../src/install-package.sh --venv; exit"
 
 
 echo "to activate environment run: $VENV_DIR/activatevenv.sh"

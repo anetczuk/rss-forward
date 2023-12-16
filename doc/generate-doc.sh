@@ -13,11 +13,12 @@ SRC_DIR="$SCRIPT_DIR/../src"
 generate_help() {
     echo "generating help output"
 
+    EXE_NAME="startrssforward.py"
     HELP_PATH=$SCRIPT_DIR/cmdargs.md
     
-    echo "## rssforward.py --help" > ${HELP_PATH}
+    echo "## ${EXE_NAME} --help" > ${HELP_PATH}
     echo -e "\`\`\`" >> ${HELP_PATH}
-    $SRC_DIR/rssforward.py --help >> ${HELP_PATH}
+    $SRC_DIR/$EXE_NAME --help >> ${HELP_PATH}
     echo -e "\`\`\`" >> ${HELP_PATH}
 }
 

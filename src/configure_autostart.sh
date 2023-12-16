@@ -5,7 +5,7 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-EXEC_PATH="$SCRIPT_DIR/rssforward.py"
+EXEC_PATH="$SCRIPT_DIR/startrssforward.py"
 TOML_CONFIG_PATH=""
 
 ARGS=()

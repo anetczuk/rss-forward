@@ -90,6 +90,8 @@ def specify_dir(dir_value, config_path, default_dir):
 
 
 def load_raw(config_path):
+    if not config_path:
+        return {}
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             return toml.load(f)

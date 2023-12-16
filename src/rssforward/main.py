@@ -27,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 def start_with_tray(parameters):
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     data_root = general_section.get(ConfigField.DATAROOT.value)
-    log_dir = general_section.get(ConfigField.LOGDIR.value)
+    log_dir = general_section.get(ConfigField.LOGDIR.value, "")
     log_viewer = general_section.get(ConfigField.LOGVIEWER.value)
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
     start_server = general_section.get(ConfigField.STARTSERVER.value, True)

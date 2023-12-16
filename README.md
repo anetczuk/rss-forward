@@ -13,9 +13,9 @@ notifications forcing users to repetitive login and check for new information.
 ## Running
 
 [There](doc/cmdargs.md) is description of command line arguments.
-To run application simply execute `rssforward.py` script with config file as follows:
+To run application simply execute `startrssforward.py` script with config file as follows:
 ```
-rssforward.py -c <apth-to-config.toml>
+startrssforward.py -c <apth-to-config.toml>
 ```
 
 Application can operate in two modes:
@@ -34,7 +34,7 @@ running application.
 
 If use case is to just grab and store data then execute following:
 ```
-rssforward.py -c <apth-to-config.toml> --trayicon=False --startserver=False --genloop=False
+startrssforward.py -c <apth-to-config.toml> --trayicon=False --startserver=False --genloop=False
 ```
 
 If executed in tray, then state of application will be indicated by following icons:
