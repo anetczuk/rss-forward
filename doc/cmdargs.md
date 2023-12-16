@@ -2,6 +2,7 @@
 ```
 usage: rssforward.py [-h] [-c CONFIG] [--trayicon {True,False}]
                      [--startserver {True,False}] [--genloop {True,False}]
+                     [--startupdelay STARTUPDELAY]
 
 RSS Forward
 
@@ -19,4 +20,8 @@ optional arguments:
                         Use RSS generator loop or scrap RSS data only once at
                         startup (overrides config 'genloop' option) (default:
                         None)
+  --startupdelay STARTUPDELAY
+                        Set delay in seconds before first generation (useful
+                        on startup to wait for KeePassXC to start before)
+                        (default: None)
 ```

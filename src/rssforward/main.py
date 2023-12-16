@@ -11,6 +11,7 @@ import sys
 import os
 import logging
 import argparse
+import time
 import subprocess  # nosec
 
 from rssforward import logger
@@ -32,6 +33,7 @@ def start_with_tray(parameters):
     start_server = general_section.get(ConfigField.STARTSERVER.value, True)
     rss_port = general_section.get(ConfigField.PORT.value, 8080)
     genloop = general_section.get(ConfigField.GENLOOP.value, True)
+    startupdelay = general_section.get(ConfigField.STARTUPDELAY.value, 0)
 
     tray_manager = TrayManager(server_state=start_server)
 
@@ -59,6 +61,10 @@ def start_with_tray(parameters):
     # data generation main loop
     exit_code = 0
     try:
+        if startupdelay > 0:
+            _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+            time.sleep(startupdelay)
+
         if genloop:
             threaded_manager.start(refresh_time)
         else:
@@ -91,6 +97,7 @@ def start_no_tray(parameters):
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
     rss_port = general_section.get(ConfigField.PORT.value, 8080)
     genloop = general_section.get(ConfigField.GENLOOP.value, True)
+    startupdelay = general_section.get(ConfigField.STARTUPDELAY.value, 0)
 
     # async start of RSS server
     rss_server = RSSServerManager()
@@ -103,6 +110,10 @@ def start_no_tray(parameters):
     # data generation main loop
     exit_code = 0
     try:
+        if startupdelay > 0:
+            _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+            time.sleep(startupdelay)
+
         if genloop:
             threaded_manager.executeLoop(refresh_time)
         else:
@@ -129,6 +140,7 @@ def start_raw(parameters):
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     refresh_time = general_section.get(ConfigField.REFRESHTIME.value, 3600)
     genloop = general_section.get(ConfigField.GENLOOP.value, True)
+    startupdelay = general_section.get(ConfigField.STARTUPDELAY.value, 0)
 
     manager = RSSManager(parameters)
     threaded_manager = ThreadedRSSManager(manager)
@@ -136,6 +148,10 @@ def start_raw(parameters):
     # data generation main loop
     exit_code = 0
     try:
+        if startupdelay > 0:
+            _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
+            time.sleep(startupdelay)
+
         if genloop:
             threaded_manager.executeLoop(refresh_time)
         else:
@@ -202,6 +218,13 @@ def main():
         required=False,
         help="Use RSS generator loop or scrap RSS data only once at startup (overrides config 'genloop' option)",
     )
+    parser.add_argument(
+        "--startupdelay",
+        type=int,
+        default=None,
+        required=False,
+        help="Set delay in seconds before first generation (useful on startup to wait for KeePassXC to start before)",
+    )
 
     args = parser.parse_args()
 
@@ -210,7 +233,7 @@ def main():
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     log_dir = general_section.get(ConfigField.LOGDIR.value)
     logger.configure(logDir=log_dir)
-    
+
     _LOGGER.info("============================== starting application ==============================")
     _LOGGER.info("Log output dir: %s", log_dir)
 
@@ -223,6 +246,8 @@ def main():
         general_section[ConfigField.STARTSERVER.value] = args.startserver
     if args.genloop is not None:
         general_section[ConfigField.GENLOOP.value] = args.genloop
+    if args.startupdelay is not None:
+        general_section[ConfigField.STARTUPDELAY.value] = args.startupdelay
 
     tray_icon = general_section.get(ConfigField.TRAYICON.value, True)
 

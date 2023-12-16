@@ -28,7 +28,7 @@ from rssforward.site.earlystage import MAIN_URL
 def main():
     logger.configure()
 
-    auth = KeepassxcAuth(client_id="xxx", state_file_path="/tmp/xxx.assoc")
+    auth = KeepassxcAuth(client_id="xxx", state_file_path="/tmp/xxx.assoc")  # nosec
     auth.connect()
 
     auth_data = auth.getAuthData(MAIN_URL)

@@ -69,7 +69,7 @@ class KeepassxcAuth:
         if not self.isDatabaseOpen():
             # there is weird behaviour: after unlocking in KeepassXC and receiving "unlock" signal
             # "isDatabaseOpen()" returns False and ask KeePassXC to authenticate again
-            # workaround is to ask again if database is open before waiting for unlock 
+            # workaround is to ask again if database is open before waiting for unlock
             self.isDatabaseOpen()
 
             _LOGGER.info("Waiting for database open")
@@ -124,8 +124,7 @@ class KeepassxcAuth:
         try:
             if socket_name:
                 return Connection(socket_name)
-            else:
-                return Connection()
+            return Connection()
         except OSError:
             return None
 
