@@ -26,17 +26,19 @@ class LockedKPXCException(Exception):
 
 
 class KeepassxcAuth:
-    def __init__(self):
-        assoc_dir = get_app_datadir()
-        # assoc_dir = tempfile.gettempdir()
-        state_path = os.path.join(assoc_dir, ".assoc")
+    def __init__(self, client_id=None, state_file_path=None):
+        if state_file_path is None:
+            assoc_dir = get_app_datadir()
+            # assoc_dir = tempfile.gettempdir()
+            state_file_path = os.path.join(assoc_dir, ".assoc")
         self.state_file = None
-        self.state_file = Path(state_path)  # state file reduces number of authentications
+        self.state_file = Path(state_file_path)  # state file reduces number of authentications
 
         self.id = None
         self.connection = None
 
-        client_id = "rss-forward"
+        if client_id is None:
+            client_id = "rss-forward"
         if self.state_file and self.state_file.exists():
             with self.state_file.open("r", encoding="utf-8") as f:
                 data = f.read()
@@ -46,11 +48,11 @@ class KeepassxcAuth:
             _LOGGER.info("Initializing new state")
 
     def connect(self):
-        try:
-            self.connection = Connection("kpxc_server")
-        except OSError:
-            _LOGGER.error("Unable to find keepassxc socket. Try different or default value of 'socket_name'.")
-            raise
+        self.connection = self._establishConnection("kpxc_server")
+        if not self.connection:
+            self.connection = self._establishConnection()
+        if not self.connection:
+            raise RuntimeError("Unable to find keepassxc socket. Try different value of 'socket_name'.")
 
         self.connection.connect()
         self.connection.change_public_keys(self.id)
@@ -64,10 +66,14 @@ class KeepassxcAuth:
     def unlockDatabase(self):
         self._checkConnection()
 
-        while not self.isDatabaseOpen():
+        if not self.isDatabaseOpen():
+            # there is weird behaviour: after unlocking in KeepassXC and receiving "unlock" signal
+            # "isDatabaseOpen()" returns False and ask KeePassXC to authenticate again
+            # workaround is to ask again if database is open before waiting for unlock 
+            self.isDatabaseOpen()
+
             _LOGGER.info("Waiting for database open")
             self.connection.wait_for_unlock()
-            time.sleep(1)
             _LOGGER.info("database unlocked")
 
         if not self.connection.test_associate(self.id):
@@ -90,10 +96,6 @@ class KeepassxcAuth:
             return self.connection.is_database_open(self.id)
         except AssertionError as exc:
             _LOGGER.warning("exception occur while checking if database is open: %s", exc)
-
-        # there is problem with connection state after connecting - workaround is to reconnect
-        self.disconnect()
-        self.connect()
         return False
 
     def getAuthData(self, access_url):
@@ -117,6 +119,15 @@ class KeepassxcAuth:
     def _checkConnection(self):
         if self.connection is None:
             raise Exception("not connected")
+
+    def _establishConnection(self, socket_name=None):
+        try:
+            if socket_name:
+                return Connection(socket_name)
+            else:
+                return Connection()
+        except OSError:
+            return None
 
 
 auth: KeepassxcAuth = None
