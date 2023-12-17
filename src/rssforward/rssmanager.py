@@ -120,9 +120,10 @@ class RSSManager:
         _LOGGER.info("========== generation ended ==========")
 
     def close(self):
-        for gen_state in self._generators.values():
-            gen = gen_state.generator
-            gen.close()
+        if self._generators:
+            for gen_state in self._generators.values():
+                gen = gen_state.generator
+                gen.close()
         keepassxc_close()
 
     def _initializeGenerators(self):

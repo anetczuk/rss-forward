@@ -168,7 +168,7 @@ def start_raw(parameters):
 
 def open_log(log_viewer, log_path):
     try:
-        command = log_viewer % log_path
+        command = log_viewer % log_path + " &"
     except TypeError:
         _LOGGER.exception("unable to run logger, command: %s log path: %s", log_viewer, log_path)
         return
