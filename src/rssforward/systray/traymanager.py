@@ -101,20 +101,26 @@ class TrayManager:
         self._setIcon()
         # icon.notify("server clicked")
         _LOGGER.info("server clicked to state %s", self._server_state)
-        if self.server_callback:
-            self.server_callback(self._server_state)
+        if self.server_callback is None:
+            _LOGGER.info("server callback not set")
+            return
+        self.server_callback(self._server_state)
 
     def _onRefreshClicked(self, icon, item):  # pylint: disable=W0613
         _LOGGER.info("refresh clicked")
         # icon.notify("refresh clicked")
-        if self.refresh_callback:
-            self.refresh_callback()
+        if self.refresh_callback is None:
+            _LOGGER.info("refresh callback not set")
+            return
+        self.refresh_callback()
 
     def _onOpenLogClicked(self, icon, item):  # pylint: disable=W0613
         _LOGGER.info("open log clicked")
         # icon.notify("refresh clicked")
-        if self.open_log_callback:
-            self.open_log_callback()
+        if self.open_log_callback is None:
+            _LOGGER.info("log callback not set")
+            return
+        self.open_log_callback()
 
     def _onQuitClicked(self, icon, item):  # pylint: disable=W0613
         _LOGGER.info("quit clicked")

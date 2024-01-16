@@ -211,11 +211,13 @@ class ThreadedRSSManager:
         """Trigger single generation."""
         with self._lock:
             if not self._thread:
+                _LOGGER.info("executing RSS manager")
                 self._callGen()
                 return
 
             try:
                 with self._wait_object:
+                    _LOGGER.info("waking up RSS thread")
                     self._wait_object.notifyAll()
             except RuntimeError:
                 # no threads wait for notification
