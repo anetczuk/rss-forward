@@ -9,6 +9,7 @@
 import os
 import logging
 import datetime
+from typing import Iterable
 import hashlib
 import json
 import pytz
@@ -82,3 +83,57 @@ def calculate_dict_hash(data_dict):
     data_bytes = data_str.encode("utf-8")
     hash_value = hashlib.md5(data_bytes).hexdigest()  # nosec
     return hash_value
+
+
+## =====================================================
+
+
+class ObjRepr:
+    def __init__(self):
+        self._visited = set()
+
+    def reprObj(self, obj):
+        self._visited.clear()
+        return self._visit(obj)
+
+    def _visit(self, obj):
+        obj_id = id(obj)
+        if obj_id in self._visited:
+            # print("visited:", type(next_obj), next_obj)
+            return obj
+        self._visited.add(obj_id)
+
+        if isinstance(obj, dict):
+            ret_dict = {}
+            for key, data in obj.items():
+                ret_dict[key] = self._visit(data)
+            return ret_dict
+
+        if hasattr(obj, "__dict__"):
+            ret_dict = {"___type___": type(obj).__name__, "___id___": id(obj)}
+            for key, data in obj.__dict__.items():
+                ret_dict[key] = self._visit(data)
+            return ret_dict
+
+        if hasattr(obj, "__slots__"):
+            ret_dict = {"___type___": type(obj).__name__, "___id___": id(obj)}
+            for key in obj.__slots__:
+                data = getattr(obj, key)
+                ret_dict[key] = self._visit(data)
+            return ret_dict
+
+        if isinstance(obj, str):
+            return obj
+
+        if isinstance(obj, Iterable):
+            ret_list = []
+            for data in obj:
+                ret_list.append(self._visit(data))
+            return ret_list
+
+        return obj
+
+
+def obj_to_dict(obj):
+    repr_obj = ObjRepr()
+    return repr_obj.reprObj(obj)
