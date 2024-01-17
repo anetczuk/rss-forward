@@ -324,7 +324,8 @@ def generate_messages_feed(messages, token):
     for item in messages:
         # pprint.pprint(item)
         item_desc = message_content(token, item.href)
-        data_dict = {"item_date": item.date, "title": item.title, "author": item.author, "content": item_desc}
+        data_dict = {"item_date": item.date, "title": item.title, "author": item.author,
+                     "content": item_desc, "has_attachment": item.has_attachment}
         add_message(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
@@ -336,6 +337,8 @@ def add_message(feed_gen, data_dict):
     title = data_dict["title"]
     author = data_dict["author"]
     item_desc = data_dict["content"]
+    if data_dict["has_attachment"]:
+        item_desc += "\n\n=== wiadomość zawiera załącznik - do pobrania poprzez Librus ==="
 
     feed_item = feed_gen.add_entry()
 
