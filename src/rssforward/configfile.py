@@ -24,6 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 @unique
 class ConfigKey(Enum):
     GENERAL = "general"
+    GENITEM = "item"
     SITE = "site"
     AUTH = "auth"
 
@@ -40,6 +41,7 @@ class ConfigField(Enum):
     LOGDIR = "logdir"
     LOGVIEWER = "logviewer"
     ENABLED = "enabled"
+    GEN_ID = "generator"
 
     AUTH_TYPE = "type"
     AUTH_LOGIN = "login"  # nosec

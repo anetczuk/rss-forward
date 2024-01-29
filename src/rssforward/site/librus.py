@@ -47,6 +47,7 @@ class LibusGenerator(RSSGenerator):
         self._username = login
         self._password = password
         self._getToken()
+        return True
 
     def generate(self) -> Dict[str, str]:
         _LOGGER.info("========== running librus scraper ==========")
@@ -324,8 +325,13 @@ def generate_messages_feed(messages, token):
     for item in messages:
         # pprint.pprint(item)
         item_desc = message_content(token, item.href)
-        data_dict = {"item_date": item.date, "title": item.title, "author": item.author,
-                     "content": item_desc, "has_attachment": item.has_attachment}
+        data_dict = {
+            "item_date": item.date,
+            "title": item.title,
+            "author": item.author,
+            "content": item_desc,
+            "has_attachment": item.has_attachment,
+        }
         add_message(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)

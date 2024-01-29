@@ -67,13 +67,15 @@ logdir = "log"              # path to store logs; path absolute or relative to c
                             # default value is app dir inside user home directory
 logviewer = "mousepad %s"   # command line to view log file, %s will be replaced with log path
 
-[site.librus]
+[[item]]
+generator = "librus"
 enabled = true                      # enable or disable scraper
 auth.type = "RAW"                   # authenticate by providing unencrypted user and password
 auth.user = "12345678"              # login example (librus id)
 auth.pass = "user_secret"           # password example
 
-[site.earlystage]
+[[item]]
+generator = "earlystage"
 enabled = true                                              # enable or disable scraper
 auth.type = "KEEPASSXC"                                     # authenticate by accessing keepassxc deamon
 auth.itemurl = "https://online.earlystage.pl/logowanie/"    # URL of keepassxc item (proper user/pass is identified by the URL)

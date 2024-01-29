@@ -19,6 +19,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 _LOGGER = logging.getLogger(__name__)
 
+logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
+
 
 class TrayManager:
     def __init__(self, server_state=True):

@@ -35,6 +35,7 @@ class EarlyStageGenerator(RSSGenerator):
         auth_data = get_auth_data(login, password)
         self._token = auth_data[0]
         self._student_id = auth_data[1][0]
+        return True
 
     def generate(self) -> Dict[str, str]:
         _LOGGER.info("========== running earlystage scraper ==========")

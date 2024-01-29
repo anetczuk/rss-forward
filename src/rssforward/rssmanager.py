@@ -8,7 +8,7 @@
 
 import os
 import logging
-from typing import Dict
+from typing import Dict, List, Tuple
 import threading
 
 import pkgutil
@@ -34,16 +34,22 @@ def get_generators() -> Dict[str, RSSGenerator]:
     modules_list = pkgutil.iter_modules([generators_path])
     for mod_info in modules_list:
         mod_name = mod_info.name
-        mod_full_name = f"{generators_module.__name__}.{mod_name}"
-        mod = __import__(mod_full_name, fromlist=[""])
-        try:
-            generator = mod.get_generator()
+        generator: RSSGenerator = get_generator(mod_name)
+        if generator:
             ret_data[mod_name] = generator
-            _LOGGER.info("loaded generator from module %s", mod_full_name)
-        except AttributeError as exc:
-            _LOGGER.warning("unable to load generator from module %s, reason: %s", mod_full_name, exc)
 
     return ret_data
+
+
+def get_generator(generator_id) -> RSSGenerator:
+    generators_module = rssforward.site
+    mod_full_name = f"{generators_module.__name__}.{generator_id}"
+    mod = __import__(mod_full_name, fromlist=[""])
+    try:
+        return mod.get_generator()
+    except AttributeError as exc:
+        _LOGGER.warning("unable to load generator from module %s, reason: %s", mod_full_name, exc)
+        return None
 
 
 def get_auth_data(auth_params):
@@ -73,13 +79,13 @@ class RSSManager:
 
         def __init__(self, generator: RSSGenerator = None):
             self.generator: RSSGenerator = generator
-            self.valid = True  # is problem with generator?
+            self.valid = True  # answers question: is problem with generator?
 
     def __init__(self, parameters=None):
         if parameters is None:
             parameters = {}
         self._params = parameters.copy()
-        self._generators: Dict[str, RSSManager.State] = None
+        self._generators: List[Tuple[str, RSSManager.State]] = None
 
     def isGenValid(self):
         """Check if all generators are valid.
@@ -89,7 +95,7 @@ class RSSManager:
         if not self._generators:
             # not initialized
             return False
-        for gen_id, gen_state in self._generators.items():
+        for gen_id, gen_state in self._generators:
             if not gen_state.valid:
                 _LOGGER.info("invalid generator: %s", gen_id)
                 return False
@@ -106,11 +112,11 @@ class RSSManager:
         _LOGGER.info("========== generating RSS data ==========")
         recent_datetime = get_recent_date()
 
-        for gen_id, gen_state in self._generators.items():
+        for gen_id, gen_state in self._generators:
             gen = gen_state.generator
             gen_data: Dict[str, str] = gen.generate()
             if not gen_data:
-                _LOGGER.info("generatorion not completed for generator %s", gen_id)
+                _LOGGER.info("generation not completed for generator %s", gen_id)
                 gen_state.valid = False
             else:
                 gen_state.valid = True
@@ -121,35 +127,38 @@ class RSSManager:
 
     def close(self):
         if self._generators:
-            for gen_state in self._generators.values():
+            for gen_pair in self._generators:
+                gen_state = gen_pair[1]
                 gen = gen_state.generator
                 gen.close()
         keepassxc_close()
 
     def _initializeGenerators(self):
-        gen_list = get_generators()
-        self._generators = {}
-        for gen_id, gen in gen_list.items():
-            self._generators[gen_id] = RSSManager.State(gen)
+        self._generators = []
 
-        gen_id_list = list(self._generators.keys())
-        scrapers_params = self._params.get(ConfigKey.SITE.value, {})
-        for gen_id in gen_id_list:
-            gen_params = scrapers_params.get(gen_id, {})
+        gen_items = self._params.get(ConfigKey.GENITEM.value, [])  # list of dicts
+        for gen_params in gen_items:
+            gen_id = gen_params.get(ConfigField.GEN_ID.value)
+            if not gen_id:
+                _LOGGER.warning("unable to get generator id from params: %s", gen_params)
+                continue
             if not gen_params.get(ConfigField.ENABLED.value, True):
-                del self._generators[gen_id]
+                _LOGGER.warning("generator %s disabled", gen_id)
+                continue
 
-            # try authenticate
-            gen_state = self._generators[gen_id]
-            gen: RSSGenerator = gen_state.generator
-            auth_params = gen_params.get(ConfigKey.AUTH.value, {})
             try:
+                generator: RSSGenerator = get_generator(gen_id)
+                auth_params = gen_params.get(ConfigKey.AUTH.value, {})
                 login, password = get_auth_data(auth_params)
-                gen_state.valid = gen.authenticate(login, password)
+                generator.authenticate(login, password)
+                gen_state = RSSManager.State(generator)
+                self._generators.append((gen_id, gen_state))
+
             except Exception as exc:  # pylint: disable=W0703
+                # unable to authenticate - will not be possible to generate content
                 _LOGGER.warning("error during authentication of %s: %s", gen_id, exc)
-                # unable to authenticate - will not be possible to generate content, so remove the generator
-                del self._generators[gen_id]
+
+        _LOGGER.info("generators initialized: %s", len(self._generators))
 
     def _writeData(self, generator_id, generator_data: Dict[str, str]):
         if not generator_data:
