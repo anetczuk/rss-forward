@@ -27,3 +27,10 @@ generator = "earlystage"
 enabled = true                                              # enable or disable scraper
 auth.type = "KEEPASSXC"                                     # authenticate by accessing keepassxc deamon
 auth.itemurl = "https://online.earlystage.pl/logowanie/"    # URL of keepassxc item (proper user/pass is identified by the URL)
+
+[[item]]
+generator = "youtube"
+enabled = true
+params.url = "https://www.youtube.com/@YouTube/videos"      # YT content link
+params.itemsperfetch = 20                                   # how many items to fetch during each generation
+params.outfile = "the-yt-videos.xml"                        # output subpath with RSS content

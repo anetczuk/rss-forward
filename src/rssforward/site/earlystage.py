@@ -6,8 +6,6 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-# pylint: disable=E0401
-
 import logging
 from typing import Dict
 import datetime
@@ -334,5 +332,5 @@ Objaśnienie: {grade_meaning}
 # ============================================================
 
 
-def get_generator() -> RSSGenerator:
+def get_generator(_=None) -> RSSGenerator:
     return EarlyStageGenerator()

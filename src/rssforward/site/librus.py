@@ -6,7 +6,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-# pylint: disable=E0401
+# pylint: disable=E0401 (import-error)
 
 import logging
 from typing import Dict
@@ -517,5 +517,5 @@ def add_homework(feed_gen, data_dict):
 # ============================================================
 
 
-def get_generator() -> RSSGenerator:
+def get_generator(_=None) -> RSSGenerator:
     return LibusGenerator()

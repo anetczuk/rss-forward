@@ -41,12 +41,12 @@ def get_generators() -> Dict[str, RSSGenerator]:
     return ret_data
 
 
-def get_generator(generator_id) -> RSSGenerator:
+def get_generator(generator_id, generator_params_dict=None) -> RSSGenerator:
     generators_module = rssforward.site
     mod_full_name = f"{generators_module.__name__}.{generator_id}"
     mod = __import__(mod_full_name, fromlist=[""])
     try:
-        return mod.get_generator()
+        return mod.get_generator(generator_params_dict)
     except AttributeError as exc:
         _LOGGER.warning("unable to load generator from module %s, reason: %s", mod_full_name, exc)
         return None
@@ -147,7 +147,10 @@ class RSSManager:
                 continue
 
             try:
-                generator: RSSGenerator = get_generator(gen_id)
+                gen_inner_params = gen_params.get(ConfigField.GEN_PARAMS.value, {})
+                generator: RSSGenerator = get_generator(gen_id, gen_inner_params)
+                if not generator:
+                    continue
                 auth_params = gen_params.get(ConfigKey.AUTH.value, {})
                 login, password = get_auth_data(auth_params)
                 generator.authenticate(login, password)
@@ -166,8 +169,9 @@ class RSSManager:
         data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
         for rss_out, content in generator_data.items():
             out_dir = os.path.join(data_root_dir, generator_id)
-            os.makedirs(out_dir, exist_ok=True)
             feed_path = os.path.join(out_dir, rss_out)
+            feed_dir = os.path.dirname(feed_path)
+            os.makedirs(feed_dir, exist_ok=True)
             _LOGGER.info("writing %s content to file: %s", generator_id, feed_path)
             write_data(feed_path, content)
 

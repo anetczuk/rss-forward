@@ -62,16 +62,16 @@ def start_with_tray(parameters):
     exit_code = 0
     try:
         if genloop:
+            # run in loop
             threaded_manager.start(refresh_time, startupdelay)
+            tray_manager.runLoop()  # run tray main loop
         else:
-            # generate data
+            # generate data only once
             _LOGGER.info("generating RSS data only once")
             if startupdelay > 0:
                 _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
                 time.sleep(startupdelay)
             manager.generateData()
-
-        tray_manager.runLoop()  # run tray main loop
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")

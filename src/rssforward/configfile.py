@@ -40,8 +40,10 @@ class ConfigField(Enum):
     DATAROOT = "dataroot"
     LOGDIR = "logdir"
     LOGVIEWER = "logviewer"
-    ENABLED = "enabled"
+
     GEN_ID = "generator"
+    ENABLED = "enabled"
+    GEN_PARAMS = "params"
 
     AUTH_TYPE = "type"
     AUTH_LOGIN = "login"  # nosec
