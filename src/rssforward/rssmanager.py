@@ -107,6 +107,7 @@ class RSSManager:
         if self._generators is None:
             self._initializeGenerators()
         if not self._generators:
+            _LOGGER.warning("generators not initialized")
             return
 
         _LOGGER.info("========== generating RSS data ==========")
@@ -137,6 +138,10 @@ class RSSManager:
         self._generators = []
 
         gen_items = self._params.get(ConfigKey.GENITEM.value, [])  # list of dicts
+        if not gen_items:
+            _LOGGER.warning("could not get configured generators")
+            return
+
         for gen_params in gen_items:
             gen_id = gen_params.get(ConfigField.GEN_ID.value)
             if not gen_id:
@@ -150,6 +155,7 @@ class RSSManager:
                 gen_inner_params = gen_params.get(ConfigField.GEN_PARAMS.value, {})
                 generator: RSSGenerator = get_generator(gen_id, gen_inner_params)
                 if not generator:
+                    _LOGGER.warning("unable to get generator %s", gen_id)
                     continue
                 auth_params = gen_params.get(ConfigKey.AUTH.value, {})
                 login, password = get_auth_data(auth_params)
@@ -186,6 +192,7 @@ class ThreadedRSSManager:
         self._wait_object = threading.Condition()
         self._thread = None
 
+    # set generator state (error) callback
     def setStateCallback(self, callback):
         self._state_callback = callback
 
@@ -266,7 +273,7 @@ class ThreadedRSSManager:
             raise
 
         except BaseException as exc:
-            _LOGGER.error("exception occurred in thread loop: %s", exc)
+            _LOGGER.exception("exception occurred in thread loop: %s type: %s", exc, type(exc))
             # executed in case of exception
             raise
 
@@ -278,7 +285,11 @@ class ThreadedRSSManager:
         if self._state_callback:
             self._state_callback(False)
 
-        self._manager.generateData()
+        try:
+            self._manager.generateData()
+
+        except RuntimeError as exc:
+            _LOGGER.error("exception occurred when calling generator: %s", exc)
 
         if self._state_callback:
             valid = self._manager.isGenValid()

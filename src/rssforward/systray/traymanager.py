@@ -24,8 +24,8 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
 
 class TrayManager:
     def __init__(self, server_state=True):
-        self._server_state = server_state
-        self._is_error = False
+        self._server_state: bool = server_state
+        self._is_error: bool = False
         self.server_callback = None
         self.refresh_callback = None
         self.open_log_callback = None
@@ -70,14 +70,14 @@ class TrayManager:
 
     def _setIcon(self):
         if self._is_error:
-            _LOGGER.info("setting gray icon")
+            _LOGGER.info("error detected - setting gray icon")
             self.tray_icon.icon = self.gray_icon_image
             return
         if self._server_state:
-            _LOGGER.info("setting blue icon")
+            _LOGGER.info("server operational - setting blue icon")
             self.tray_icon.icon = self.blue_icon_image
         else:
-            _LOGGER.info("setting red icon")
+            _LOGGER.info("server disabled - setting red icon")
             self.tray_icon.icon = self.red_icon_image
 
     def runLoop(self):
@@ -87,12 +87,15 @@ class TrayManager:
 
     # =================================================
 
+    # set callback for enable/disable RSS server
     def setRSSServerCallback(self, callback):
         self.server_callback = callback
 
+    # set "refresh" callback
     def setRefreshCallback(self, callback):
         self.refresh_callback = callback
 
+    # set open log callback
     def setOpenLogCallback(self, callback):
         self.open_log_callback = callback
 

@@ -54,6 +54,19 @@ def save_recent_date(recent_datetime):
     rssforward.persist.store_object_simple(recent_datetime, recentdate_path)
 
 
+def string_to_date_general(date_string) -> datetime.datetime:
+    try:
+        return string_to_date(date_string)
+    except ValueError:
+        pass
+
+    try:
+        return datetime.datetime.fromisoformat(date_string)
+    except ValueError:
+        _LOGGER.error("unable to convert string '%s' to datetime", date_string)
+        raise
+
+
 def string_to_date(date_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(date_string, "%Y-%m-%d")
     return add_timezone(item_date)

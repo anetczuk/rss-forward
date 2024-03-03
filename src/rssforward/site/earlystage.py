@@ -10,7 +10,7 @@ import logging
 from typing import Dict
 import datetime
 
-from rssforward.utils import convert_to_html, string_to_date, add_timezone, calculate_dict_hash
+from rssforward.utils import convert_to_html, string_to_date, add_timezone, calculate_dict_hash, string_to_date_general
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.access.earlystageapi import get_auth_data, get_attendances, get_homeworks, get_grades
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
@@ -54,10 +54,14 @@ class EarlyStageGenerator(RSSGenerator):
         gen_data = generate_homeworks_feed(homeworks, incoming)
         ret_dict.update(gen_data)
 
-        _LOGGER.info("accessing homeworks")
+        _LOGGER.info("accessing grades")
         grades = get_grades(self._token, self._student_id)
-        gen_data = generate_grades_feed(grades)
-        ret_dict.update(gen_data)
+        if grades is not None:
+            gen_data = generate_grades_feed(grades)
+            ret_dict.update(gen_data)
+        else:
+            # might happen after finishing the school
+            _LOGGER.warning("unable to get grades")
 
         return ret_dict
 
@@ -66,11 +70,14 @@ class EarlyStageGenerator(RSSGenerator):
 
 
 ATTEND_STATUS_DICT = {
-    # 0: "spóźnienie",
-    1: "obecny"
-    # 2: "nieobecny",
-    # 3: "brak książki"
+    0: "współpraca zakończona",
+    1: "obecny",
+    # 2: "brak książki",
+    3: "nieobecny",
 }
+
+
+BOOK_STATUS_DICT = {0: "brak książki", 1: "z książką"}
 
 
 def generate_attendances_feed(attendances):
@@ -86,9 +93,17 @@ def generate_attendances_feed(attendances):
         lesson_date = lesson.get("date")
         lesson_subject = lesson.get("subject")
         attend_status = item.get("status")
-        status_label = ATTEND_STATUS_DICT.get(attend_status, attend_status)
+        attend_label = ATTEND_STATUS_DICT.get(attend_status, attend_status)
+        book_status = item.get("book")
+        book_label = BOOK_STATUS_DICT.get(book_status, book_status)
 
-        data_dict = {"item_date": lesson_date, "name": lesson_name, "subject": lesson_subject, "status": status_label}
+        data_dict = {
+            "item_date": lesson_date,
+            "name": lesson_name,
+            "subject": lesson_subject,
+            "status": attend_label,
+            "book": book_label,
+        }
         add_atendence(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
@@ -99,29 +114,33 @@ def add_atendence(feed_gen, data_dict):
     lesson_date = data_dict["item_date"]
     lesson_name = data_dict["name"]
     lesson_subject = data_dict["subject"]
-    status_label = data_dict["status"]
+    attend_label = data_dict["status"]
+    book_label = data_dict["book"]
+
+    item_datetime = string_to_date_general(lesson_date)
+    item_date = item_datetime.date()
 
     feed_item = feed_gen.add_entry()
 
     data_hash = calculate_dict_hash(data_dict)
-    item_id = f"{lesson_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    item_id = f"{item_date}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
     feed_item.id(item_id)
 
-    feed_item.title(f"Obecność w dniu {lesson_date}: {status_label}")
+    feed_item.title(f"Obecność w dniu {item_date}: {attend_label}")
     feed_item.author({"name": "earlystage", "email": "earlystage"})
 
     # fill description
     item_desc = f"""\
 Lekcja: {lesson_name}
 Temat lekcji: {lesson_subject}
-Data: {lesson_date}
-Obecność: {status_label}
+Data: {item_date}
+Obecność: {attend_label}
+Książka: {book_label}
 """
     item_desc = convert_to_html(item_desc)
     feed_item.content(item_desc)
     # fill publish date
-    item_date = string_to_date(lesson_date)
-    feed_item.pubDate(item_date)
+    feed_item.pubDate(item_datetime)
 
 
 HW_STATUS_DICT = {0: "Niesprawdzona", 1: "Odrobione", 2: "Częsciowo odrobione", 3: "<b>Nieodrobione</b>"}

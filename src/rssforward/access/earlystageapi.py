@@ -41,11 +41,13 @@ def get_auth_header(token):
     return headers
 
 
-def get_json_data(token, url):
+def get_json_data(token, url, throw=True):
     headers = get_auth_header(token)
     response = requests.get(url, headers=headers, timeout=30)
     if response.status_code != 200:
-        raise RuntimeError(f"unable to get data: {response.status_code}")
+        if throw:
+            raise RuntimeError(f"unable to get data: {response.status_code}")
+        return None
     data = json.loads(response.text)
     return data
 
@@ -73,4 +75,4 @@ def get_grades(token, student_id):
         f"https://office-api.earlystage.pl/api/parent/me/students/{student_id}/grades"
         "?dateFrom=2023-09-01&dateTo=2024-08-31"
     )
-    return get_json_data(token, url)
+    return get_json_data(token, url, throw=False)
