@@ -16,8 +16,7 @@ examples_dir=$SCRIPT_DIR/../examples
 ## D104: Missing docstring in public package
 ## D105: Missing docstring in magic method
 ## D107 Missing docstring in __init__
-## E203 whitespace before ':'               # conflict with black
-ignore_errors=D100,D101,D102,D103,D104,D105,D107,E203
+ignore_errors=D100,D101,D102,D103,D104,D105,D107
 
 
 echo "running pydocstyle"

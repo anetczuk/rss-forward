@@ -67,6 +67,13 @@ def string_to_date_general(date_string) -> datetime.datetime:
         raise
 
 
+# handled format: 2024-06-04T14:23:41.077Z
+# iso format: '2024-06-04T14:23:41Z'
+def stringiso_to_date(datetime_string) -> datetime.datetime:
+    item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S.%fZ")
+    return add_timezone(item_date)
+
+
 def string_to_date(date_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(date_string, "%Y-%m-%d")
     return add_timezone(item_date)
@@ -82,7 +89,11 @@ def add_timezone(dt: datetime.datetime) -> datetime.datetime:
     return tz_info.localize(dt)
 
 
-def convert_to_html(content: str) -> str:
+def convert_to_html(content: str, preserve_newline=False) -> str:
+    if content is None:
+        return None
+    if preserve_newline:
+        return content.replace("\n", "<br/>\n")
     return content.replace("\n", "<br/>")
 
 

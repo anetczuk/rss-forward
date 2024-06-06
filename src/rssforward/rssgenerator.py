@@ -29,6 +29,7 @@ class RSSGenerator(ABC):
     def generate(self) -> Dict[str, str]:
         """Grab data and generate RSS feed.
 
+        Returned dict keys are relative paths to files where content from value will be stored to.
         Returns None if there was problem with generator.
         """
         raise NotImplementedError("method not implemented")
