@@ -96,6 +96,15 @@ url = "https://api.justjoin.it/v2/user-panel/offers?categories[]=9&city=Warszawa
 itemsperfetch = 20
 outfile = "c_warsaw.xml"
 
+[[item]]
+generator = "bulldogjob"
+enabled = true
+[[item.params.filter]]
+label = "Offers Python Warsaw"
+url = "https://bulldogjob.pl/companies/jobs/s/city,Warszawa/skills,Python/order,published,desc"
+itemsperfetch = 20
+outfile = "python_warsaw.xml"
+
 ```
 
 <!-- insertend -->
