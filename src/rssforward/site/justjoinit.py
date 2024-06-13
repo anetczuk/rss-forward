@@ -18,7 +18,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, calculate_dict_hash, stringiso_to_date
+from rssforward.utils import convert_to_html, stringisoz_to_date
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
@@ -112,15 +112,18 @@ def add_offer(feed_gen, label, data_dict):
 
     feed_item = feed_gen.add_entry()
 
-    data_hash = calculate_dict_hash(data_dict)
-    item_id = f"{offer_published}_{data_hash}"  # add date to prevent hash collision (very unlikely, but still...)
+    slug = data_dict["slug"]
+
+    # data_hash = calculate_dict_hash(data_dict)
+    # calculating hash from data dict is to "fragile"
+    # add date to prevent hash collision (very unlikely, but still...)
+    item_id = f"{offer_published}_{slug}"
     feed_item.id(item_id)
 
     feed_item.title(f"{label}: {offer_company} - {offer_title}")
     feed_item.author({"name": "justjoin.it", "email": "justjoin.it"})
 
     # fill description
-    slug = data_dict["slug"]
     desc_url = f"https://justjoin.it/offers/{slug}"
     offer_desc = get_description(desc_url)
     item_desc = convert_to_html(offer_desc)
@@ -140,7 +143,7 @@ Data:<br/>
     feed_item.content(item_desc)
 
     # fill publish date
-    item_date = stringiso_to_date(offer_published)
+    item_date = stringisoz_to_date(offer_published)
     feed_item.pubDate(item_date)
     feed_item.link(href=desc_url, rel="alternate")
     # feed_item.link( href=desc_url, rel='via')        # does not work in thunderbird

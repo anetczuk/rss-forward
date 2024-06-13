@@ -115,7 +115,14 @@ class RSSManager:
 
         for gen_id, gen_state in self._generators:
             gen = gen_state.generator
-            gen_data: Dict[str, str] = gen.generate()
+
+            try:
+                gen_data: Dict[str, str] = gen.generate()
+            except Exception:
+                _LOGGER.exception("exception raised during generator execution")
+                gen_state.valid = False
+                continue
+
             if not gen_data:
                 _LOGGER.info("generation not completed for generator %s", gen_id)
                 gen_state.valid = False

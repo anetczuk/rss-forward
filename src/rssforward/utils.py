@@ -67,11 +67,34 @@ def string_to_date_general(date_string) -> datetime.datetime:
         raise
 
 
-# handled format: 2024-06-04T14:23:41.077Z
 # iso format: '2024-06-04T14:23:41Z'
 def stringiso_to_date(datetime_string) -> datetime.datetime:
+    item_date = datetime.datetime.fromisoformat(datetime_string)
+    return add_timezone(item_date)
+
+
+# handled format: 2024-06-04T14:23:41.077Z
+def stringiso2_to_date(datetime_string) -> datetime.datetime:
+    item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%SZ")
+    return add_timezone(item_date)
+
+
+# handled format: 2024-06-04T14:23:41.077Z
+def stringisoz_to_date(datetime_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S.%fZ")
     return add_timezone(item_date)
+
+
+def stringisoauto_to_date(datetime_string) -> datetime.datetime:
+    try:
+        return stringiso2_to_date(datetime_string)
+    except ValueError:
+        pass
+    try:
+        return stringisoz_to_date(datetime_string)
+    except ValueError:
+        pass
+    return stringiso_to_date(datetime_string)
 
 
 def string_to_date(date_string) -> datetime.datetime:

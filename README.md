@@ -105,6 +105,15 @@ url = "https://bulldogjob.pl/companies/jobs/s/city,Warszawa/skills,Python/order,
 itemsperfetch = 20
 outfile = "python_warsaw.xml"
 
+[[item]]
+generator = "theprotocol"
+enabled = true
+[[item.params.filter]]
+label = "Offers C++ Warsaw"
+url = "https://theprotocol.it/filtry/c++;t/warszawa;wp?sort=date?sort=date"
+itemsperfetch = 20
+outfile = "c_warsaw.xml"
+
 ```
 
 <!-- insertend -->
