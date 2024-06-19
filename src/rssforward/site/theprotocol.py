@@ -12,6 +12,7 @@ import logging
 import time
 from typing import Dict
 from enum import Enum, unique
+import pprint
 
 import random
 import json
@@ -20,7 +21,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, stringisoauto_to_date
+from rssforward.utils import convert_to_html, stringisoauto_to_date, escape_html
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
@@ -144,7 +145,22 @@ def add_offer(feed_gen, label, offer_url):
 
     # data_string = pprint.pformat(data_dict)
     item_desc = convert_to_html(offer_desc)
-    item_desc = f"""{item_desc}"""
+
+    data_string = pprint.pformat(data_dict)
+    data_string = escape_html(data_string)
+
+    item_desc = f"""\
+{item_desc}
+
+<br/>
+
+<div>
+Data:<br/>
+<pre>
+{data_string}
+</pre>
+</div>
+"""
     feed_item.content(item_desc)
 
     # fill publish date
@@ -174,7 +190,7 @@ def convert_to_section(section_data):
         return convert_section("System operacyjny:", elems)
 
     if section_type == "about-project":
-        return convert_section("O projekcie:", elems)
+        return convert_section("O projekcie:", elems, inline=False)
 
     if section_type == "responsibilities":
         return convert_list("Zakres obowiązków:", elems)
@@ -210,13 +226,16 @@ def convert_to_section(section_data):
         return convert_section("Etapy rekrutacji:", elems)
 
     if section_type == "about-us":
-        return convert_section("O firmie:", elems)
+        return convert_section("O firmie:", elems, inline=False)
 
     if section_type == "about-us-description":
         return convert_section("O firmie:", elems)
 
     if section_type == "additional-module":
         return convert_section("Dodatkowe informacje:", elems)
+
+    if section_type == "work-time":
+        return convert_list("Podział pracy:", elems)
 
     if section_type == "about-us-gallery":
         return ""
@@ -230,9 +249,11 @@ def convert_list(title, elements_list):
     return f"<div><b>{title}</b><br/>{content}</div>\n"
 
 
-def convert_section(title, elements_list):
+def convert_section(title, elements_list, inline=True):
     content = " ".join(elements_list)
-    return f"<div><b>{title}</b> {content}</div>\n"
+    if inline:
+        return f"<div><b>{title}</b> {content}</div>\n"
+    return f"<div><b>{title}</b><br/>{content}</div>\n"
 
 
 def get_nested_dict(data_dict, key_list):

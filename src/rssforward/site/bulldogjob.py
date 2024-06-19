@@ -20,7 +20,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, string_to_date
+from rssforward.utils import convert_to_html, string_to_date, escape_html
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
@@ -134,7 +134,10 @@ def add_offer(feed_gen, label, offer_url):
     # fill description
     offer_desc = data_dict["description"]
     item_desc = convert_to_html(offer_desc)
+
     data_string = pprint.pformat(data_dict)
+    data_string = escape_html(data_string)
+
     item_desc = f"""\
 {item_desc}
 

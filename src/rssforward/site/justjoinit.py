@@ -18,7 +18,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, stringisoz_to_date
+from rssforward.utils import convert_to_html, stringisoz_to_date, escape_html
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
@@ -127,8 +127,31 @@ def add_offer(feed_gen, label, data_dict):
     desc_url = f"https://justjoin.it/offers/{slug}"
     offer_desc = get_description(desc_url)
     item_desc = convert_to_html(offer_desc)
+
+    employment_details = ""
+    employment_types = data_dict["employmentTypes"]
+    for item in employment_types:
+        emp_currency = item["currency"]
+        emp_from = item["from"]
+        emp_to = item["to"]
+        emp_type = item["type"]
+        emp_gross = item["gross"]
+        emp_currency = emp_currency.upper()
+        gross_label = ""
+        if emp_gross:
+            gross_label = "Gross"
+        else:
+            gross_label = "Net"
+        employment_details += f"<div><b>Wynagrodzenie:</b> {emp_from} - {emp_to} {emp_currency} {gross_label} {emp_type}</div>\n"
+
     data_string = pprint.pformat(data_dict)
+    data_string = escape_html(data_string)
+
     item_desc = f"""\
+{employment_details}
+
+<br/>
+
 {item_desc}
 
 <br/>

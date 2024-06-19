@@ -13,6 +13,7 @@ from typing import Iterable
 import hashlib
 import json
 import pytz
+import html
 
 from appdirs import user_data_dir
 
@@ -118,6 +119,10 @@ def convert_to_html(content: str, preserve_newline=False) -> str:
     if preserve_newline:
         return content.replace("\n", "<br/>\n")
     return content.replace("\n", "<br/>")
+
+
+def escape_html(content: str) -> str:
+    return html.escape(content)
 
 
 def write_data(file_path, content):
