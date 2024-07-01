@@ -33,7 +33,8 @@ def main():
     filters = [
         {
             "label": "Offers C++ Warsaw",
-            "url": "https://theprotocol.it/filtry/c++;t/warszawa;wp?sort=date",  # pylint: disable=C0301
+            # "url": "https://theprotocol.it/filtry/c++;t/warszawa;wp?sort=date",  # pylint: disable=C0301
+            "url": "https://theprotocol.it/filtry/c++;t/zdalna;rw?sort=date",  # pylint: disable=C0301
             "itemsperfetch": 2,
             "outfile": "c_warsaw.xml",
         }

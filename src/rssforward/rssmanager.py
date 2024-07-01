@@ -118,7 +118,7 @@ class RSSManager:
 
             try:
                 gen_data: Dict[str, str] = gen.generate()
-            except Exception:
+            except Exception:  # pylint: disable=W0703
                 _LOGGER.exception("exception raised during generator execution")
                 gen_state.valid = False
                 continue

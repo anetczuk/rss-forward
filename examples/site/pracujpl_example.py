@@ -17,15 +17,11 @@ except ImportError:
     ## in this case __init__ is already loaded
     pass
 
-
 import os
 from rssforward import logger
-from rssforward.site.justjoinit import get_generator
+from rssforward.site.pracujpl import get_generator, add_offer
 from rssforward.utils import write_data
-
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-TMP_DIR = os.path.join(SCRIPT_DIR, os.pardir, os.pardir, "tmp", "examples")
+from rssforward.rss.utils import init_feed_gen
 
 
 def main():
@@ -36,7 +32,8 @@ def main():
     filters = [
         {
             "label": "Offers C++ Warsaw",
-            "url": "https://api.justjoin.it/v2/user-panel/offers?categories[]=9&city=Warszawa&page=1&sortBy=newest&orderBy=DESC&perPage=100&salaryCurrencies=PLN",  # pylint: disable=C0301
+            "url": "https://it.pracuj.pl/praca/warszawa;wp?sc=0&itth=41",  # pylint: disable=C0301
+            "itemsperfetch": 1,
             "outfile": "c_warsaw.xml",
         }
     ]
@@ -47,12 +44,24 @@ def main():
     generator_data = generator.generate()
     # pprint.pprint(generator_data)
     for rss_out, content in generator_data.items():
-        out_dir = os.path.join(TMP_DIR, "rss-forward", "justjoin")  # nosec
+        out_dir = os.path.join("/tmp", "rss-forward", "pracujpl")  # nosec
         feed_path = os.path.join(out_dir, rss_out)
         feed_dir = os.path.dirname(feed_path)
         os.makedirs(feed_dir, exist_ok=True)
         print(f"writing content to file: {feed_path}")
         write_data(feed_path, content)
+
+    # ======================================
+
+    feed_gen = init_feed_gen("pracuj.pl")
+    feed_gen.title("offer feed")
+    feed_gen.description("nice offers")
+
+    offer_url = "https://www.pracuj.pl/praca/embedded-application-developer-digital-experience-platform-warszawa,oferta,1003409341"  # pylint: disable=C0301
+    out_path = os.path.join("/tmp", "rss-forward", "pracujpl", "offer.html")  # nosec
+    html_dir = os.path.dirname(out_path)
+    os.makedirs(html_dir, exist_ok=True)
+    add_offer(feed_gen, "the offer", offer_url, html_out_path=out_path)
 
 
 if __name__ == "__main__":

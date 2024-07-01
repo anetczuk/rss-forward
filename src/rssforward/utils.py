@@ -12,8 +12,8 @@ import datetime
 from typing import Iterable
 import hashlib
 import json
-import pytz
 import html
+import pytz
 
 from appdirs import user_data_dir
 
@@ -123,6 +123,18 @@ def convert_to_html(content: str, preserve_newline=False) -> str:
 
 def escape_html(content: str) -> str:
     return html.escape(content)
+
+
+# make various string conversions to meet feed requirements
+def normalize_string(content: str) -> str:
+    content = content.replace("\x02", " ")
+
+    # content = content.encode().decode("utf-8","strict")
+
+    # string_encode = content.encode("ascii", "ignore")
+    # return string_encode.decode()
+
+    return content
 
 
 def write_data(file_path, content):

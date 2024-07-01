@@ -18,9 +18,10 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, stringisoz_to_date, escape_html
+from rssforward.utils import convert_to_html, stringisoz_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
+from rssforward.site.utils.react import extract_data_dict, get_nested_dict
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -126,7 +127,10 @@ def add_offer(feed_gen, label, data_dict):
     # fill description
     desc_url = f"https://justjoin.it/offers/{slug}"
     offer_desc = get_description(desc_url)
-    item_desc = convert_to_html(offer_desc)
+
+    item_desc = offer_desc
+    item_desc = normalize_string(item_desc)
+    item_desc = convert_to_html(item_desc)
 
     employment_details = ""
     employment_types = data_dict["employmentTypes"]
@@ -142,7 +146,9 @@ def add_offer(feed_gen, label, data_dict):
             gross_label = "Gross"
         else:
             gross_label = "Net"
-        employment_details += f"<div><b>Wynagrodzenie:</b> {emp_from} - {emp_to} {emp_currency} {gross_label} {emp_type}</div>\n"
+        employment_details += (
+            f"<div><b>Wynagrodzenie:</b> {emp_from} - {emp_to} {emp_currency} {gross_label} {emp_type}</div>\n"
+        )
 
     data_string = pprint.pformat(data_dict)
     data_string = escape_html(data_string)
@@ -180,14 +186,24 @@ def get_description(url):
     response = requests.get(url, headers=headers, timeout=30)
 
     if response.status_code not in (200, 204):
+        _LOGGER.warning(f"unable to get description from url: {url} response: {response.status_code}")
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    found = soup.find_all("div", attrs={"class": "MuiBox-root css-qal8sw"})
-    if len(found) > 1:
-        return str(found[1])
-    return None
+    data_dict = extract_data_dict(soup)
+    if data_dict is None:
+        return None
+    data_dict = get_nested_dict(data_dict, ["props", "pageProps", "offer"])
+    # pprint.pprint(data_dict)
+    data_body = data_dict.get("body")
+    return data_body
+
+    # found = soup.find_all("div", attrs={"class": "MuiBox-root css-qal8sw"})
+    # if len(found) > 1:
+    #     return str(found[1])
+    # _LOGGER.warning(f"unable to get description from url: {url} no data found")
+    # return None
 
 
 # ============================================================

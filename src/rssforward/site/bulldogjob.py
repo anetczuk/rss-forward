@@ -20,7 +20,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, string_to_date, escape_html
+from rssforward.utils import convert_to_html, string_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
@@ -100,6 +100,7 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
 def add_offer(feed_gen, label, offer_url):
     # sleep_random(4)
+    _LOGGER.info(f"getting offer details: {offer_url}")
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(offer_url, headers=headers, timeout=10)
 
@@ -133,7 +134,10 @@ def add_offer(feed_gen, label, offer_url):
 
     # fill description
     offer_desc = data_dict["description"]
-    item_desc = convert_to_html(offer_desc)
+
+    item_desc = offer_desc
+    item_desc = normalize_string(item_desc)
+    item_desc = convert_to_html(item_desc)
 
     data_string = pprint.pformat(data_dict)
     data_string = escape_html(data_string)

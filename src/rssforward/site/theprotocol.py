@@ -15,15 +15,16 @@ from enum import Enum, unique
 import pprint
 
 import random
-import json
 from urllib.parse import urljoin
 import requests
 
 from bs4 import BeautifulSoup
 
-from rssforward.utils import convert_to_html, stringisoauto_to_date, escape_html
+from rssforward.utils import convert_to_html, stringisoauto_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
+from rssforward.site.utils.react import extract_data_dict, get_nested_dict
+from rssforward.site.utils.htmlbuild import convert_line, convert_list
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -95,28 +96,32 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
         full_url = urljoin(filter_url, offer_url)
         add_offer(feed_gen, label, full_url)
 
-    content = dumps_feed_gen(feed_gen)
-    return content
+    try:
+        content = dumps_feed_gen(feed_gen)
+        return content
+    except ValueError:
+        _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
+        raise
 
 
-def add_offer(feed_gen, label, offer_url):
+def add_offer(feed_gen, label, offer_url=None, content=None):
     # sleep_random(3)
-    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get(offer_url, headers=headers, timeout=10)
+    if offer_url is not None:
+        _LOGGER.info(f"getting offer details: {offer_url}")
+        headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
+        response = requests.get(offer_url, headers=headers, timeout=10)
 
-    if response.status_code not in (200, 204):
-        _LOGGER.warning("unable to get job offer content")
+        if response.status_code not in (200, 204):
+            _LOGGER.warning("unable to get job offer content")
+            return
+
+        content = response.text
+
+    soup = BeautifulSoup(content, "html.parser")
+
+    data_dict = extract_data_dict(soup)
+    if data_dict is None:
         return
-
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    offer_json_list = soup.select('script[id="__NEXT_DATA__"]')  # all React web pages have this json embedded
-    if len(offer_json_list) < 1:
-        _LOGGER.warning("unable to find job offer json")
-        return
-
-    json_content = offer_json_list[0].string
-    data_dict = json.loads(json_content)
     data_dict = get_nested_dict(data_dict, ["props", "pageProps", "offer"])
 
     attributes = data_dict["attributes"]
@@ -144,7 +149,9 @@ def add_offer(feed_gen, label, offer_url):
         offer_desc += convert_to_section(sec_item)
 
     # data_string = pprint.pformat(data_dict)
-    item_desc = convert_to_html(offer_desc)
+    item_desc = offer_desc
+    item_desc = normalize_string(item_desc)
+    item_desc = convert_to_html(item_desc)
 
     data_string = pprint.pformat(data_dict)
     data_string = escape_html(data_string)
@@ -181,16 +188,16 @@ def convert_to_section(section_data):
         return ""
 
     if section_type == "technologies-expected":
-        return convert_section("Wymagane:", elems)
+        return convert_line("Wymagane:", elems)
 
     if section_type == "technologies-optional":
-        return convert_section("Mile widziane:", elems)
+        return convert_line("Mile widziane:", elems)
 
     if section_type == "technologies-os":
-        return convert_section("System operacyjny:", elems)
+        return convert_line("System operacyjny:", elems)
 
     if section_type == "about-project":
-        return convert_section("O projekcie:", elems, inline=False)
+        return convert_line("O projekcie:", elems, inline=False)
 
     if section_type == "responsibilities":
         return convert_list("Zakres obowiązków:", elems)
@@ -220,19 +227,19 @@ def convert_to_section(section_data):
         return convert_list("Zespół:", elems)
 
     if section_type == "work-organization-team-size":
-        return convert_section("Wielkość zespołu:", elems)
+        return convert_line("Wielkość zespołu:", elems)
 
     if section_type == "recruitment-stages":
-        return convert_section("Etapy rekrutacji:", elems)
+        return convert_line("Etapy rekrutacji:", elems)
 
     if section_type == "about-us":
-        return convert_section("O firmie:", elems, inline=False)
+        return convert_line("O firmie:", elems, inline=False)
 
     if section_type == "about-us-description":
-        return convert_section("O firmie:", elems)
+        return convert_line("O firmie:", elems)
 
     if section_type == "additional-module":
-        return convert_section("Dodatkowe informacje:", elems)
+        return convert_line("Dodatkowe informacje:", elems)
 
     if section_type == "work-time":
         return convert_list("Podział pracy:", elems)
@@ -242,27 +249,6 @@ def convert_to_section(section_data):
 
     _LOGGER.warning("unhandled section type: %s", section_type)
     return f"<div>unhandled type: {section_type}<br/>{elems}</div>\n"
-
-
-def convert_list(title, elements_list):
-    content = "<ul> <li>" + "</li> <li>".join(elements_list) + "</li> </ul>"
-    return f"<div><b>{title}</b><br/>{content}</div>\n"
-
-
-def convert_section(title, elements_list, inline=True):
-    content = " ".join(elements_list)
-    if inline:
-        return f"<div><b>{title}</b> {content}</div>\n"
-    return f"<div><b>{title}</b><br/>{content}</div>\n"
-
-
-def get_nested_dict(data_dict, key_list):
-    sub_dict = data_dict
-    for key_item in key_list:
-        sub_dict = sub_dict.get(key_item)
-        if sub_dict is None:
-            return None
-    return sub_dict
 
 
 def match_nested(item_list, nested_list):

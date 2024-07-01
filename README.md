@@ -114,6 +114,15 @@ url = "https://theprotocol.it/filtry/c++;t/warszawa;wp?sort=date?sort=date"
 itemsperfetch = 20
 outfile = "c_warsaw.xml"
 
+[[item]]
+generator = "pracujpl"
+enabled = true
+[[item.params.filter]]
+label = "Offers C++ Warsaw"
+url = "https://it.pracuj.pl/praca/warszawa;wp?sc=0&itth=41"
+itemsperfetch = 20
+outfile = "c_warsaw.xml"
+
 ```
 
 <!-- insertend -->
