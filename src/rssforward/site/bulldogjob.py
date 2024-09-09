@@ -148,6 +148,7 @@ def add_offer(feed_gen, label, offer_url):
 <br/>
 
 <div>
+ID: {offer_id}<br/>
 Data:<br/>
 <pre>
 {data_string}

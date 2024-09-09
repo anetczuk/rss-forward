@@ -163,6 +163,7 @@ def add_offer(feed_gen, label, data_dict):
 <br/>
 
 <div>
+ID: {item_id}<br/>
 Data:<br/>
 <pre>
 {data_string}

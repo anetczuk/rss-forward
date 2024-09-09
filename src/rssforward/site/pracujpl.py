@@ -126,6 +126,9 @@ def add_offer(feed_gen, label, offer_url=None, content=None, html_out_path=None)
     data_dict = get_nested_dict(data_dict, ["props", "pageProps"])
 
     queries_list = get_nested_dict(data_dict, ["dehydratedState", "queries"])
+    if not queries_list:
+        _LOGGER.warning("unable to get job data from url: %s", offer_url)
+        return
     query_data = queries_list[0]
     offer_data = get_nested_dict(query_data, ["state", "data"])
     attributes = offer_data["attributes"]
@@ -177,6 +180,7 @@ def add_offer(feed_gen, label, offer_url=None, content=None, html_out_path=None)
 <br/>
 
 <div>
+ID: {offer_id}<br/>
 Data:<br/>
 <pre>
 {data_string}
