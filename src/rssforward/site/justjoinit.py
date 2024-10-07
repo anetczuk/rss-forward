@@ -11,6 +11,7 @@
 import logging
 from typing import Dict
 from enum import Enum, unique
+import time
 
 import pprint
 import json
@@ -126,7 +127,16 @@ def add_offer(feed_gen, label, data_dict):
 
     # fill description
     desc_url = f"https://justjoin.it/offers/{slug}"
-    offer_desc = get_description(desc_url)
+
+    for rep in range(0, 3):
+        offer_desc = get_description(desc_url)
+        if offer_desc is not None:
+            break
+        time.sleep(1.5)
+        _LOGGER.error("no description for url (attempt: %s) %s", rep + 1, desc_url)
+    else:
+        _LOGGER.error("no description for url after attempts: %s", desc_url)
+        offer_desc = ""
 
     item_desc = offer_desc
     item_desc = normalize_string(item_desc)
@@ -184,10 +194,22 @@ def get_description(url):
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0",
         "Version": "2",
     }
-    response = requests.get(url, headers=headers, timeout=30)
 
-    if response.status_code not in (200, 204):
-        _LOGGER.warning(f"unable to get description from url: {url} response: {response.status_code}")
+    for _ in range(0, 2):
+        try:
+            response = requests.get(url, headers=headers, timeout=30)
+            if response.status_code in (200, 204):
+                # got response - break the loop
+                break
+            # sometimes server responds witn code 500 - in this case send another request
+            _LOGGER.warning(f"unable to get description from url: {url} response: {response.status_code}")
+        except requests.exceptions.ReadTimeout as exc:
+            _LOGGER.warning(f"unable to get description from url: {url} exception: {exc}")
+        # next iteration
+        time.sleep(1.0)
+    else:
+        # could not reach description page
+        _LOGGER.warning(f"unable to get description from url: {url} after several attempts")
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")

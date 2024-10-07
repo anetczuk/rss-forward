@@ -252,14 +252,12 @@ def main():
         _LOGGER.info("starting with tray")
         exit_code = start_with_tray(parameters)
         sys.exit(exit_code)
-        return
 
     _LOGGER.info("starting without system tray")
     start_server = general_section.get(ConfigField.STARTSERVER.value, True)
     if start_server:
         exit_code = start_no_tray(parameters)
         sys.exit(exit_code)
-        return
 
     _LOGGER.info("starting RSS server disabled")
     exit_code = start_raw(parameters)

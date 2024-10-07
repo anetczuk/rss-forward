@@ -123,7 +123,7 @@ def convert_info_to_channel(info_dict) -> Dict[str, Any]:
             "link": yt_link,
             "media_thumbnail": thumb_dict,
             "summary": yt_entry.get("description", ""),
-            "published": epoch_to_datetime(item_upload_date)
+            "published": epoch_to_datetime(item_upload_date),
             # "published": num_date_to_datetime(item_upload_date)
         }
         data_entries.append(item)

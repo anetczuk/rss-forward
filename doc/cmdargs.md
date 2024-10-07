@@ -7,7 +7,7 @@ usage: startrssforward.py [-h] [-c CONFIG] [--trayicon {True,False}]
 
 RSS Forward
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
                         Path to TOML config file (default: None)

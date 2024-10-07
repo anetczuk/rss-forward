@@ -63,6 +63,9 @@ class KeepassxcAuth:
         self.connection.disconnect()
         self.connection = None
 
+    def getHash(self):
+        return self.connection.get_database_hash(self.id)
+
     def unlockDatabase(self):
         self._checkConnection()
 
@@ -78,6 +81,9 @@ class KeepassxcAuth:
 
         if not self.connection.test_associate(self.id):
             _LOGGER.info("Associating application")
+
+            # will raise exception AssertionError: {'action': 'database-locked'}
+            # if KeePass is configured to lock database on minimalization
             if not self.connection.associate(self.id):
                 raise RuntimeError("could not associate")
             if self.state_file:
@@ -95,6 +101,8 @@ class KeepassxcAuth:
         try:
             return self.connection.is_database_open(self.id)
         except AssertionError as exc:
+            if "database-locked" in str(exc):
+                return False
             _LOGGER.warning("exception occur while checking if database is open: %s", exc)
         return False
 
@@ -118,7 +126,7 @@ class KeepassxcAuth:
 
     def _checkConnection(self):
         if self.connection is None:
-            raise Exception("not connected")
+            raise RuntimeError("not connected")
 
     def _establishConnection(self, socket_name=None):
         try:
@@ -135,9 +143,18 @@ auth: KeepassxcAuth = None
 def get_auth_data(access_url):
     global auth  # pylint: disable=W0603
     if not auth:
-        auth = KeepassxcAuth()
-        auth.connect()
-        auth.unlockDatabase()
+        for _i in range(0, 3):
+            try:
+                auth = KeepassxcAuth()
+                auth.connect()
+                auth.unlockDatabase()
+                break
+            except Exception as exc:  # # pylint: disable=W0718
+                _LOGGER.exception("failed to unlock database: %s, retrying", exc)
+                time.sleep(1.0)
+        else:
+            # loop finished without database unlock
+            raise RuntimeError("failed to unlock database")
 
     while True:
         try:
@@ -146,6 +163,9 @@ def get_auth_data(access_url):
                 return login_data
         except LockedKPXCException as exc:
             _LOGGER.warning("failed to get auth data: %s", exc)
+            time.sleep(1)
+        except BrokenPipeError as exc:
+            _LOGGER.info("failed to get auth data: %s, retrying", exc)
             time.sleep(1)
 
     return {}

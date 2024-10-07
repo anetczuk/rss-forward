@@ -173,7 +173,6 @@ class RSSServerManager:
                     httpd.serve_forever()
                 #             httpd.handle_request()
                 finally:
-                    _LOGGER.exception("unhandled exception occur - stopping server thread")
                     self._service.server_close()
                     self._service = None
                     self._notifyStopped()

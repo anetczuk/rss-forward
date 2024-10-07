@@ -55,7 +55,7 @@ class LibusGenerator(RSSGenerator):
         try:
             return generate_content(self._token)
         except TokenError as exc:
-            _LOGGER.warning("token error - try one more time with new token (%s)", exc)
+            _LOGGER.debug("token error - try one more time with new token (%s)", exc)
 
         self._getToken()
         return generate_content(self._token)
@@ -100,7 +100,7 @@ def get_announcements_by_date(token, start_datetime=None):
 def generate_content(token) -> Dict[str, str]:
     if token is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
-        return {}
+        return None
 
     ret_dict: Dict[str, str] = {}
 

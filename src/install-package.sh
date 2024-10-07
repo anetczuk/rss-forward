@@ -22,3 +22,6 @@ if [[ $* == *--venv* ]]; then
 else
     pip3 install --user .
 fi
+
+# remove build directory
+rm -r "build"

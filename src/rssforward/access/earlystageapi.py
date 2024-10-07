@@ -8,8 +8,12 @@
 
 # pylint: disable=E0401
 
+import logging
 import json
 import requests
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 # 400 Bad Request
@@ -30,7 +34,15 @@ def get_auth_data(username: str, password: str):
     data_results = data_dict.get("results")
     data_token = data_results.get("apiToken")
 
-    students_list = data_results.get("user").get("parent").get("students")
+    user_data = data_results.get("user")
+    parent_data = user_data.get("parent")
+    students_list = parent_data.get("students")
+
+    if students_list is None:
+        # it can happen that parent account does not have assigned students
+        # it happens if student decided to stop attending to classes
+        return data_token, None
+
     data_id_list = [item.get("id") for item in students_list]
 
     return data_token, data_id_list

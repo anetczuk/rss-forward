@@ -31,16 +31,23 @@ class EarlyStageGenerator(RSSGenerator):
 
     def authenticate(self, login, password):
         auth_data = get_auth_data(login, password)
-        self._token = auth_data[0]
-        self._student_id = auth_data[1][0]
+        self._token, students_list = auth_data
+        if not students_list:
+            self._student_id = None
+        else:
+            self._student_id = students_list[0]
         return True
 
     def generate(self) -> Dict[str, str]:
         _LOGGER.info("========== running earlystage scraper ==========")
 
+        if not self._student_id:
+            # no students data
+            return {}
+
         if not self._token:
             _LOGGER.warning("unable to generate content, because generator is not authenticated")
-            return {}
+            return None
 
         ret_dict: Dict[str, str] = {}
 

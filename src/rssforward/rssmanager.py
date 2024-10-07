@@ -80,6 +80,13 @@ class RSSManager:
         def __init__(self, generator: RSSGenerator = None):
             self.generator: RSSGenerator = generator
             self.valid = True  # answers question: is problem with generator?
+            # self.auth_data = auth_data
+
+        # def authenticate(self):
+        #     login, password = self.auth_data
+        #     self.generator.authenticate(login, password)
+
+    # =====================================================================
 
     def __init__(self, parameters=None):
         if parameters is None:
@@ -123,7 +130,7 @@ class RSSManager:
                 gen_state.valid = False
                 continue
 
-            if not gen_data:
+            if gen_data is None:
                 _LOGGER.info("generation not completed for generator %s", gen_id)
                 gen_state.valid = False
             else:
@@ -155,7 +162,7 @@ class RSSManager:
                 _LOGGER.warning("unable to get generator id from params: %s", gen_params)
                 continue
             if not gen_params.get(ConfigField.ENABLED.value, True):
-                _LOGGER.warning("generator %s disabled", gen_id)
+                _LOGGER.info("generator %s disabled", gen_id)
                 continue
 
             try:
@@ -165,14 +172,18 @@ class RSSManager:
                     _LOGGER.warning("unable to get generator %s", gen_id)
                     continue
                 auth_params = gen_params.get(ConfigKey.AUTH.value, {})
-                login, password = get_auth_data(auth_params)
-                generator.authenticate(login, password)
+                auth_data = get_auth_data(auth_params)
                 gen_state = RSSManager.State(generator)
+
+                # gen_state.authenticate()
+                login, password = auth_data
+                generator.authenticate(login, password)
+
                 self._generators.append((gen_id, gen_state))
 
-            except Exception as exc:  # pylint: disable=W0703
+            except Exception:  # pylint: disable=W0703
                 # unable to authenticate - will not be possible to generate content
-                _LOGGER.warning("error during authentication of %s: %s", gen_id, exc)
+                _LOGGER.exception("error during authentication of %s", gen_id)
 
         _LOGGER.info("generators initialized: %s", len(self._generators))
 
@@ -211,7 +222,7 @@ class ThreadedRSSManager:
                 return
             self._execute_loop = True
             self._thread = threading.Thread(target=self._runLoop, args=[refresh_time, startupdelay])
-            _LOGGER.warning("starting thread")
+            _LOGGER.info("starting thread")
             self._thread.start()
 
     def stop(self):
@@ -223,7 +234,7 @@ class ThreadedRSSManager:
             self._execute_loop = False
             try:
                 with self._wait_object:
-                    self._wait_object.notifyAll()
+                    self._wait_object.notifyAll()  # pylint: disable=W4902
             except RuntimeError:
                 # no threads wait for notification
                 _LOGGER.info("thread does not wait")
@@ -245,7 +256,7 @@ class ThreadedRSSManager:
             try:
                 with self._wait_object:
                     _LOGGER.info("waking up RSS thread")
-                    self._wait_object.notifyAll()
+                    self._wait_object.notifyAll()  # pylint: disable=W4902
             except RuntimeError:
                 # no threads wait for notification
                 _LOGGER.info("thread does not wait")
