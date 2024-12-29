@@ -117,10 +117,10 @@ class KeepassxcAuth:
             data = logins[0]
             login = {"login": data.get("login"), "password": data.get("password")}
         except ProtocolError as exc:
-            _LOGGER.warning("failed to get auth data: %s", exc)
+            _LOGGER.exception("failed to get auth data")
             raise LockedKPXCException() from exc
         except AssertionError as exc:
-            _LOGGER.warning("failed to get auth data: %s", exc)
+            _LOGGER.exception("failed to get auth data")
             raise LockedKPXCException() from exc
         return login
 

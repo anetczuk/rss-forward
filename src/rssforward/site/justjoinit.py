@@ -22,7 +22,6 @@ from bs4 import BeautifulSoup
 from rssforward.utils import convert_to_html, stringisoz_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
-from rssforward.site.utils.react import extract_data_dict, get_nested_dict
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ class JustJoinItGenerator(RSSGenerator):
         return ret_dict
 
 
-def get_offers_content(label, filter_url, filter_items, throw=True):
+def get_offers_content(label, filter_url, filter_items, throw=True, attempts=3):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0",
         "Version": "2",
@@ -94,13 +93,13 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
     _LOGGER.info("found %s items", len(json_offers_list))
     for offer in json_offers_list:
-        add_offer(feed_gen, label, offer)
+        add_offer(feed_gen, label, offer, attempts=attempts)
 
     content = dumps_feed_gen(feed_gen)
     return content
 
 
-def add_offer(feed_gen, label, data_dict):
+def add_offer(feed_gen, label, data_dict, attempts=3):
     offer_title = data_dict["title"]
     offer_company = data_dict["companyName"]
     offer_published = data_dict["publishedAt"]
@@ -128,14 +127,14 @@ def add_offer(feed_gen, label, data_dict):
     # fill description
     desc_url = f"https://justjoin.it/offers/{slug}"
 
-    for rep in range(0, 3):
+    for rep in range(0, attempts):
         offer_desc = get_description(desc_url)
         if offer_desc is not None:
             break
         time.sleep(1.5)
         _LOGGER.error("no description for url (attempt: %s) %s", rep + 1, desc_url)
     else:
-        _LOGGER.error("no description for url after attempts: %s", desc_url)
+        _LOGGER.error("no description for url after %s attempts: %s", attempts, desc_url)
         offer_desc = ""
 
     item_desc = offer_desc
@@ -206,7 +205,7 @@ def get_description(url):
         except requests.exceptions.ReadTimeout as exc:
             _LOGGER.warning(f"unable to get description from url: {url} exception: {exc}")
         # next iteration
-        time.sleep(1.0)
+        time.sleep(2.0)
     else:
         # could not reach description page
         _LOGGER.warning(f"unable to get description from url: {url} after several attempts")
@@ -214,19 +213,47 @@ def get_description(url):
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    data_dict = extract_data_dict(soup)
-    if data_dict is None:
-        return None
-    data_dict = get_nested_dict(data_dict, ["props", "pageProps", "offer"])
-    # pprint.pprint(data_dict)
-    data_body = data_dict.get("body")
-    return data_body
+    ## remove all style elements
+    for style in soup.find_all("style"):
+        style.decompose()
 
-    # found = soup.find_all("div", attrs={"class": "MuiBox-root css-qal8sw"})
-    # if len(found) > 1:
-    #     return str(found[1])
-    # _LOGGER.warning(f"unable to get description from url: {url} no data found")
-    # return None
+    # data_dict = extract_data_dict(soup)
+    # if data_dict is None:
+    #     _LOGGER.warning(f"unable to extract data from response: {url}\nsoup object: %s", soup)
+    #     return None
+    # data_dict = get_nested_dict(data_dict, ["props", "pageProps", "offer"])
+    # # pprint.pprint(data_dict)
+    # data_body = data_dict.get("body")
+    # return data_body
+
+    content_list = []
+
+    found_h3_list = soup.find_all("h3", attrs={"class": "MuiTypography-h3"})
+
+    for title_item in found_h3_list:
+        title_content = str(title_item)
+        if "Tech stack" not in title_content:
+            continue
+        tech_div = title_item.parent
+        content_list.append( str(tech_div) )
+        break
+
+    for title_item in found_h3_list:
+        title_content = str(title_item)
+        if "Job description" not in title_content:
+            continue
+
+        title_parent = title_item.parent   
+        desc_div = title_parent.nextSibling
+        desc_parent = desc_div.parent
+        content_list.append( str(desc_parent) )
+        break
+
+    if len(content_list) == 2:
+        content_list.insert(1, "")
+
+    ret_content = "\n".join(content_list)
+    return ret_content
 
 
 # ============================================================

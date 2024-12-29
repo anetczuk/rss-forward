@@ -62,7 +62,8 @@ def string_to_date_general(date_string) -> datetime.datetime:
         pass
 
     try:
-        return datetime.datetime.fromisoformat(date_string)
+        datetime_obj = datetime.datetime.fromisoformat(date_string)
+        return add_timezone(datetime_obj)
     except ValueError:
         _LOGGER.error("unable to convert string '%s' to datetime", date_string)
         raise
@@ -105,6 +106,11 @@ def string_to_date(date_string) -> datetime.datetime:
 
 def string_to_datetime(datetime_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
+    return add_timezone(item_date)
+
+
+def string_to_datetime_hm(datetime_string) -> datetime.datetime:
+    item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M")
     return add_timezone(item_date)
 
 

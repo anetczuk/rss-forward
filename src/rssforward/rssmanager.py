@@ -88,11 +88,13 @@ class RSSManager:
 
     # =====================================================================
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, generators=None):
         if parameters is None:
             parameters = {}
         self._params = parameters.copy()
         self._generators: List[Tuple[str, RSSManager.State]] = None
+        if generators:
+            self._generators = generators
 
     def isGenValid(self):
         """Check if all generators are valid.

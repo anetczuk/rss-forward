@@ -146,7 +146,10 @@ def add_offer(feed_gen, label, offer_url=None, content=None):
 
     offer_desc = ""
     for sec_item in desc_sections:
-        offer_desc += convert_to_section(sec_item)
+        sect_desc, found = convert_to_section(sec_item)
+        offer_desc += sect_desc
+        if found is False:
+            _LOGGER.warning("unhandled section type: %s on address: %s", sec_item, offer_url)
 
     # data_string = pprint.pformat(data_dict)
     item_desc = offer_desc
@@ -182,74 +185,77 @@ Data:<br/>
 def convert_to_section(section_data):
     section_type = section_data.get("type")
     if section_type is None:
-        return ""
+        return "", False
 
     elems = section_data.get("elements")
     if elems is None:
-        return ""
+        return "", False
 
     if section_type == "technologies-expected":
-        return convert_line("Wymagane:", elems)
+        return convert_line("Wymagane:", elems), True
 
     if section_type == "technologies-optional":
-        return convert_line("Mile widziane:", elems)
+        return convert_line("Mile widziane:", elems), True
 
     if section_type == "technologies-os":
-        return convert_line("System operacyjny:", elems)
+        return convert_line("System operacyjny:", elems), True
 
     if section_type == "about-project":
-        return convert_line("O projekcie:", elems, inline=False)
+        return convert_line("O projekcie:", elems, inline=False), True
 
     if section_type == "responsibilities":
-        return convert_list("Zakres obowiązków:", elems)
+        return convert_list("Zakres obowiązków:", elems), True
 
     if section_type == "requirements-expected":
-        return convert_list("Wymagania:", elems)
+        return convert_list("Wymagania:", elems), True
 
     if section_type == "requirements-optional":
-        return convert_list("Mile widziane:", elems)
+        return convert_list("Mile widziane:", elems), True
 
     if section_type == "work-organization-work-style":
-        return convert_list("Tak pracujemy:", elems)
+        return convert_list("Tak pracujemy:", elems), True
 
     if section_type == "training-space":
-        return convert_list("Możliwości rozwoju:", elems)
+        return convert_list("Możliwości rozwoju:", elems), True
 
     if section_type == "offered":
-        return convert_list("Oferujemy:", elems)
+        return convert_list("Oferujemy:", elems), True
 
     if section_type == "benefits":
-        return convert_list("Benefity:", elems)
+        return convert_list("Benefity:", elems), True
 
     if section_type == "development-practices":
-        return convert_list("Tak pracujemy nad projektem:", elems)
+        return convert_list("Tak pracujemy nad projektem:", elems), True
 
     if section_type == "work-organization-team-members":
-        return convert_list("Zespół:", elems)
+        return convert_list("Zespół:", elems), True
 
     if section_type == "work-organization-team-size":
-        return convert_line("Wielkość zespołu:", elems)
+        return convert_line("Wielkość zespołu:", elems), True
 
     if section_type == "recruitment-stages":
-        return convert_line("Etapy rekrutacji:", elems)
+        return convert_line("Etapy rekrutacji:", elems), True
 
     if section_type == "about-us":
-        return convert_line("O firmie:", elems, inline=False)
+        return convert_line("O firmie:", elems, inline=False), True
 
     if section_type == "about-us-description":
-        return convert_line("O firmie:", elems)
+        return convert_line("O firmie:", elems), True
 
     if section_type == "additional-module":
-        return convert_line("Dodatkowe informacje:", elems)
+        return convert_line("Dodatkowe informacje:", elems), True
 
     if section_type == "work-time":
-        return convert_list("Podział pracy:", elems)
+        return convert_list("Podział pracy:", elems), True
 
     if section_type == "about-us-gallery":
-        return ""
+        return "", True
+
+    if section_type == "about-hr-consulting-agency-client":
+        return convert_line("O kliencie agencji:", elems, inline=False), True
 
     _LOGGER.warning("unhandled section type: %s", section_type)
-    return f"<div>unhandled type: {section_type}<br/>{elems}</div>\n"
+    return f"<div>unhandled type: {section_type}<br/>{elems}</div>\n", False
 
 
 def match_nested(item_list, nested_list):

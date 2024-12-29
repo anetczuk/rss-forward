@@ -177,6 +177,9 @@ class RSSServerManager:
                     self._service = None
                     self._notifyStopped()
             _LOGGER.info("server thread ended")
+        except OSError:
+            _LOGGER.exception("unable to start server on port: %s", self.port)
+            raise
         except:  # noqa
             _LOGGER.exception("unhandled exception occur - terminating server thread")
             raise

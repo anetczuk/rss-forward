@@ -16,7 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def extract_data_dict(soup):
-    offer_json_list = soup.select('script[id="__NEXT_DATA__"]')  # all React web pages have this json embedded
+    offer_json_list = soup.select('script[id="__NEXT_DATA__"]')  # some React web pages have this json embedded
     if len(offer_json_list) < 1:
         _LOGGER.warning("unable to find job offer json")
         return None

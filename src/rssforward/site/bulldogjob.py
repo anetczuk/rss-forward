@@ -105,7 +105,7 @@ def add_offer(feed_gen, label, offer_url):
     response = requests.get(offer_url, headers=headers, timeout=10)
 
     if response.status_code not in (200, 204):
-        _LOGGER.warning("unable to get job offer content")
+        _LOGGER.warning(f"unable to get job offer content, response status: {response.status_code}")
         return
 
     soup = BeautifulSoup(response.text, "html.parser")
