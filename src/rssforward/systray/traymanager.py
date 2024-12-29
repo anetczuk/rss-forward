@@ -31,6 +31,7 @@ class TrayManager:
         self.open_log_callback = None
 
         self.red_icon_image = load_icon("rss-forward-red-64.png")
+        self.green_icon_image = load_icon("rss-forward-green-64.png")
         self.blue_icon_image = load_icon("rss-forward-blue-64.png")
         self.gray_icon_image = load_icon("rss-gray-64.png")
 
@@ -70,15 +71,15 @@ class TrayManager:
 
     def _setIcon(self):
         if self._is_error:
-            _LOGGER.info("error detected - setting gray icon")
-            self.tray_icon.icon = self.gray_icon_image
+            _LOGGER.info("error detected - setting red icon")
+            self.tray_icon.icon = self.red_icon_image
             return
         if self._server_state:
             _LOGGER.info("server operational - setting blue icon")
             self.tray_icon.icon = self.blue_icon_image
         else:
-            _LOGGER.info("server disabled - setting red icon")
-            self.tray_icon.icon = self.red_icon_image
+            _LOGGER.info("server disabled - setting green icon")
+            self.tray_icon.icon = self.green_icon_image
 
     def runLoop(self):
         """Execute event loop. Method have to be executed from main thread."""
