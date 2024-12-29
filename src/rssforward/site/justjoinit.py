@@ -235,7 +235,7 @@ def get_description(url):
         if "Tech stack" not in title_content:
             continue
         tech_div = title_item.parent
-        content_list.append( str(tech_div) )
+        content_list.append(str(tech_div))
         break
 
     for title_item in found_h3_list:
@@ -243,10 +243,10 @@ def get_description(url):
         if "Job description" not in title_content:
             continue
 
-        title_parent = title_item.parent   
+        title_parent = title_item.parent
         desc_div = title_parent.nextSibling
         desc_parent = desc_div.parent
-        content_list.append( str(desc_parent) )
+        content_list.append(str(desc_parent))
         break
 
     if len(content_list) == 2:
