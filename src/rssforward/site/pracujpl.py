@@ -19,10 +19,11 @@ from urllib.parse import urljoin
 import requests
 
 from bs4 import BeautifulSoup
+from feedgen.feed import FeedGenerator
 
 from rssforward.utils import stringisoauto_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
-from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
+from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.site.utils.react import extract_data_dict, get_nested_dict
 from rssforward.site.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
 
@@ -74,27 +75,15 @@ class PracujPlGenerator(RSSGenerator):
 
 
 def get_offers_content(label, filter_url, filter_items, throw=True):
-    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get(filter_url, headers=headers, timeout=10)
-
-    if response.status_code not in (200, 204):
-        if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+    offers_links_list = get_offers_links(filter_url, filter_items, throw)
+    if not offers_links_list:
         return None
 
-    feed_gen = init_feed_gen(MAIN_URL)
+    feed_gen: FeedGenerator = init_feed_gen(MAIN_URL)
     feed_gen.title(label)
     feed_gen.description(label)
 
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    offers_content_list = soup.select('a[data-test*="link-offer"]')
-    items_num = min(filter_items, len(offers_content_list))
-    offers_content_list = offers_content_list[0:items_num]
-
-    for offer_item in offers_content_list:
-        offer_url = offer_item["href"]
-        full_url = urljoin(filter_url, offer_url)
+    for full_url in offers_links_list:
         add_offer(feed_gen, label, full_url)
 
     try:
@@ -105,7 +94,36 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
         raise
 
 
-def add_offer(feed_gen, label, offer_url=None, content=None, html_out_path=None):
+def add_offer(feed_gen, label, full_url, html_out_path=None):
+    offer_data = extract_offer_data(full_url, html_out_path=html_out_path)
+    offer_data["title"] = label + ": " + offer_data["title"]
+    add_data_to_feed(feed_gen, offer_data)
+
+
+def get_offers_links(filter_url, filter_items, throw=True):
+    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
+    response = requests.get(filter_url, headers=headers, timeout=10)
+
+    if response.status_code not in (200, 204):
+        if throw:
+            raise RuntimeError(f"unable to get data: {response.status_code}")
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    offers_links_list = soup.select('a[data-test*="link-offer"]')
+    items_num = min(filter_items, len(offers_links_list))
+    offers_links_list = offers_links_list[0:items_num]
+
+    full_list = []
+    for offer_item in offers_links_list:
+        offer_url = offer_item["href"]
+        full_url = urljoin(filter_url, offer_url)
+        full_list.append(full_url)
+    return full_list
+
+
+def extract_offer_data(offer_url=None, content=None, html_out_path=None):
     # sleep_random(3)
     if offer_url is not None:
         _LOGGER.info(f"getting offer details: {offer_url}")
@@ -114,7 +132,7 @@ def add_offer(feed_gen, label, offer_url=None, content=None, html_out_path=None)
 
         if response.status_code not in (200, 204):
             _LOGGER.warning("unable to get job offer content")
-            return
+            return None
 
         content = response.text
 
@@ -122,13 +140,13 @@ def add_offer(feed_gen, label, offer_url=None, content=None, html_out_path=None)
 
     data_dict = extract_data_dict(soup)
     if data_dict is None:
-        return
+        return None
     data_dict = get_nested_dict(data_dict, ["props", "pageProps"])
 
     queries_list = get_nested_dict(data_dict, ["dehydratedState", "queries"])
     if not queries_list:
         _LOGGER.warning("unable to get job data from url: %s", offer_url)
-        return
+        return None
     query_data = queries_list[0]
     offer_data = get_nested_dict(query_data, ["state", "data"])
     attributes = offer_data["attributes"]
@@ -149,13 +167,6 @@ def add_offer(feed_gen, label, offer_url=None, content=None, html_out_path=None)
     work_mode = convert_work_mode(employment["workModes"])
 
     ########
-
-    feed_item = feed_gen.add_entry()
-
-    feed_item.id(offer_id)
-
-    feed_item.title(f"{label}: {offer_company} - {offer_title}")
-    feed_item.author({"name": MAIN_NAME, "email": MAIN_NAME})
 
     # fill description
     desc_sections = offer_data["sections"]
@@ -192,14 +203,17 @@ Data:<br/>
         with open(html_out_path, "w", encoding="utf-8") as html_file:
             html_file.write(item_desc)
 
-    feed_item.content(item_desc)
-
     # fill publish date
     item_date = stringisoauto_to_date(offer_published)
-    feed_item.pubDate(item_date)
 
-    feed_item.link(href=offer_url, rel="alternate")
-    # feed_item.link( href=offer_url, rel='via')        # does not work in thunderbird
+    return {
+        "id": offer_id,
+        "title": f"{offer_company} - {offer_title}",
+        "author": {"name": MAIN_NAME, "email": MAIN_NAME},
+        "content": item_desc,
+        "pub_date": item_date,
+        "link": offer_url,
+    }
 
 
 def convert_work_schedule(work_schedule_list):

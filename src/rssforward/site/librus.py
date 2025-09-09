@@ -517,5 +517,5 @@ def add_homework(feed_gen, data_dict):
 # ============================================================
 
 
-def get_generator(_=None) -> RSSGenerator:
+def get_generator(_gen_params=None) -> RSSGenerator:
     return LibusGenerator()

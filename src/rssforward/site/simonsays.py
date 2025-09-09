@@ -530,5 +530,5 @@ Opis:<br/>
 # ============================================================
 
 
-def get_generator(_=None) -> RSSGenerator:
+def get_generator(_gen_params=None) -> RSSGenerator:
     return SimonSaysGenerator()

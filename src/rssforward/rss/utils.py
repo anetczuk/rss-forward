@@ -7,6 +7,7 @@
 #
 
 import logging
+from typing import Dict, Any
 
 from feedgen.feed import FeedGenerator
 
@@ -19,6 +20,18 @@ def init_feed_gen(main_link, lang="pl") -> FeedGenerator:
     feed_gen.link(href=main_link)
     feed_gen.language(lang)
     return feed_gen
+
+
+def add_data_to_feed(feed_gen: FeedGenerator, data_dict: Dict[str, Any]):
+    feed_item = feed_gen.add_entry()
+
+    feed_item.id(data_dict["id"])
+    feed_item.title(data_dict["title"])
+    feed_item.author(data_dict["author"])
+    feed_item.content(data_dict["content"])
+    feed_item.pubDate(data_dict["pub_date"])
+    feed_item.link(href=data_dict["link"], rel="alternate")
+    # feed_item.link( data_dict["link"], rel="via" )          # does not work in thunderbird
 
 
 def dumps_feed_gen(feed_gen: FeedGenerator):

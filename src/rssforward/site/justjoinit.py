@@ -228,17 +228,20 @@ def get_description(url):
 
     content_list = []
 
-    found_h3_list = soup.find_all("h3", attrs={"class": "MuiTypography-h3"})
-
-    for title_item in found_h3_list:
+    tech_stack_list = soup.find_all("h2", attrs={"class": "MuiTypography-root"})
+    for title_item in tech_stack_list:
         title_content = str(title_item)
         if "Tech stack" not in title_content:
             continue
         tech_div = title_item.parent
+        ## remove all ul elements
+        for ul_elem in tech_div.find_all("li"):
+            ul_elem.decompose()
         content_list.append(str(tech_div))
         break
 
-    for title_item in found_h3_list:
+    job_desc_list = soup.find_all("h3", attrs={"class": "MuiTypography-root"})
+    for title_item in job_desc_list:
         title_content = str(title_item)
         if "Job description" not in title_content:
             continue
