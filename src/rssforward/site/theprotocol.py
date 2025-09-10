@@ -85,7 +85,9 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
     feed_gen.title(label)
     feed_gen.description(label)
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    content = response.content
+    content = content.decode("utf-8")
+    soup = BeautifulSoup(content, "html.parser")
 
     offers_content_list = soup.select('a[href*="szczegoly/praca"]')
     items_num = min(filter_items, len(offers_content_list))
@@ -115,7 +117,8 @@ def add_offer(feed_gen, label, offer_url=None, content=None):
             _LOGGER.warning("unable to get job offer content")
             return
 
-        content = response.text
+        content = response.content
+        content = content.decode("utf-8")
 
     soup = BeautifulSoup(content, "html.parser")
 

@@ -126,6 +126,7 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
 
     # fill description
     desc_url = f"https://justjoin.it/offers/{slug}"
+    _LOGGER.info(f"getting offer details: {desc_url}")
 
     for rep in range(0, attempts):
         offer_desc = get_description(desc_url)
@@ -211,7 +212,9 @@ def get_description(url):
         _LOGGER.warning(f"unable to get description from url: {url} after several attempts")
         return None
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    content = response.content
+    content = content.decode("utf-8")
+    soup = BeautifulSoup(content, "html.parser")
 
     ## remove all style elements
     for style in soup.find_all("style"):
