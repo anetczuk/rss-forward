@@ -16,7 +16,6 @@ import pprint
 
 import random
 from urllib.parse import urljoin
-import requests
 
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
@@ -26,6 +25,7 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.site.utils.react import extract_data_dict, get_nested_dict
 from rssforward.site.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
+from rssforward.site.utils.curl import curl_get_content
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -101,15 +101,12 @@ def add_offer(feed_gen, label, full_url, html_out_path=None):
 
 
 def get_offers_links(filter_url, filter_items, throw=True):
-    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get(filter_url, headers=headers, timeout=10)
-
-    if response.status_code not in (200, 204):
+    response_text: str = curl_get_content(filter_url)
+    if not response_text:
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            raise RuntimeError(f"unable to get content from url: {filter_url}")
         return None
-
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response_text, "html.parser")
 
     offers_links_list = soup.select('a[data-test*="link-offer"]')
     items_num = min(filter_items, len(offers_links_list))
@@ -125,17 +122,12 @@ def get_offers_links(filter_url, filter_items, throw=True):
 
 def extract_offer_data(offer_url=None, content=None, html_out_path=None):
     # sleep_random(3)
-    if offer_url is not None:
-        _LOGGER.info(f"getting offer details: {offer_url}")
-        headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-        response = requests.get(offer_url, headers=headers, timeout=10)
 
-        if response.status_code not in (200, 204):
+    if offer_url:
+        content: str = curl_get_content(offer_url)
+        if not content:
             _LOGGER.warning("unable to get job offer content")
             return None
-
-        content = response.text
-
     soup = BeautifulSoup(content, "html.parser")
 
     data_dict = extract_data_dict(soup)

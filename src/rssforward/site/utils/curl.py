@@ -45,7 +45,7 @@ def curl_get(session, targetUrl, params_dict=None, header_list=None):
     dataBuffer = BytesIO()
     #     try:
 
-    session.setopt(pycurl.POST, 0)
+    session.setopt(pycurl.POST, 0)  ## disable POST
     if params_dict:
         session.setopt(session.URL, targetUrl + "?" + urlencode(params_dict))
     else:
@@ -62,6 +62,19 @@ def curl_get(session, targetUrl, params_dict=None, header_list=None):
     #     finally:
     #         session.close()
     return dataBuffer
+
+
+def curl_get_content(url, session=None):
+    if session is None:
+        session = get_curl_session("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0")
+    response = curl_get(session, url)
+    response_code = get_status_code(session)
+    if response_code not in (200, 204):
+        _LOGGER.warning(f"unable to get content, code: {response_code} url: {url}")
+        return None
+
+    response_text: str = response.getvalue().decode("utf-8")
+    return response_text
 
 
 ## perform 'POST' request on curl session
