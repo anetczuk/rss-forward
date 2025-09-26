@@ -11,6 +11,7 @@ import logging
 import datetime
 from typing import Iterable
 import hashlib
+import re
 import json
 import html
 import pytz
@@ -104,6 +105,11 @@ def string_to_date(date_string) -> datetime.datetime:
     return add_timezone(item_date)
 
 
+def string2_to_date(date_string) -> datetime.datetime:
+    item_date = datetime.datetime.strptime(date_string, "%d.%m.%Y")
+    return add_timezone(item_date)
+
+
 def string_to_datetime(datetime_string) -> datetime.datetime:
     item_date = datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
     return add_timezone(item_date)
@@ -143,16 +149,33 @@ def normalize_string(content: str) -> str:
     return content
 
 
+def read_data(file_path: str) -> str:
+    with open(file_path, "r", encoding="utf-8") as file:
+        return file.read()
+
+
 def write_data(file_path, content):
     with open(file_path, "w", encoding="utf8") as fp:
         fp.write(content)
 
 
-def calculate_dict_hash(data_dict):
-    data_str = json.dumps(data_dict, sort_keys=True)
-    data_bytes = data_str.encode("utf-8")
+def calculate_str_hash(content: str):
+    data_bytes = content.encode("utf-8")
     hash_value = hashlib.md5(data_bytes).hexdigest()  # nosec
     return hash_value
+
+
+def calculate_dict_hash(data_dict):
+    data_str = json.dumps(data_dict, sort_keys=True)
+    return calculate_str_hash(data_str)
+
+
+def prepare_filename(name: str):
+    name = name.lower()
+    name = re.sub(r"\s+", "_", name)
+    # name = name.replace(".", "_")
+    name = name.replace("(", "_")
+    return name.replace(")", "_")
 
 
 ## =====================================================

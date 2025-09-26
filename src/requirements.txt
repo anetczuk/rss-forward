@@ -15,3 +15,6 @@ requests>=2.31.0
 pystray==0.19.5
 
 yt-dlp
+
+selenium
+webdriver-manager

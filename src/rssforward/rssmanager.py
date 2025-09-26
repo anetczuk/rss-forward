@@ -137,7 +137,7 @@ class RSSManager:
                 gen_state.valid = False
             else:
                 gen_state.valid = True
-            self._writeData(gen_id, gen_data)
+                self._writeData(gen_id, gen_data)
 
         save_recent_date(recent_datetime)
         _LOGGER.info("========== generation ended ==========")
@@ -198,8 +198,11 @@ class RSSManager:
             feed_path = os.path.join(out_dir, rss_out)
             feed_dir = os.path.dirname(feed_path)
             os.makedirs(feed_dir, exist_ok=True)
-            _LOGGER.info("writing %s content to file: %s", generator_id, feed_path)
-            write_data(feed_path, content)
+            if content is None:
+                _LOGGER.warning("unable to write %s content to file: %s", generator_id, feed_path)
+            else:
+                _LOGGER.info("writing %s content to file: %s", generator_id, feed_path)
+                write_data(feed_path, content)
 
 
 #
@@ -235,7 +238,7 @@ class ThreadedRSSManager:
             _LOGGER.info("stopping thread")
             self._execute_loop = False
             try:
-                with self._wait_object:
+                with self._wait_object:  # lock the object
                     self._wait_object.notifyAll()  # pylint: disable=W4902
             except RuntimeError:
                 # no threads wait for notification
@@ -256,7 +259,7 @@ class ThreadedRSSManager:
                 return
 
             try:
-                with self._wait_object:
+                with self._wait_object:  # lock the object
                     _LOGGER.info("waking up RSS thread")
                     self._wait_object.notifyAll()  # pylint: disable=W4902
             except RuntimeError:
@@ -267,7 +270,7 @@ class ThreadedRSSManager:
         try:
             if startupdelay > 0:
                 _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
-                with self._wait_object:
+                with self._wait_object:  # lock the object
                     self._wait_object.wait(startupdelay)
 
             while True:
@@ -277,7 +280,7 @@ class ThreadedRSSManager:
 
                 self._callGen()
 
-                with self._wait_object:
+                with self._wait_object:  # lock the object
                     with self._lock:
                         if not self._execute_loop:
                             break
