@@ -192,7 +192,7 @@ def encode_base64(content: str):
 def decode_base64(b64_content: str):
     data_bytes = base64.b64decode(b64_content)
     return data_bytes.decode()
-    
+
 
 ## =====================================================
 
