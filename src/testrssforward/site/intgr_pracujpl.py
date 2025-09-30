@@ -22,7 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-import pprint
 
 try:
     ## following import success only when file is directly executed from command line
@@ -35,6 +34,7 @@ except ImportError:
     pass
 
 import sys
+import pprint
 
 from rssforward import logger
 from rssforward.site.pracujpl import (

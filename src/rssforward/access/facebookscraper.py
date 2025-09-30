@@ -93,6 +93,7 @@ class FacebookScraper:
                 #     continue
                 post_details = {
                     "id": post_id,
+                    "type": "post",
                     "title": item[0],
                     "event_date": None,
                     "place": None,
@@ -271,7 +272,7 @@ class FacebookScraper:
 
         # source_code = script.get_attribute("outerHTML")
 
-        main_data_dict = {"id": event_id, "url": details_url} | main_data_dict
+        main_data_dict = {"id": event_id, "type": "event", "url": details_url} | main_data_dict
 
         ## find description
         span_list = main_section.find_elements(By.CSS_SELECTOR, "span")

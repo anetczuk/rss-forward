@@ -13,6 +13,7 @@ from typing import Iterable
 import hashlib
 import re
 import json
+import base64
 import html
 import pytz
 
@@ -68,6 +69,11 @@ def string_to_date_general(date_string) -> datetime.datetime:
     except ValueError:
         _LOGGER.error("unable to convert string '%s' to datetime", date_string)
         raise
+
+
+def timestamp_to_date(timestamp) -> datetime.datetime:
+    item_date = datetime.datetime.utcfromtimestamp(timestamp)
+    return add_timezone(item_date)
 
 
 # iso format: '2024-06-04T14:23:41Z'
@@ -177,6 +183,16 @@ def prepare_filename(name: str):
     name = name.replace("(", "_")
     return name.replace(")", "_")
 
+
+def encode_base64(content: str):
+    data_bytes = content.encode()
+    return base64.b64encode(data_bytes)
+
+
+def decode_base64(b64_content: str):
+    data_bytes = base64.b64decode(b64_content)
+    return data_bytes.decode()
+    
 
 ## =====================================================
 

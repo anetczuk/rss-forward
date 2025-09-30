@@ -14,7 +14,7 @@ from enum import Enum, unique
 
 from feedgen.feed import FeedGenerator
 
-from rssforward.utils import escape_html, normalize_string, prepare_filename
+from rssforward.utils import escape_html, normalize_string, prepare_filename, encode_base64
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.access.facebookscraper import FacebookScraper
@@ -116,6 +116,7 @@ def convert_item_data(page_title, post_details, html_out_path=None):
 <br/>
 <br/>"""
 
+    desc_b64 = encode_base64(item_desc)
     item_desc = f"""\
 {date_content}
 <b>Description</b>:
@@ -123,7 +124,10 @@ def convert_item_data(page_title, post_details, html_out_path=None):
 {item_desc}
 <br/>
 <br/>
-Id: {item_id}
+Id: {item_id}<br/>
+Type: {post_details["type"]}<br/>
+Content:<br/>
+{desc_b64}
 """
 
     if html_out_path:
