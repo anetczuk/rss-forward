@@ -37,6 +37,7 @@ import sys
 
 from rssforward import logger
 from rssforward.site.justjoinit import get_description
+from rssforward.utils import write_data
 
 
 def main():
@@ -46,13 +47,13 @@ def main():
     # gen_data = generator.generate()
     # print(gen_data)
 
-    url = "https://justjoin.it/offers/respect-energy-crm-engineer-c-net-developer-warszawa-c"
-    # url = "https://justjoin.it/offers/dcv-technologies-c-developer-warsaw-warszawa-c"
+    url = "https://justjoin.it/job-offer/link-group-c-and-qt-qml-software-engineer-poznan-c"
     desc = get_description(url)
-    print(f"description:\n{desc}")
     if not desc:
         print("FAILED")
         sys.exit(1)
+
+    write_data("/tmp/justjoinit.html", desc)
 
 
 if __name__ == "__main__":

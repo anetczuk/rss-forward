@@ -164,6 +164,19 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
     data_string = escape_html(data_string)
 
     item_desc = f"""\
+<style>
+#deckgl-wrapper,
+#offerCardCompanyLogo,
+.slick-slider,
+button,
+svg {{
+    display: none;
+}}
+.MuiBox-root > ul > li {{
+    display: none;
+}}
+</style>
+
 {employment_details}
 
 <br/>
@@ -195,7 +208,7 @@ def get_description(url):
         "Version": "2",
     }
 
-    for _ in range(0, 2):
+    for _i in range(0, 2):
         try:
             response = requests.get(url, headers=headers, timeout=30)
             if response.status_code in (200, 204):
@@ -231,17 +244,17 @@ def get_description(url):
 
     content_list = []
 
-    tech_stack_list = soup.find_all("h2", attrs={"class": "MuiTypography-root"})
-    for title_item in tech_stack_list:
-        title_content = str(title_item)
-        if "Tech stack" not in title_content:
-            continue
-        tech_div = title_item.parent
-        ## remove all ul elements
-        for ul_elem in tech_div.find_all("li"):
-            ul_elem.decompose()
-        content_list.append(str(tech_div))
-        break
+    # tech_stack_list = soup.find_all("h2", attrs={"class": "MuiTypography-root"})
+    # for title_item in tech_stack_list:
+    #     title_content = str(title_item)
+    #     if "Tech stack" not in title_content:
+    #         continue
+    #     tech_div = title_item.parent
+    #     ## remove all ul elements
+    #     for ul_elem in tech_div.find_all("li"):
+    #         ul_elem.decompose()
+    #     content_list.append(str(tech_div))
+    #     break
 
     job_desc_list = soup.find_all("h3", attrs={"class": "MuiTypography-root"})
     for title_item in job_desc_list:
