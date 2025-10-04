@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024, Arkadiusz Netczuk <dev.arnet@gmail.com>
+# Copyright (c) 2025, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
 #
 # This source code is licensed under the BSD 3-Clause license found in the
@@ -11,81 +11,51 @@
 import logging
 import time
 from typing import Dict
-from enum import Enum, unique
 import datetime
-import pprint
 
 import random
 from urllib.parse import urljoin
+import requests
 
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
 
-from rssforward.utils import stringisoauto_to_date, escape_html, normalize_string
+from rssforward.utils import normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
-from rssforward.site.utils.react import extract_data_dict, get_nested_dict
 from rssforward.site.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
-from rssforward.site.utils.curl import curl_get_content
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
-MAIN_NAME = "pracuj.pl"
-MAIN_URL = "https://www.pracuj.pl/"
-
-
-@unique
-class ParamsField(Enum):
-    FILTER = "filter"
-    LABEL = "label"
-    URL = "url"
-    ITEMSPERFETCH = "itemsperfetch"
-    OUTFILE = "outfile"
+MAIN_NAME = "waw4free.pl"
+MAIN_URL = "https://waw4free.pl/"
 
 
 #
-class PracujPlGenerator(RSSGenerator):
-    def __init__(self, params_dict=None):
-        super().__init__()
-        self.params = {}
-        if params_dict:
-            self.params = params_dict.copy()
-        self.filters_list = self.params.get(ParamsField.FILTER.value)
+class Waw4FreeGenerator(RSSGenerator):
 
-    def authenticate(self, login, password):
+    def authenticate(self, _login, _password):
         return True
 
     def generate(self) -> Dict[str, str]:
         _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
-        if self.filters_list is None:
-            _LOGGER.info("nothing to get - no filters")
-            return {}
-
-        ret_dict = {}
-        for filter_data in self.filters_list:
-            filter_label = filter_data.get(ParamsField.LABEL.value)
-            filter_url = filter_data.get(ParamsField.URL.value)
-            filter_items = filter_data.get(ParamsField.ITEMSPERFETCH.value, 20)
-            _LOGGER.info("accessing: %s", filter_label)
-            outfile = filter_data.get(ParamsField.OUTFILE.value)
-            content = get_offers_content(filter_label, filter_url, filter_items)
-            ret_dict[outfile] = content
-        return ret_dict
+        content = get_content()
+        return {"news.xml": content}
 
 
-def get_offers_content(label, filter_url, filter_items, throw=True):
-    offers_links_list = get_offers_links(filter_url, filter_items, throw)
-    if not offers_links_list:
+def get_content(items_num=20):
+    news_links = get_news_links(items_num, False)
+    if not news_links:
         return None
 
     feed_gen: FeedGenerator = init_feed_gen(MAIN_URL)
-    feed_gen.title(label)
-    feed_gen.description(label)
+    feed_gen.title(MAIN_NAME)
+    feed_gen.description(MAIN_NAME)
 
-    for full_url in offers_links_list:
-        add_offer(feed_gen, label, full_url)
+    for full_url in news_links:
+        add_news(feed_gen, full_url)
 
     try:
         content = dumps_feed_gen(feed_gen)
@@ -95,127 +65,102 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
         raise
 
 
-def add_offer(feed_gen, label, full_url, html_out_path=None):
-    offer_data = extract_offer_data(full_url, html_out_path=html_out_path)
+def get_news_links(posts_num, throw=True):
+    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
+    response = requests.get("https://waw4free.pl/?wydarzenia=dzisiaj&kolejne_dni=tak", headers=headers, timeout=10)
 
-    pub_date: datetime.datetime = offer_data["pub_date"]
-    curr_time = datetime.datetime.now(tz=datetime.timezone.utc)
-    time_diff = curr_time - pub_date
-    diff_days = time_diff.total_seconds() / (60 * 60 * 24)
-    if diff_days > 7:
-        ## do not add older offers - on the site refreshed/renewed offers change its ID, so
-        ## the offer will appear again in RSS with original publish date
-        return
-
-    offer_data["title"] = label + ": " + offer_data["title"]
-    add_data_to_feed(feed_gen, offer_data)
-
-
-def get_offers_links(filter_url, filter_items, throw=True):
-    response_text: str = curl_get_content(filter_url)
-    if not response_text:
+    if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get content from url: {filter_url}")
+            raise RuntimeError(f"unable to get data: {response.status_code}")
         return None
-    soup = BeautifulSoup(response_text, "html.parser")
 
-    offers_links_list = soup.select('a[data-test*="link-offer"]')
-    items_num = min(filter_items, len(offers_links_list))
-    offers_links_list = offers_links_list[0:items_num]
+    content = response.content
+    content = content.decode("utf-8")
+
+    soup = BeautifulSoup(content, "html.parser")
 
     full_list = []
-    for offer_item in offers_links_list:
-        offer_url = offer_item["href"]
-        full_url = urljoin(filter_url, offer_url)
+    articles_list = soup.find_all("div", attrs={"class": "box"})
+    for article in articles_list:
+        link = article.select("a")[0]
+        item_url = link["href"]
+        full_url = urljoin(MAIN_URL, item_url)
+        autopromocja_list = article.find_all("div", attrs={"class": "b-c-border"})
+        if autopromocja_list:
+            ## skipping autopromocja item
+            _LOGGER.debug("skipping autopromocja item: %s", full_url)
+            continue
         full_list.append(full_url)
+
+    items_num = min(posts_num, len(full_list))
+    full_list = full_list[0:items_num]
     return full_list
 
 
-def extract_offer_data(offer_url=None, content=None, html_out_path=None):
-    # sleep_random(3)
+def add_news(feed_gen, full_url):
+    offer_data = extract_news_data(full_url)
+    if not offer_data:
+        return
+    add_data_to_feed(feed_gen, offer_data)
 
-    if offer_url:
-        content: str = curl_get_content(offer_url)
-        if not content:
+
+def extract_news_data(news_url=None, content=None):
+    # sleep_random(3)
+    if news_url is not None:
+        _LOGGER.info(f"getting offer details: {news_url}")
+        headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
+        response = requests.get(news_url, headers=headers, timeout=10)
+
+        if response.status_code not in (200, 204):
             _LOGGER.warning("unable to get job offer content")
             return None
+
+        content = response.content
+        content = content.decode("utf-8")
+
     soup = BeautifulSoup(content, "html.parser")
 
-    data_dict = extract_data_dict(soup)
-    if data_dict is None:
+    id_value = news_url.rsplit("/", 1)[-1]
+
+    articles_list = soup.find_all("div", attrs={"class": "article"})
+    article = articles_list[0]
+
+    article_title_list = article.find_all("h1", attrs={"itemprop": "name"})
+    if not article_title_list:
+        _LOGGER.warning("unable to get event from: %s", news_url)
         return None
-    data_dict = get_nested_dict(data_dict, ["props", "pageProps"])
+    title_text = article_title_list[0].text
 
-    queries_list = get_nested_dict(data_dict, ["dehydratedState", "queries"])
-    if not queries_list:
-        _LOGGER.warning("unable to get job data from url: %s", offer_url)
-        return None
-    query_data = queries_list[0]
-    offer_data = get_nested_dict(query_data, ["state", "data"])
-    attributes = offer_data["attributes"]
+    article_element = article.find_all("div", attrs={"class": "box-category"})[0]
+    article_element.clear()
 
-    offer_id = data_dict["offerId"]
-    offer_title = attributes["jobTitle"]
-    offer_company = attributes["displayEmployerName"]
-    offer_published = offer_data["publicationDetails"]["lastPublishedUtc"]
+    article_element = article.find_all("div", attrs={"id": "article_share"})[0]
+    article_element.clear()
 
-    if offer_url is None:
-        offer_url = offer_data["offerURLName"]
-        offer_url = f"{MAIN_URL}praca/{offer_url}"
+    article_element_list = article.find_all("div", attrs={"id": "inrebox"})
+    for item in article_element_list:
+        item.clear()
 
-    employment = attributes["employment"]
-    # full_remote = employment["entirelyRemoteWork"]
-    work_schedule = convert_work_schedule(employment["workSchedules"])
-    contract_types = convert_contract_data(employment["typesOfContracts"])
-    work_mode = convert_work_mode(employment["workModes"])
+    article_element = article.find_all("div", attrs={"id": "stopka_ogloszenia"})[0]
+    article_element.clear()
 
-    ########
+    article_element = article.find_all("div", attrs={"class": "zobacz-box-text"})[0]
+    article_element.clear()
 
-    # fill description
-    desc_sections = offer_data["sections"]
-
-    offer_desc = ""
-    offer_desc += f"""<div style="margin-left: 12px">{contract_types}{work_schedule}{work_mode}</div>\n"""
-
-    for sec_item in desc_sections:
-        sec_content = convert_to_section(sec_item)
-        offer_desc += f"{sec_content}<br/>\n"
-
-    item_desc = offer_desc
+    item_desc = str(article)
     item_desc = normalize_string(item_desc)
     # item_desc = convert_to_html(item_desc)
 
-    data_string = pprint.pformat(offer_data)
-    data_string = escape_html(data_string)
-
-    item_desc = f"""\
-{item_desc}
-
-<br/>
-
-<div>
-ID: {offer_id}<br/>
-Data:<br/>
-<pre>
-{data_string}
-</pre>
-</div>
-"""
-
-    if html_out_path:
-        with open(html_out_path, "w", encoding="utf-8") as html_file:
-            html_file.write(item_desc)
-
-    # fill publish date
-    item_date = stringisoauto_to_date(offer_published)
+    utc_dt = datetime.datetime.now(datetime.timezone.utc)
+    item_date = utc_dt.astimezone()
 
     return {
-        "id": offer_id,
-        "title": f"{offer_company} - {offer_title}",
+        "id": id_value,
+        "title": title_text,
         "author": {"name": MAIN_NAME, "email": MAIN_NAME},
         "content": item_desc,
         "pub_date": item_date,
-        "link": offer_url,
+        "link": news_url,
     }
 
 
@@ -341,5 +286,5 @@ def sleep_random(max_seconds):
 # ============================================================
 
 
-def get_generator(gen_params=None) -> RSSGenerator:
-    return PracujPlGenerator(gen_params)
+def get_generator(_gen_params=None) -> RSSGenerator:
+    return Waw4FreeGenerator()

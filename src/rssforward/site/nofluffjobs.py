@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024, Arkadiusz Netczuk <dev.arnet@gmail.com>
+# Copyright (c) 2025, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
 #
 # This source code is licensed under the BSD 3-Clause license found in the
@@ -11,6 +11,7 @@
 import logging
 from typing import Dict
 from enum import Enum, unique
+import datetime
 
 import json
 import requests
@@ -157,6 +158,16 @@ def add_offer(feed_gen, label, offer_data, html_out_path=None):
     offer_data = add_offer_content(offer_data, html_out_path=html_out_path)
     if not offer_data:
         return
+
+    pub_date: datetime.datetime = offer_data["pub_date"]
+    curr_time = datetime.datetime.now(tz=datetime.timezone.utc)
+    time_diff = curr_time - pub_date
+    diff_days = time_diff.total_seconds() / (60 * 60 * 24)
+    if diff_days > 7:
+        ## do not add older offers - on the site refreshed/renewed offers change its ID, so
+        ## the offer will appear again in RSS with original publish date
+        return
+
     offer_data["title"] = label + ": " + offer_data["title"]
     add_data_to_feed(feed_gen, offer_data)
 
@@ -256,13 +267,14 @@ common-posting-salaries-list .calculate {{
 {salary_content}
 <br/>
 {content}
+<br/>
+Id: {offer_data["id"]}
 """
 
     if html_out_path:
         write_data(html_out_path, content)
 
     offer_data["content"] = content
-    offer_data["id"] = offer_data["id"]
     return offer_data
 
     # offer_nice_tech = get_section(soup, "div", {"id": "posting-nice-to-have"})

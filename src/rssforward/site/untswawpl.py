@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024, Arkadiusz Netczuk <dev.arnet@gmail.com>
+# Copyright (c) 2025, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
 #
 # This source code is licensed under the BSD 3-Clause license found in the
@@ -11,7 +11,6 @@
 import logging
 import time
 from typing import Dict
-from enum import Enum, unique
 
 import random
 from urllib.parse import urljoin
@@ -31,14 +30,6 @@ _LOGGER = logging.getLogger(__name__)
 
 MAIN_NAME = "UNTS Warszawa"
 MAIN_URL = "http://unts.waw.pl/"
-
-
-@unique
-class ParamsField(Enum):
-    FILTER = "filter"
-    LABEL = "label"
-    ITEMSPERFETCH = "itemsperfetch"
-    OUTFILE = "outfile"
 
 
 #

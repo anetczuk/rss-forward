@@ -34,18 +34,21 @@ except ImportError:
     pass
 
 import sys
+import logging
 import pprint
 
 from rssforward import logger
 from rssforward.rssgenerator import RSSGenerator
-from rssforward.site.untswawpl import get_generator, get_news_links, extract_news_data
+from rssforward.site.waw4free import get_generator, get_content, MAIN_NAME
+from rssforward.utils import write_data
 
 
-page = "szlakgier"
+_LOGGER = logging.getLogger(__name__)
 
 
 def grab_by_generator():
-    generator: RSSGenerator = get_generator()
+    params = {}
+    generator: RSSGenerator = get_generator(params)
     gen_data = generator.generate()
     pprint.pprint(gen_data)
 
@@ -55,14 +58,14 @@ def main():
 
     # grab_by_generator()
 
-    news_links = get_news_links(1, True)
-    if len(news_links) != 1:
+    offers_content = get_content(1)
+    if not offers_content:
         print("FAILED")
         sys.exit(1)
 
-    full_url = news_links[0]
-    offer_data = extract_news_data(full_url)
-    pprint.pprint(offer_data)
+    out_path = f"/tmp/{MAIN_NAME}.xml"
+    _LOGGER.info("writing rss to file: file://%s", out_path)
+    write_data(out_path, offers_content)
 
 
 if __name__ == "__main__":
