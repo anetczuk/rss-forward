@@ -84,15 +84,15 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
     feed_gen.title(label)
     feed_gen.description(label)
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
     soup = BeautifulSoup(content, "html.parser")
 
     offers_content_list = soup.select(".container a")
     items_num = min(filter_items, len(offers_content_list))
-    offers_content_list = offers_content_list[0:items_num]
+    offers_content_tags = offers_content_list[0:items_num]
 
-    for offer_item in offers_content_list:
+    for offer_item in offers_content_tags:
         offer_url = offer_item["href"]
         add_offer(feed_gen, label, offer_url)
 
@@ -110,8 +110,8 @@ def add_offer(feed_gen, label, offer_url):
         _LOGGER.warning(f"unable to get job offer content, response status: {response.status_code}")
         return
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
     soup = BeautifulSoup(content, "html.parser")
 
     offer_json_list = soup.findAll("script", {"type": "application/ld+json"})

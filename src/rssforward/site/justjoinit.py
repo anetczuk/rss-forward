@@ -225,8 +225,8 @@ def get_description(url):
         _LOGGER.warning(f"unable to get description from url: {url} after several attempts")
         return None
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
     soup = BeautifulSoup(content, "html.parser")
 
     ## remove all style elements

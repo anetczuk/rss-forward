@@ -1,19 +1,41 @@
 #!/bin/bash
 
-#set -eu
-set -u
+set -eu
+#set -u
 
 
 ## works both under bash and sh
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-src_dir=$SCRIPT_DIR/../src
-examples_dir=$SCRIPT_DIR/../examples
+FIX_ERROR=0
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+      --fix)    FIX_ERROR=1
+                shift # past argument
+                ;;
+      -*)       echo "Unknown option $1"
+                exit 1
+                ;;
+      *)    shift # past argument
+            ;;
+    esac
+done
+
+
+check_dirs=()
+src_dir="$SCRIPT_DIR/../src"
+check_dirs+=("$src_dir")
+examples_dir="$SCRIPT_DIR/../examples"
+if [ -d "$examples_dir" ]; then
+    check_dirs+=("$examples_dir")
+fi
+check_dirs+=("$SCRIPT_DIR")
 
 
 echo "running black"
-black --line-length=120 $src_dir $examples_dir $SCRIPT_DIR
+black --line-length=120 "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -27,7 +49,7 @@ echo "black -- no warnings found"
 ## E126 continuation line over-indented for hanging indent
 ## E201 whitespace after '('
 ## E202 whitespace before ')'
-## E203 whitespace before ':'               # conflict with black
+## E203 whitespace before ':' - black formatter adds space before
 ## E221 multiple spaces before equal operator
 ## E241 multiple spaces after ':'
 ## E262 inline comment should start with '# '
@@ -40,9 +62,10 @@ echo "black -- no warnings found"
 ignore_errors=E115,E126,E201,E202,E203,E221,E241,E262,E265,E266,E402,E501,W391,D
 
 
+echo
 echo "running pycodestyle"
 echo "to ignore warning inline add comment at the end of line: # noqa"
-pycodestyle --show-source --statistics --count --ignore=$ignore_errors $src_dir $examples_dir $SCRIPT_DIR
+pycodestyle --show-source --statistics --count --ignore="$ignore_errors" "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -56,8 +79,10 @@ echo "pycodestyle -- no warnings found"
 ignore_errors=$ignore_errors,F401
 
 
+echo
 echo "running flake8"
-python3 -m flake8 --show-source --statistics --count --ignore=$ignore_errors $src_dir $examples_dir $SCRIPT_DIR
+echo "to ignore warning for one line put following comment in end of line: # noqa: <warning-code>"
+python3 -m flake8 --show-source --statistics --count --ignore="$ignore_errors" "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -68,20 +93,188 @@ fi
 echo "flake8 -- no warnings found"
 
 
+check_files=""
 src_files=$(find "$src_dir" -type f -name "*.py")
-example_files=$(find "$examples_dir" -type f -name "*.py")
+check_files="${check_files} ${src_files}"
+example_files=$(find "$examples_dir" -type f -name "*.py") || true
+if [[ "${example_files}" != "" ]]; then
+    check_files="${check_files} ${example_files}"
+fi
+tools_files=$(find "$SCRIPT_DIR" -type f -name "*.py")
+check_files="${check_files} ${tools_files}"
 
+
+## for unknown reason pylint works better from root directory
+pushd "${SCRIPT_DIR}/.." > /dev/null
+echo
 echo "running pylint3"
 echo "to ignore warning for module put following line on top of file: # pylint: disable=<check_id>"
 echo "to ignore warning for one line put following comment in end of line: # pylint: disable=<check_id>"
-pylint --rcfile=$SCRIPT_DIR/pylint3.config $src_files $example_files
+# shellcheck disable=SC2086
+pylint --rcfile="$SCRIPT_DIR/pylint3.config" $check_files
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
 fi
 echo "pylint3 -- no warnings found"
+popd > /dev/null
 
 
+echo
+echo "running ruff"
+echo "to ignore warning for module put following line on top of file: # ruff: noqa: <check_id>"
+echo "to ignore warning for one line put following comment in line before: # ruff: noqa: <check_id>"
+run_ruff() {
+    local check_dir="${1}"
+    echo "checking ${check_dir}"
+    pushd "${check_dir}" > /dev/null
+
+    local RUFF_ARGS=()
+    if [[ ${FIX_ERROR} -ne 0 ]]; then
+        RUFF_ARGS+=(--fix)
+    fi
+
+    ignore_errors=()
+    ignore_errors+=(ANN001)     ## ANN001 Missing type annotation for function argument
+    ignore_errors+=(ANN201)     ## ANN201 Missing return type annotation for public function
+    ignore_errors+=(ANN202)     ## ANN202 Missing return type annotation for private function
+    ignore_errors+=(ANN204)     ## ANN204 Missing return type annotation for special method
+    ignore_errors+=(D100)       ## D100 Missing docstring in public module
+    ignore_errors+=(D101)       ## D101 Missing docstring in public class
+    ignore_errors+=(D102)       ## D102 Missing docstring in public method
+    ignore_errors+=(D103)       ## D103 Missing docstring in public function
+    ignore_errors+=(D104)       ## D104 Missing docstring in public package
+    ignore_errors+=(D107)       ## D107 Missing docstring in `__init__`
+    ignore_errors+=(D203)       ## incorrect-blank-line-before-class
+    ignore_errors+=(D213)       ## multi-line-summary-second-line
+    ignore_errors+=(E501)       ## E501 Line too long (111 > 88)
+    ignore_errors+=(ERA001)     ## ERA001 Found commented-out code
+    ignore_errors+=(PLR2004)    ## PLR2004 Magic value used in comparison, consider replacing `2` with a constant variable
+    ignore_errors+=(PT009)      ## PT009 Use a regular `assert` instead of unittest-style `assertEqual`
+    ignore_errors+=(RUF013)     ## RUF013 PEP 484 prohibits implicit `Optional`
+    ignore_errors+=(RUF100)     ## RUF100 [*] Unused `noqa` directive (unused: `F811`)
+    ignore_errors+=(TRY400)     ## TRY400 Use `logging.exception` instead of `logging.error`
+
+    ## TODO: fix    
+    ignore_errors+=(S108)       ## S108 Probable insecure usage of temporary file or directory: "/tmp/"
+    ignore_errors+=(T201)       ## T201 `print` found
+    ignore_errors+=(T203)       ## T203 `pprint` found
+    ignore_errors+=(TC001)      ## TC001 Move application import `rssforward.rssgenerator.RSSGenerator` into a type-checking block
+    ignore_errors+=(F401)       ## F401 `__init__` imported but unused; consider using `importlib.util.find_spec` to test for availability
+    ignore_errors+=(SIM105)     ## SIM105 Use `contextlib.suppress(ImportError)` instead of `try`-`except`-`pass`
+    ignore_errors+=(FBT003)     ## FBT003 Boolean positional value in function call
+    ignore_errors+=(COM812)     ## COM812 [*] Trailing comma missing
+    ignore_errors+=(N816)       ## N816 Variable `testResult` in global scope should not be mixedCase
+    ignore_errors+=(N806)       ## N806 Variable `testsLoader` in function should be lowercase
+    ignore_errors+=(SLF001)     ## SLF001 Private member accessed: `_testMethodName`
+    ignore_errors+=(FLY002)     ## FLY002 Consider f-string instead of string join
+    ignore_errors+=(N803)       ## N803 Argument name `rePattern` should be lowercase
+    ignore_errors+=(N803)       ## N803 Argument name `testsList` should be lowercase
+    ignore_errors+=(UP015)      ## UP015 [*] Unnecessary mode argument
+    ignore_errors+=(DTZ002)     ## DTZ002 `datetime.datetime.today()` used
+    ignore_errors+=(UP035)      ## UP035 `typing.Dict` is deprecated, use `dict` instead
+    ignore_errors+=(UP006)      ## UP006 Use `list` instead of `List` for type annotation
+    ignore_errors+=(TRY401)     ## TRY401 Redundant exception object included in `logging.exception` call
+    ignore_errors+=(TRY300)     ## TRY300 Consider moving this statement to an `else` block
+    ignore_errors+=(TRY003)     ## TRY003 Avoid specifying long messages outside the exception class
+    ignore_errors+=(TD003)      ## TD003 Missing issue link for this TODO
+    ignore_errors+=(TD002)      ## TD002 Missing author in TODO; try: `# TODO(<author_name>): ...` or `# TODO @<author_name>: ...`
+    ignore_errors+=(TC002)      ## TC002 Move third-party import `feedgen.feed.FeedGenerator` into a type-checking block
+    ignore_errors+=(S602)       ## S602 `subprocess` call with `shell=True` identified, security issue
+    ignore_errors+=(SIM108)     ## SIM108 Use ternary operator `gross_label = "Gross" if emp_gross else "Net"` instead of `if`-`else`-block 
+    ignore_errors+=(S324)       ## S324 Probable use of insecure hash functions in `hashlib`: `md5`
+    ignore_errors+=(S311)       ## S311 Standard pseudo-random generators are not suitable for cryptographic purposes
+    ignore_errors+=(ANN205)     ## ANN205 Missing return type annotation for staticmethod `debug`
+    ignore_errors+=(ARG002)     ## ARG002 Unused method argument: `icon`
+    ignore_errors+=(ARG005)     ## ARG005 Unused lambda argument: `item`
+    ignore_errors+=(B024)       ## B024 `Versionable` is an abstract base class, but it has no abstract methods or properties
+    ignore_errors+=(B027)       ## B027 `RSSGenerator.close` is an empty method in an abstract base class, but has no abstract decorator
+    ignore_errors+=(BLE001)     ## BLE001 Do not catch blind exception: `BaseException`
+    ignore_errors+=(C901)       ## C901 `convert_to_section` is too complex (24 > 10)
+    ignore_errors+=(D105)       ## D105 Missing docstring in magic method
+    ignore_errors+=(DTZ001)     ## DTZ001 `datetime.datetime()` called without a `tzinfo` argument
+    ignore_errors+=(DTZ004)     ## DTZ004 `datetime.datetime.utcfromtimestamp()` used
+    ignore_errors+=(DTZ005)     ## DTZ005 `datetime.datetime.now()` called without a `tz` argument
+    ignore_errors+=(EM101)      ## EM101 Exception must not use a string literal, assign to variable first
+    ignore_errors+=(EM102)      ## EM102 Exception must not use an f-string literal, assign to variable first
+    ignore_errors+=(EXE001)     ## EXE001 Shebang is present but file is not executable
+    ignore_errors+=(EXE002)     ## EXE002 The file is executable but no shebang is present
+    ignore_errors+=(FBT001)     ## FBT001 Boolean-typed positional argument in function definition
+    ignore_errors+=(FBT002)     ## FBT002 Boolean default positional argument in function definition
+    ignore_errors+=(FIX002)     ## FIX002 Line contains TODO, consider resolving the issue
+    ignore_errors+=(G004)       ## G004 Logging statement uses f-string
+    ignore_errors+=(LOG007)     ## LOG007 Use of `logging.exception` with falsy `exc_info`
+    ignore_errors+=(N802)       ## N802 Function name `_callGen` should be lowercase
+    ignore_errors+=(N818)       ## N818 Exception name `LockedKPXCException` should be named with an Error suffix
+    ignore_errors+=(PERF203)    ## PERF203 `try`-`except` within a loop incurs performance overhead
+    ignore_errors+=(PERF401)    ## PERF401 Use a list comprehension to create a transformed list
+    ignore_errors+=(PERF402)    ## PERF402 Use `list` or `list.copy` to create a copy of a list
+    ignore_errors+=(PGH004)     ## PGH004 Use specific rule codes when using `noqa`
+    ignore_errors+=(PIE808)     ## PIE808 [*] Unnecessary `start` argument in `range`
+    ignore_errors+=(PLR0911)    ## PLR0911 Too many return statements (24 > 6)
+    ignore_errors+=(PLR0912)    ## PLR0912 Too many branches (23 > 12)
+    ignore_errors+=(PLR0915)    ## PLR0915 Too many statements (69 > 50)
+    ignore_errors+=(PLR2044)    ## PLR2044 [*] Line with empty comment
+    ignore_errors+=(PLW0602)    ## PLW0602 Using global for `auth` but no assignment is done
+    ignore_errors+=(PLW0603)    ## PLW0603 Using the global statement to update `auth` is discouraged
+    ignore_errors+=(PLW2901)    ## PLW2901 `for` loop variable `word` overwritten by assignment target
+    ignore_errors+=(PTH104)     ## PTH104 `os.rename()` should be replaced by `Path.rename()`
+    ignore_errors+=(PTH107)     ## PTH107 `os.remove()` should be replaced by `Path.unlink()`
+    ignore_errors+=(PTH110)     ## PTH110 `os.path.exists()` should be replaced by `Path.exists()`
+    ignore_errors+=(PTH119)     ## PTH119 `os.path.basename()` should be replaced by `Path.name`
+    ignore_errors+=(RET504)     ## RET504 Unnecessary assignment to `content` before `return` statement
+    ignore_errors+=(RSE102)     ## RSE102 [*] Unnecessary parentheses on raised exception
+    ignore_errors+=(RUF001)     ## RUF001 String contains ambiguous ` ` (NARROW NO-BREAK SPACE). Did you mean ` ` (SPACE)?
+    ignore_errors+=(RUF003)     ## RUF003 Comment contains ambiguous ` ` (NARROW NO-BREAK SPACE). Did you mean ` ` (SPACE)?
+    ignore_errors+=(S105)       ## S105 Possible hardcoded password assigned to: "AUTH_PASS"
+    ignore_errors+=(S301)       ## S301 `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
+    ignore_errors+=(A005)       ## A005 Module `site` shadows a Python standard-library module
+    
+    ignore_errors+=(DTZ007)     ## DTZ007 Naive datetime constructed using `datetime.datetime.strptime()` without %z
+    ignore_errors+=(DTZ011)     ## DTZ011 `datetime.date.today()` used
+    ignore_errors+=(I001)       ## I001 [*] Import block is un-sorted or un-formatted
+    ignore_errors+=(PTH100)     ## PTH100 `os.path.abspath()` should be replaced by `Path.resolve()`
+    ignore_errors+=(PTH103)     ## PTH103 `os.makedirs()` should be replaced by `Path.mkdir(parents=True)`
+    ignore_errors+=(PTH109)     ## PTH109 `os.getcwd()` should be replaced by `Path.cwd()`
+    ignore_errors+=(PTH112)     ## PTH112 `os.path.isdir()` should be replaced by `Path.is_dir()`
+    ignore_errors+=(PTH113)     ## PTH113 `os.path.isfile()` should be replaced by `Path.is_file()`
+    ignore_errors+=(PTH117)     ## PTH117 `os.path.isabs()` should be replaced by `Path.is_absolute()`
+    ignore_errors+=(PTH118)     ## PTH118 `os.path.join()` should be replaced by `Path` with `/` operator
+    ignore_errors+=(PTH120)     ## PTH120 `os.path.dirname()` should be replaced by `Path.parent`
+    ignore_errors+=(PTH122)     ## PTH122 `os.path.splitext()` should be replaced by `Path.suffix`, `Path.stem`, and `Path.parent`
+    ignore_errors+=(PTH123)     ## PTH123 `open()` should be replaced by `Path.open()
+    ignore_errors+=(PTH208)     ## PTH208 Use `pathlib.Path.iterdir()` instead.
+
+    ignore_string="${ignore_errors[*]}"
+    ignore_string="${ignore_string//${IFS:0:1}/,}"
+
+    if [ ${#RUFF_ARGS[@]} -ne 0 ]; then
+        ruff check --select ALL --ignore "${ignore_string}" "${RUFF_ARGS[*]}"
+    else
+        ruff check --select ALL --ignore "${ignore_string}"
+    fi
+
+    exit_code=$?
+    popd > /dev/null
+    if [ $exit_code -ne 0 ]; then
+        exit $exit_code
+    fi
+}
+
+for dir in "${check_dirs[@]}"; do
+   run_ruff "${dir}"
+done
+
+echo "ruff -- no warnings found"
+
+
+echo
+echo "running complexipy"
+complexipy -d low -mx 70 "${check_dirs[@]}"
+echo "complexipy -- no warnings found"
+
+
+echo
 echo "running bandit"
 echo "to ignore warning for one line put following comment in end of line: # nosec"
 
@@ -90,7 +283,8 @@ echo "to ignore warning for one line put following comment in end of line: # nos
 skip_list="B301,B403"
 
 #echo "to ignore warning for one line put following comment in end of line: # nosec
-bandit --skip "${skip_list}" -r $src_dir $example_files $SCRIPT_DIR
+# shellcheck disable=SC2086
+bandit --skip "${skip_list}" -r "${check_dirs[@]}" -x "$src_dir/test*"
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
@@ -98,10 +292,35 @@ fi
 echo "bandit -- no warnings found"
 
 
-echo "running safety"
-safety check -r $src_dir/requirements.txt
-exit_code=$?
-if [ $exit_code -ne 0 ]; then
-    exit $exit_code
+echo
+req_path="$src_dir/requirements.txt"
+if [ -f "$req_path" ]; then
+    echo "running safety"
+    safety check -r "$req_path"
+    exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        exit $exit_code
+    fi
+    echo "safety -- no warnings found"
+else
+    echo "skipping safety - no requirements file found"
 fi
-echo "safety -- no warnings found"
+
+
+## check shell scripts
+echo
+found_files=$(find "$src_dir/../" -not -path "*/venv/*" -not -path "*/tmp/*" -type f -name '*.sh' -o -name '*.bash')
+echo "found sh files to check: $found_files"
+
+## SC2002 (style): Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead.
+## SC2129: Consider using { cmd1; cmd2; } >> file instead of individual redirects.
+## SC2155 (warning): Declare and assign separately to avoid masking return values.
+EXCLUDE_LIST="SC2002,SC2129,SC2155"
+
+echo
+echo "to suppress line warning add before the line: # shellcheck disable=<code>"
+# shellcheck disable=SC2068
+shellcheck -a -x --exclude "$EXCLUDE_LIST" ${found_files[@]}
+echo "shellcheck -- no warnings found"
+
+echo -e "\nall checks completed"

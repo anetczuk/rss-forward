@@ -23,7 +23,7 @@ while :; do
       --config)         ## add prefix program
                         TOML_CONFIG_PATH=$(realpath "$2")
                         shift; shift ;;
-      *)  ARGS+=($1)
+      *)  ARGS+=("${1}")
           shift ;;
     esac
 done

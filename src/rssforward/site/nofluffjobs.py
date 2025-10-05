@@ -18,13 +18,14 @@ import requests
 
 from bs4 import BeautifulSoup
 
+from feedgen.feed import FeedGenerator
+
 from rssforward.utils import (
     timestamp_to_date,
     write_data,
 )
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
-from feedgen.feed import FeedGenerator
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -107,8 +108,8 @@ def get_offers_links(filter_url, throw=True):
             raise RuntimeError(f"unable to get data: {response.status_code}")
         return None
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
     soup = BeautifulSoup(content, "html.parser")
 
     offer_json_list = soup.findAll("script", {"id": "serverApp-state"})
@@ -181,8 +182,8 @@ def add_offer_content(offer_data, html_out_path=None):
     if response.status_code not in (200, 204):
         return None
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
     soup = BeautifulSoup(content, "html.parser")
 
     # offer_name_list = soup.findAll("div", {"class": "posting-details-description"})

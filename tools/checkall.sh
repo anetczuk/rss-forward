@@ -7,15 +7,18 @@ set -eu
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-cd $SCRIPT_DIR
+cd "$SCRIPT_DIR"
 
 
 ./codecheck.sh
+
+echo
+echo
 ./doccheck.sh
+
 ./typecheck.sh
 
-echo -e "\nchecking links in MD files"
 ./mdcheck.sh
 
 
-echo "everything is fine"
+echo -e "\neverything is fine"

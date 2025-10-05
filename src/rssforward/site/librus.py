@@ -9,7 +9,7 @@
 # pylint: disable=E0401 (import-error)
 
 import logging
-from typing import Dict
+from typing import Dict, Any
 import datetime
 
 from librus_apix.exceptions import MaintananceError, TokenError
@@ -72,7 +72,7 @@ class LibusGenerator(RSSGenerator):
 
 
 def get_messages_by_date(token, start_datetime=None):
-    ret_messages = []
+    ret_messages: list[Any] = []
     max_page_index = get_max_page_number(token)
     for pi in range(0, max_page_index + 1):
         messages = get_recieved(token, page=pi)
@@ -86,7 +86,7 @@ def get_messages_by_date(token, start_datetime=None):
 
 
 def get_announcements_by_date(token, start_datetime=None):
-    ret_announcements = []
+    ret_announcements: list[Any] = []
     announcements = get_announcements(token)
     _LOGGER.info("received %s announcements", len(announcements))
     for item in announcements:

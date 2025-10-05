@@ -36,7 +36,7 @@ _LOGGER = logging.getLogger(__name__)
 ## implementation allows to pass custom base path
 class RootedHTTPRequestHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
-        base_path = self.server.base_path
+        base_path = self.server.base_path  # type: ignore[attr-defined]
         if base_path is None:
             ## no base path given -- standard implementation
             return super().translate_path(path)

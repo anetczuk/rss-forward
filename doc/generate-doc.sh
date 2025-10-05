@@ -14,16 +14,16 @@ generate_help() {
     echo "generating help output"
 
     EXE_NAME="startrssforward.py"
-    HELP_PATH=$SCRIPT_DIR/cmdargs.md
+    HELP_PATH="${SCRIPT_DIR}/cmdargs.md"
     
-    echo "## ${EXE_NAME} --help" > ${HELP_PATH}
-    echo -e "\`\`\`" >> ${HELP_PATH}
-    $SRC_DIR/$EXE_NAME --help >> ${HELP_PATH}
-    echo -e "\`\`\`" >> ${HELP_PATH}
+    echo "## ${EXE_NAME} --help" > "${HELP_PATH}"
+    echo -e "\`\`\`" >> "${HELP_PATH}"
+    "${SRC_DIR}/${EXE_NAME}" --help >> "${HELP_PATH}"
+    echo -e "\`\`\`" >> "${HELP_PATH}"
 }
 
 
 generate_help
 
 
-$SCRIPT_DIR/generate_small.sh
+"${SCRIPT_DIR}"/generate_small.sh

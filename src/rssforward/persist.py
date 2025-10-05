@@ -196,15 +196,15 @@ class Versionable(metaclass=abc.ABCMeta):
     def __setstate__(self, dict_):
         version_present_in_pickle = dict_.pop("_class_version", None)
         # pylint: disable=E1101
-        if version_present_in_pickle == self._class_version:
+        if version_present_in_pickle == self._class_version:  # type: ignore[attr-defined]
             # pylint: disable=W0201
             self.__dict__ = dict_
         else:
             self._convertstate_(dict_, version_present_in_pickle)
 
     def _convertstate_(self, dict_, dictVersion_):
-        # pylint: disable=E1101
-        _LOGGER.info("converting object from version %s to %s", dictVersion_, self._class_version)
+        # pylint: disable=E1101,C0301
+        _LOGGER.info("converting object from version %s to %s", dictVersion_, self._class_version)  # type: ignore[attr-defined]
         # pylint: disable=W0201
         self.__dict__ = dict_
 

@@ -167,32 +167,35 @@ class SimonSaysGenerator(RSSGenerator):
 
         return ret_list
 
-    def _getMarks(self, student_id):
-        url = "https://simonsays.langlion.com//api/marks"
-        params_dict = {"student_user_id": student_id}
-        data_dict = self._fetchDataDict(url, params_dict)
-        if data_dict is None:
-            return None
+    def _getMarks(self, _student_id):
+        # TODO: finish marks scrapping
+        return []
 
-        # print("data:", json.dumps(data_dict, indent=4))
-
-        ret_list = []
-
-        items_list = data_dict.get("data", [])
-        for data_item in items_list:
-            marks = data_item.get("marks")
-            if marks:
-                _LOGGER.error("unhandled case - found marks!!!")
-                return None
-
-            special_marks = data_item.get("available_special_marks")
-            if special_marks:
-                _LOGGER.error("unhandled case - found special marks!!!")
-                return None
-
-            # ret_list.append(message_details_data)
-
-        return ret_list
+        # url = "https://simonsays.langlion.com//api/marks"
+        # params_dict = {"student_user_id": student_id}
+        # data_dict = self._fetchDataDict(url, params_dict)
+        # if data_dict is None:
+        #     return None
+        #
+        # # print("data:", json.dumps(data_dict, indent=4))
+        #
+        # ret_list = []
+        #
+        # items_list = data_dict.get("data", [])
+        # for data_item in items_list:
+        #     marks = data_item.get("marks")
+        #     if marks:
+        #         _LOGGER.error("unhandled case - found marks!!!")
+        #         return None
+        #
+        #     special_marks = data_item.get("available_special_marks")
+        #     if special_marks:
+        #         _LOGGER.error("unhandled case - found special marks!!!")
+        #         return None
+        #
+        #     # ret_list.append(message_details_data)
+        #
+        # return ret_list
 
     def _getDocuments(self, student_id):
         url = "https://simonsays.langlion.com//api/student/userDocuments"
@@ -279,8 +282,8 @@ def add_message(feed_gen, data_dict):
     sender = data_dict["sender"]
     date_string = data_dict["date"]  # example: 2024-10-06 14:10:31
     attachments = data_dict["attachments"]
-    have_attachments = len(attachments) > 0
-    if have_attachments:
+    have_attachments = None
+    if len(attachments) > 0:
         have_attachments = "Wiadomość posiada załączniki<br/>"
     else:
         have_attachments = "<!-- no attachments -->"

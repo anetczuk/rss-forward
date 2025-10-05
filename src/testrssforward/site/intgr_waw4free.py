@@ -47,8 +47,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def grab_by_generator():
-    params = {}
-    generator: RSSGenerator = get_generator(params)
+    generator: RSSGenerator = get_generator()
     gen_data = generator.generate()
     pprint.pprint(gen_data)
 

@@ -74,8 +74,8 @@ def get_news_links(posts_num, throw=True):
             raise RuntimeError(f"unable to get data: {response.status_code}")
         return None
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
 
     soup = BeautifulSoup(content, "html.parser")
 

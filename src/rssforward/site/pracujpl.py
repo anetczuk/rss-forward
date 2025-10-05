@@ -121,21 +121,21 @@ def get_offers_links(filter_url, filter_items, throw=True):
 
     offers_links_list = soup.select('a[data-test*="link-offer"]')
     items_num = min(filter_items, len(offers_links_list))
-    offers_links_list = offers_links_list[0:items_num]
+    offers_links_tags = offers_links_list[0:items_num]
 
     full_list = []
-    for offer_item in offers_links_list:
+    for offer_item in offers_links_tags:
         offer_url = offer_item["href"]
         full_url = urljoin(filter_url, offer_url)
         full_list.append(full_url)
     return full_list
 
 
-def extract_offer_data(offer_url=None, content=None, html_out_path=None):
+def extract_offer_data(offer_url=None, content: str = None, html_out_path=None):
     # sleep_random(3)
 
     if offer_url:
-        content: str = curl_get_content(offer_url)
+        content = curl_get_content(offer_url)
         if not content:
             _LOGGER.warning("unable to get job offer content")
             return None

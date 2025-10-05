@@ -85,15 +85,15 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
     feed_gen.title(label)
     feed_gen.description(label)
 
-    content = response.content
-    content = content.decode("utf-8")
+    content_bytes = response.content
+    content = content_bytes.decode("utf-8")
     soup = BeautifulSoup(content, "html.parser")
 
     offers_content_list = soup.select('a[href*="szczegoly/praca"]')
     items_num = min(filter_items, len(offers_content_list))
-    offers_content_list = offers_content_list[0:items_num]
+    offers_content_tags = offers_content_list[0:items_num]
 
-    for offer_item in offers_content_list:
+    for offer_item in offers_content_tags:
         offer_url = offer_item["href"]
         full_url = urljoin(filter_url, offer_url)
         add_offer(feed_gen, label, full_url)
