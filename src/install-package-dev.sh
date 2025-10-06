@@ -10,13 +10,13 @@ set -eu
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-echo "Installing package $SCRIPT_DIR"
-
-
 ## creates "*.egg-info" directory along package dir
 
-if [[ $* == *--venv* ]]; then
+if [[ $* == *--system* ]]; then
     pip3 install -e "$SCRIPT_DIR" 
 else
     pip3 install --user -e "$SCRIPT_DIR" 
 fi
+
+echo "Removing $SCRIPT_DIR/build direcotry"
+rm -r "$SCRIPT_DIR/build"
