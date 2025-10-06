@@ -8,7 +8,6 @@
 
 import os
 import logging
-from typing import Dict, List, Tuple
 import threading
 
 import pkgutil
@@ -25,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # returns list of instances of base generator class
-def get_generators() -> Dict[str, RSSGenerator]:
+def get_generators() -> dict[str, RSSGenerator]:
     ret_data = {}
 
     generators_module = rssforward.site
@@ -72,7 +71,6 @@ def get_auth_data(auth_params):
     return (None, None)
 
 
-#
 class RSSManager:
     class State:
         """Container for generator and it's state."""
@@ -92,7 +90,7 @@ class RSSManager:
         if parameters is None:
             parameters = {}
         self._params = parameters.copy()
-        self._generators: List[Tuple[str, RSSManager.State]] = None
+        self._generators: list[tuple[str, RSSManager.State]] = None
         if generators:
             self._generators = generators
 
@@ -126,7 +124,7 @@ class RSSManager:
             gen = gen_state.generator
 
             try:
-                gen_data: Dict[str, str] = gen.generate()
+                gen_data: dict[str, str] = gen.generate()
             except Exception:  # pylint: disable=W0703
                 _LOGGER.exception("exception raised during generator execution")
                 gen_state.valid = False
@@ -189,7 +187,7 @@ class RSSManager:
 
         _LOGGER.info("generators initialized: %s", len(self._generators))
 
-    def _writeData(self, generator_id, generator_data: Dict[str, str]):
+    def _writeData(self, generator_id, generator_data: dict[str, str]):
         if not generator_data:
             return
         data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
@@ -205,7 +203,6 @@ class RSSManager:
                 write_data(feed_path, content)
 
 
-#
 class ThreadedRSSManager:
     def __init__(self, manager):
         self._manager = manager
@@ -288,15 +285,14 @@ class ThreadedRSSManager:
                     self._wait_object.wait(refresh_time)
 
             _LOGGER.info("thread loop ended")
-            return
 
         except KeyboardInterrupt:
             _LOGGER.error("keyboard interrupt")
             # executed in case of exception
             raise
 
-        except BaseException as exc:
-            _LOGGER.exception("exception occurred in thread loop: %s type: %s", exc, type(exc))
+        except BaseException:
+            _LOGGER.exception("exception occurred in thread loop")
             # executed in case of exception
             raise
 
@@ -306,7 +302,7 @@ class ThreadedRSSManager:
 
     def _callGen(self):
         if self._state_callback:
-            self._state_callback(False)
+            self._state_callback(new_state=False)
 
         try:
             self._manager.generateData()

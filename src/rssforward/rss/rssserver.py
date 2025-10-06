@@ -46,13 +46,11 @@ class RootedHTTPRequestHandler(SimpleHTTPRequestHandler):
         words = filter(None, words)
         path = base_path
         for word in words:
-            _, word = os.path.splitdrive(word)
-            # drive, word = os.path.splitdrive(word)
-            _, word = os.path.split(word)
-            # head, word = os.path.split(word)
-            if word in (os.curdir, os.pardir):
+            _drive, word_path = os.path.splitdrive(word)
+            _head, word_path = os.path.split(word_path)
+            if word_path in (os.curdir, os.pardir):
                 continue
-            path = os.path.join(path, word)
+            path = os.path.join(path, word_path)
         return path
 
 
@@ -91,13 +89,14 @@ class RSSServerManager:
         self.lock = threading.RLock()
 
     @staticmethod
-    def getPrimaryIp():
+    def getPrimaryIp() -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             # doesn't even have to be reachable
             sock.connect(("10.255.255.255", 1))
             IP = sock.getsockname()[0] + ":" + str(RSSServerManager.DEFAULT_PORT)
-        except BaseException:
+        # ruff: noqa: BLE001
+        except Exception:  # pylint: disable=W0718
             IP = "127.0.0.1" + ":" + str(RSSServerManager.DEFAULT_PORT)
         finally:
             sock.close()
@@ -180,7 +179,7 @@ class RSSServerManager:
         except OSError:
             _LOGGER.exception("unable to start server on port: %s", self.port)
             raise
-        except:  # noqa
+        except:  # noqa: E722
             _LOGGER.exception("unhandled exception occur - terminating server thread")
             raise
 

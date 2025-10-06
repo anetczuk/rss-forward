@@ -47,6 +47,7 @@ class ConfigField(Enum):
 
     AUTH_TYPE = "type"
     AUTH_LOGIN = "login"  # nosec
+    # ruff: noqa: S105
     AUTH_PASS = "pass"  # nosec
     AUTH_ITEMURL = "itemurl"  # nosec
 
@@ -89,15 +90,14 @@ def specify_dir(dir_value, config_path, default_dir):
         # relative path - make it relative to config file
         config_dir = os.path.dirname(config_path)
         dir_value = os.path.join(config_dir, dir_value)
-    dir_value = os.path.abspath(dir_value)
-    return dir_value
+    return os.path.abspath(dir_value)
 
 
 def load_raw(config_path):
     if not config_path:
         return {}
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             return toml.load(f)
     except FileNotFoundError:
         _LOGGER.warning("could not load config file '%s' - using default configuration", config_path)

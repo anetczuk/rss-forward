@@ -37,7 +37,6 @@ lib_logger.setLevel(logging.WARNING)
 MAIN_URL = "https://www.facebook.com"
 
 
-#
 class FacebookScraper:
     HEADLESS = True
 
@@ -48,11 +47,12 @@ class FacebookScraper:
         self.driver = self._init_driver()
         self.title = None
 
-    ## context management
     def __enter__(self):
+        """Enter context manager."""
         return self
 
     def __exit__(self, _exc_type, _exc_value, _exc_traceback):
+        """Exit context manager."""
         self.close()
 
     def close(self):
@@ -284,10 +284,14 @@ class FacebookScraper:
                     description = description[:see_less_pos]
                 description = description.strip()
                 main_data_dict["content"] = description
-                _LOGGER.debug("found description")
-                return main_data_dict
+
+            # ruff: noqa: PERF203
             except ValueError:
                 pass
+
+            else:
+                _LOGGER.debug("found description")
+                return main_data_dict
 
         _LOGGER.error("could not get post description")
         # curr_size = self.driver.get_window_size()
@@ -386,44 +390,49 @@ def pub_string_to_date(pub_text) -> datetime.datetime:
         if len(pub_text) <= 3 and pub_text.endswith("d"):
             sufix = pub_text.index("d")
             num_day = int(pub_text[:sufix])
-            today_date = datetime.date.today()
+            today_date = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
             midnight = datetime.datetime.combine(today_date, datetime.time())
             midnight = midnight - datetime.timedelta(days=num_day)
-            today_datetime = add_timezone(midnight)
-            return today_datetime
+            return add_timezone(midnight)
 
         ## try to parse date in format
-        ## "<month name> <day number> at <hour_number>:<min_number> {AM|PM}", eg. "September 8 at 3:50 PM"
+        ## "<month name> <day number> at <hour_number>:<min_number> {AM|PM}", eg. "September 8 at 3:50 PM"
         try:
             item_date = None
             item_date = datetime.datetime.strptime(pub_text, "%B %d at %I:%M %p")
             ## set current year
-            now_date = datetime.datetime.now()
-            item_date = item_date.replace(year=now_date.year)
+            now_date = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
+            now_timezone = now_date.tzinfo
+            item_date = item_date.replace(year=now_date.year, tzinfo=now_timezone)
             if item_date > now_date:
                 ## subtract one year
                 item_date = item_date.replace(year=item_date.year - 1)
-            item_date = add_timezone(item_date)
-            return item_date
+
         except ValueError:
             ## could not parse
             pass
+
+        else:
+            return item_date
 
         ## try to parse date in format "<month name> <day number>", eg. "July 9"
         try:
             item_date = None
             item_date = datetime.datetime.strptime(pub_text, "%B %d")
             ## set current year
-            now_date = datetime.datetime.now()
-            item_date = item_date.replace(year=now_date.year)
+            now_date = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
+            now_timezone = now_date.tzinfo
+            item_date = item_date.replace(year=now_date.year, tzinfo=now_timezone)
             if item_date > now_date:
                 ## subtract one year
                 item_date = item_date.replace(year=item_date.year - 1)
-            item_date = add_timezone(item_date)
-            return item_date
+
         except ValueError:
             ## could not parse
             pass
+
+        else:
+            return item_date
 
         _LOGGER.error("unable to convert post pub date: '%s'", pub_text)
         return None

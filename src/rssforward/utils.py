@@ -9,7 +9,7 @@
 import os
 import logging
 import datetime
-from typing import Iterable
+from collections.abc import Iterable
 import hashlib
 import re
 import json
@@ -33,8 +33,7 @@ def get_app_datadir():
 
 def get_recentdate_path():
     data_dir = get_app_datadir()
-    recentdate_path = os.path.join(data_dir, "recentdate.obj")
-    return recentdate_path
+    return os.path.join(data_dir, "recentdate.obj")
 
 
 def read_recent_date():
@@ -43,12 +42,13 @@ def read_recent_date():
 
 
 def get_recent_date():
-    today_date = datetime.date.today()
+    now_datetime = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
+    today_date = now_datetime.date()
     midnight = datetime.datetime.combine(today_date, datetime.time())
     # move back 1 day to prevent short time window where data could be skipped
     midnight = midnight - datetime.timedelta(days=1)
-    today_datetime = add_timezone(midnight)
-    return today_datetime
+    now_timezone = now_datetime.tzinfo
+    return midnight.replace(tzinfo=now_timezone)
 
 
 def save_recent_date(recent_datetime):
@@ -72,7 +72,7 @@ def string_to_date_general(date_string) -> datetime.datetime:
 
 
 def timestamp_to_date(timestamp) -> datetime.datetime:
-    item_date = datetime.datetime.utcfromtimestamp(timestamp)
+    item_date = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
     return add_timezone(item_date)
 
 
@@ -145,18 +145,16 @@ def escape_html(content: str) -> str:
 
 # make various string conversions to meet feed requirements
 def normalize_string(content: str) -> str:
-    content = content.replace("\x02", " ")
+    return content.replace("\x02", " ")
 
     # content = content.encode().decode("utf-8","strict")
 
     # string_encode = content.encode("ascii", "ignore")
     # return string_encode.decode()
 
-    return content
-
 
 def read_data(file_path: str) -> str:
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(file_path, encoding="utf-8") as file:
         return file.read()
 
 
@@ -167,8 +165,8 @@ def write_data(file_path, content):
 
 def calculate_str_hash(content: str):
     data_bytes = content.encode("utf-8")
-    hash_value = hashlib.md5(data_bytes).hexdigest()  # nosec
-    return hash_value
+    # ruff: noqa: S324
+    return hashlib.md5(data_bytes).hexdigest()  # nosec
 
 
 def calculate_dict_hash(data_dict):
@@ -235,10 +233,7 @@ class ObjRepr:
             return obj
 
         if isinstance(obj, Iterable):
-            ret_list = []
-            for data in obj:
-                ret_list.append(self._visit(data))
-            return ret_list
+            return [self._visit(data) for data in obj]
 
         return obj
 

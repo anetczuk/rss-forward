@@ -8,7 +8,7 @@
 
 import unittest
 
-from rssforward.utils import normalize_string
+from rssforward.utils import normalize_string, get_recent_date
 
 
 class UtilsTest(unittest.TestCase):
@@ -25,3 +25,8 @@ class UtilsTest(unittest.TestCase):
         converted = []
         converted.append(normalize_string(string[0]))
         self.assertEqual(["aaa bbb\nccc"], converted)
+
+    def test_get_recent_date(self):
+        recent = get_recent_date()
+        tzinfo = recent.tzinfo
+        self.assertTrue(tzinfo is not None)

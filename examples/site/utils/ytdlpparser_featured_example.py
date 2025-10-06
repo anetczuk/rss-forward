@@ -7,22 +7,28 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 import sys
+import logging
 import json
 import pprint
 
 from rssforward import logger
 from rssforward.site.utils.ytdlpparser import parse_playlist
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_json(obj):
@@ -35,8 +41,7 @@ def main():
     # przygody przedsiebiorcow
     url = "https://www.youtube.com/@PrzygodyPrzedsiebiorcow/featured"
     ret_dict = parse_playlist(url)
-    print("extracted rss channel data:")
-    pprint.pprint(ret_dict)
+    _LOGGER.info("extracted rss channel data:\n%s", pprint.pformat(ret_dict))
 
 
 # =============================================================

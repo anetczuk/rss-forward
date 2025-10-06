@@ -28,7 +28,8 @@ def get_auth_data(username: str, password: str):
     response = requests.post(url, data=data, timeout=30)
 
     if response.status_code != 200:
-        raise RuntimeError(f"unable to authenticate: {response.status_code}")
+        message = f"unable to authenticate: {response.status_code}"
+        raise RuntimeError(message)
 
     data_dict = json.loads(response.text)
     data_results = data_dict.get("results")
@@ -49,8 +50,7 @@ def get_auth_data(username: str, password: str):
 
 
 def get_auth_header(token):
-    headers = {"X-AUTH-TOKEN": token}
-    return headers
+    return {"X-AUTH-TOKEN": token}
 
 
 def get_json_data(token, url, throw=True):
@@ -58,10 +58,10 @@ def get_json_data(token, url, throw=True):
     response = requests.get(url, headers=headers, timeout=30)
     if response.status_code != 200:
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
-    data = json.loads(response.text)
-    return data
+    return json.loads(response.text)
 
 
 def get_attendances(token, student_id):

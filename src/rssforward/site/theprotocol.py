@@ -10,7 +10,6 @@
 
 import logging
 import time
-from typing import Dict
 from enum import Enum, unique
 import pprint
 
@@ -42,7 +41,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class TheProtocolGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -54,7 +52,7 @@ class TheProtocolGenerator(RSSGenerator):
     def authenticate(self, login, password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running theprotocol scraper ==========")
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
@@ -78,7 +76,8 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
     if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
 
     feed_gen = init_feed_gen(MAIN_URL)
@@ -100,10 +99,11 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
     try:
         content = dumps_feed_gen(feed_gen)
-        return content
     except ValueError:
         _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
         raise
+
+    return content
 
 
 def add_offer(feed_gen, label, offer_url=None, content=None):
@@ -274,6 +274,7 @@ def match_nested(item_list, nested_list):
 
 
 def sleep_random(max_seconds):
+    # ruff: noqa: S311
     rand_secs = random.randint(1, max_seconds)  # nosec
     time.sleep(rand_secs)
 

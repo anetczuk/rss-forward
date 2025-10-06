@@ -9,24 +9,30 @@
 
 # pylint: disable=E0401
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 
 import os
+import logging
 import pprint
 
 from rssforward import TMP_DIR
 from rssforward.utils import write_data
 from rssforward.access.earlystageapi import get_auth_data, get_attendances, get_homeworks, get_grades
 from rssforward.keepass.keepassauth import get_auth_data as get_keepasxc_auth_data
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def main():
@@ -45,26 +51,26 @@ def main():
     attendances = get_attendances(token, student_id)
 
     out_file = os.path.join(out_dir, "attendances.txt")
-    print("writing output", out_file)
+    _LOGGER.info("writing output %s", out_file)
     content = pprint.pformat(attendances)
     write_data(out_file, content)
 
     homeworks, homeworks_incoming = get_homeworks(token, student_id)
 
     out_file = os.path.join(out_dir, "homeworks.txt")
-    print("writing output", out_file)
+    _LOGGER.info("writing output %s", out_file)
     content = pprint.pformat(homeworks)
     write_data(out_file, content)
 
     out_file = os.path.join(out_dir, "homeworks_incoming.txt")
-    print("writing output", out_file)
+    _LOGGER.info("writing output %s", out_file)
     content = pprint.pformat(homeworks_incoming)
     write_data(out_file, content)
 
     grades = get_grades(token, student_id)
 
     out_file = os.path.join(out_dir, "grades.txt")
-    print("writing output", out_file)
+    _LOGGER.info("writing output %s", out_file)
     content = pprint.pformat(grades)
     write_data(out_file, content)
 

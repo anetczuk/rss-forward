@@ -9,7 +9,6 @@
 # pylint: disable=E0401 (import-error)
 
 import logging
-from typing import Dict
 from enum import Enum, unique
 import datetime
 
@@ -44,7 +43,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class NoFluffJobsGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -56,7 +54,7 @@ class NoFluffJobsGenerator(RSSGenerator):
     def authenticate(self, login, password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
@@ -92,10 +90,11 @@ def get_offers_content(label, filter_url, filter_items, throw=True, html_out_pat
 
     try:
         content = dumps_feed_gen(feed_gen)
-        return content
     except ValueError:
         _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
         raise
+
+    return content
 
 
 def get_offers_links(filter_url, throw=True):
@@ -105,7 +104,8 @@ def get_offers_links(filter_url, throw=True):
 
     if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
 
     content_bytes = response.content

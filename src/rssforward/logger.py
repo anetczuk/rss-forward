@@ -26,12 +26,12 @@ def get_logging_output_file(log_dir=None):
         ## something bad happened (or unable to create directory)
         logDir = os.getcwd()
 
-    logFile = os.path.join(logDir, "log.txt")
-    return logFile
+    return os.path.join(logDir, "log.txt")
 
 
 def configure(logFile=None, logDir=None, logLevel=None):
     # pylint: disable=W0603
+    # ruff: noqa: PLW0603
     global log_file
     log_file = logFile
     if log_file is None:

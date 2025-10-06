@@ -13,8 +13,6 @@ import zipfile
 import filecmp
 import pickle
 
-import abc
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -91,7 +89,7 @@ def load_object_simple(inputFile, defaultValue=None, silent=False):
         return defaultValue
     except FileNotFoundError:
         if silent is False:
-            _LOGGER.exception("failed to load: %s", inputFile, exc_info=False)
+            _LOGGER.error("failed to load: %s", inputFile)
         return defaultValue
     except ModuleNotFoundError:
         ## class moved to other module
@@ -168,6 +166,7 @@ def print_file_content(filePath):
     # return ''.join('{:02x} '.format(x) for x in byteList)
     bSize = len(byteList)
     for i in range(bSize):
+        # ruff: noqa: T201
         print(f"byte {i:06d}: {byteList[i]:02x}")
         # print( ''.join( '{:06d}: {:02x}'.format( i, byteList[i] ) ) )
 
@@ -186,14 +185,17 @@ def read_file_bytes(filePath):
 ## ==========================================================
 
 
-class Versionable(metaclass=abc.ABCMeta):
+class Versionable:
     def __getstate__(self):
+        """Get object's state."""
         if not hasattr(self, "_class_version"):
-            raise RuntimeError("Your class must define _class_version class variable")
+            message = "Your class must define _class_version class variable"
+            raise RuntimeError(message)
         # pylint: disable=E1101
         return {"_class_version": self._class_version, **self.__dict__}
 
     def __setstate__(self, dict_):
+        """Restore object state."""
         version_present_in_pickle = dict_.pop("_class_version", None)
         # pylint: disable=E1101
         if version_present_in_pickle == self._class_version:  # type: ignore[attr-defined]

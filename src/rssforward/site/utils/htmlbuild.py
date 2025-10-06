@@ -28,7 +28,7 @@ def convert_content(title, elements_list):
 
 
 def convert_list(title, elements_list):
-    content = wrap_list(elements_list, False)
+    content = wrap_list(elements_list, inline=False)
     if title:
         title_content = convert_title(title)
         return f"""<!-- convert_list --><div>{title_content}{content}</div>\n"""
@@ -37,7 +37,7 @@ def convert_list(title, elements_list):
 
 
 def convert_line(title, elements_list, inline=True):
-    content = wrap_list(elements_list, True)
+    content = wrap_list(elements_list, inline=True)
     if title:
         title_content = convert_title(title)
         if inline:

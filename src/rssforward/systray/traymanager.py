@@ -36,7 +36,9 @@ class TrayManager:
         self.gray_icon_image = load_icon("rss-gray-64.png")
 
         rss_server_item = pystray.MenuItem(
-            "Run RSS Server", self._onRSSServerClicked, checked=lambda item: self._server_state
+            "Run RSS Server",
+            self._onRSSServerClicked,
+            checked=lambda _item: self._server_state,
         )
 
         rss_refresh_item = pystray.MenuItem("Refresh RSS", self._onRefreshClicked)
@@ -66,6 +68,7 @@ class TrayManager:
         self._is_error = new_state
         self._setIcon()
 
+    # ruff: noqa: FBT001
     def setValid(self, new_state: bool):
         self.is_error = not new_state
 

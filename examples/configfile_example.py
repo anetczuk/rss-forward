@@ -7,22 +7,27 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 import os
+import logging
 import pprint
 
 from rssforward import logger, PKG_DIR
 from rssforward.configfile import load_config
 
+
+_LOGGER = logging.getLogger(__name__)
 
 EXAMPLES_DIR = os.path.join(PKG_DIR, os.pardir, os.pardir, "examples")
 
@@ -31,7 +36,7 @@ def main():
     logger.configure()
     config_path = os.path.join(EXAMPLES_DIR, "config_example.toml")
     config_dir = load_config(config_path)
-    pprint.pprint(config_dir)
+    _LOGGER.info("config_dir:\n%s", pprint.pformat(config_dir))
 
 
 if __name__ == "__main__":

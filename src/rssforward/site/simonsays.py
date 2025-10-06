@@ -7,7 +7,6 @@
 #
 
 import logging
-from typing import Dict
 import json
 
 from rssforward.utils import (
@@ -28,7 +27,6 @@ _LOGGER = logging.getLogger(__name__)
 MAIN_URL = "https://simonsays.langlion.com/"
 
 
-#
 class SimonSaysGenerator(RSSGenerator):
     def __init__(self):
         super().__init__()
@@ -38,7 +36,7 @@ class SimonSaysGenerator(RSSGenerator):
 
     def authenticate(self, login, password):
         self._session = get_curl_session(
-            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0",
         )
 
         url = "https://simonsays.langlion.com/user/checkUser"
@@ -72,7 +70,7 @@ class SimonSaysGenerator(RSSGenerator):
         self._token = text_output[access_token_field_start_index:access_token_field_end_index]
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running simonsays scraper ==========")
 
         if not self._token:
@@ -86,7 +84,7 @@ class SimonSaysGenerator(RSSGenerator):
             _LOGGER.error("unable to user id")
             return None
 
-        ret_dict: Dict[str, str] = {}
+        ret_dict: dict[str, str] = {}
 
         ## nothing interesting - just list of summaries
         # url = "https://simonsays.langlion.com/api/wall"
@@ -206,13 +204,8 @@ class SimonSaysGenerator(RSSGenerator):
 
         # print("data:", json.dumps(data_dict, indent=4))
 
-        ret_list = []
-
         items_list = data_dict.get("data", {}).get("userDocuments", [])
-        for data_item in items_list:
-            ret_list.append(data_item)
-
-        return ret_list
+        return list(items_list)
 
     def _getClasses(self, student_id):
         url = "https://simonsays.langlion.com//api/student/classes"
@@ -263,7 +256,7 @@ class SimonSaysGenerator(RSSGenerator):
 # ============================================
 
 
-def generate_messages_feed(messages_list) -> Dict[str, str]:
+def generate_messages_feed(messages_list) -> dict[str, str]:
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Wiadomości")
     feed_gen.description("wiadomości")
@@ -312,7 +305,7 @@ Treść:
     feed_item.pubDate(item_datetime)
 
 
-def generate_marks_feed(marks_list) -> Dict[str, str]:
+def generate_marks_feed(marks_list) -> dict[str, str]:
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Oceny")
     feed_gen.description("oceny")
@@ -390,7 +383,7 @@ Objaśnienie: {grade_meaning}
     feed_item.pubDate(grade_datetime)
 
 
-def generate_documents_feed(documents_list) -> Dict[str, str]:
+def generate_documents_feed(documents_list) -> dict[str, str]:
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Dokumenty")
     feed_gen.description("dokumenty")
@@ -448,7 +441,7 @@ Treść:<br/>
     feed_item.pubDate(create_date)
 
 
-def generate_classes_feed(classes_list) -> Dict[str, str]:
+def generate_classes_feed(classes_list) -> dict[str, str]:
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Zajęcia")
     feed_gen.description("zajęcia")

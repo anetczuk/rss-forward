@@ -10,7 +10,6 @@
 
 import logging
 import time
-from typing import Dict
 import datetime
 
 import random
@@ -33,20 +32,19 @@ MAIN_NAME = "waw4free.pl"
 MAIN_URL = "https://waw4free.pl/"
 
 
-#
 class Waw4FreeGenerator(RSSGenerator):
 
     def authenticate(self, _login, _password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
         content = get_content()
         return {"news.xml": content}
 
 
 def get_content(items_num=20):
-    news_links = get_news_links(items_num, False)
+    news_links = get_news_links(items_num, throw=False)
     if not news_links:
         return None
 
@@ -59,10 +57,11 @@ def get_content(items_num=20):
 
     try:
         content = dumps_feed_gen(feed_gen)
-        return content
     except ValueError:
         _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
         raise
+
+    return content
 
 
 def get_news_links(posts_num, throw=True):
@@ -71,7 +70,8 @@ def get_news_links(posts_num, throw=True):
 
     if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
 
     content_bytes = response.content
@@ -93,8 +93,7 @@ def get_news_links(posts_num, throw=True):
         full_list.append(full_url)
 
     items_num = min(posts_num, len(full_list))
-    full_list = full_list[0:items_num]
-    return full_list
+    return full_list[0:items_num]
 
 
 def add_news(feed_gen, full_url):
@@ -165,9 +164,7 @@ def extract_news_data(news_url=None, content=None):
 
 
 def convert_work_schedule(work_schedule_list):
-    content_list = []
-    for item in work_schedule_list:
-        content_list.append(item["name"])
+    content_list = [item["name"] for item in work_schedule_list]
     if not content_list:
         return ""
     output = convert_list("Wymiar godzin:", content_list)
@@ -191,9 +188,7 @@ def convert_contract_data(contract_data_list):
 
 
 def convert_work_mode(work_mode_list):
-    content_list = []
-    for item in work_mode_list:
-        content_list.append(item["name"])
+    content_list = [item["name"] for item in work_mode_list]
     if not content_list:
         return ""
     output = convert_list("Tryb pracy:", content_list)
@@ -279,6 +274,7 @@ def convert_model(model_data):
 
 
 def sleep_random(max_seconds):
+    # ruff: noqa: S311
     rand_secs = random.randint(1, max_seconds)  # nosec
     time.sleep(rand_secs)
 

@@ -10,7 +10,6 @@
 
 import logging
 import time
-from typing import Dict
 from enum import Enum, unique
 import datetime
 import pprint
@@ -45,7 +44,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class PracujPlGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -57,7 +55,7 @@ class PracujPlGenerator(RSSGenerator):
     def authenticate(self, login, password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
@@ -89,10 +87,11 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
     try:
         content = dumps_feed_gen(feed_gen)
-        return content
     except ValueError:
         _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
         raise
+
+    return content
 
 
 def add_offer(feed_gen, label, full_url, html_out_path=None):
@@ -115,7 +114,8 @@ def get_offers_links(filter_url, filter_items, throw=True):
     response_text: str = curl_get_content(filter_url)
     if not response_text:
         if throw:
-            raise RuntimeError(f"unable to get content from url: {filter_url}")
+            message = f"unable to get content from url: {filter_url}"
+            raise RuntimeError(message)
         return None
     soup = BeautifulSoup(response_text, "html.parser")
 
@@ -220,9 +220,7 @@ Data:<br/>
 
 
 def convert_work_schedule(work_schedule_list):
-    content_list = []
-    for item in work_schedule_list:
-        content_list.append(item["name"])
+    content_list = [item["name"] for item in work_schedule_list]
     if not content_list:
         return ""
     output = convert_list("Wymiar godzin:", content_list)
@@ -246,9 +244,7 @@ def convert_contract_data(contract_data_list):
 
 
 def convert_work_mode(work_mode_list):
-    content_list = []
-    for item in work_mode_list:
-        content_list.append(item["name"])
+    content_list = [item["name"] for item in work_mode_list]
     if not content_list:
         return ""
     output = convert_list("Tryb pracy:", content_list)
@@ -334,6 +330,7 @@ def convert_model(model_data):
 
 
 def sleep_random(max_seconds):
+    # ruff: noqa: S311
     rand_secs = random.randint(1, max_seconds)  # nosec
     time.sleep(rand_secs)
 

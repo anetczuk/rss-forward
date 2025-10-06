@@ -76,7 +76,7 @@ def start_with_tray(parameters):
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
 
-    except:  # noqa pylint: disable=W0702
+    except:  # noqa: E722 pylint: disable=W0702
         _LOGGER.exception("unhandled exception detected - exiting")
         exit_code = 1
 
@@ -123,7 +123,7 @@ def start_no_tray(parameters):
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
 
-    except:  # noqa pylint: disable=W0702
+    except:  # noqa: E722 pylint: disable=W0702
         _LOGGER.exception("unhandled exception detected - exiting")
         exit_code = 1
 
@@ -159,7 +159,7 @@ def start_raw(parameters):
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
 
-    except:  # noqa pylint: disable=W0702
+    except:  # noqa: E722 pylint: disable=W0702
         _LOGGER.exception("unhandled exception detected - exiting")
         exit_code = 1
 
@@ -173,6 +173,7 @@ def open_log(log_viewer, log_path):
         _LOGGER.exception("unable to run logger, command: %s log path: %s", log_viewer, log_path)
         return
     _LOGGER.info("opening log viewer: %s", command)
+    # ruff: noqa: S602
     with subprocess.Popen(command, shell=True):  # nosec
         pass
 
@@ -185,7 +186,8 @@ def str_to_bool(value):
         return True
     if value.lower() in ("false", "f", "no", "n"):
         return False
-    raise argparse.ArgumentTypeError("boolean value expected")
+    message = "boolean value expected"
+    raise argparse.ArgumentTypeError(message)
 
 
 def main():

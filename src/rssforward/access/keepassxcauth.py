@@ -21,7 +21,7 @@ from rssforward.utils import get_app_datadir
 _LOGGER = logging.getLogger(__name__)
 
 
-class LockedKPXCException(Exception):
+class LockedKPXCError(Exception):
     pass
 
 
@@ -52,7 +52,8 @@ class KeepassxcAuth:
         if not self.connection:
             self.connection = self._establishConnection()
         if not self.connection:
-            raise RuntimeError("Unable to find keepassxc socket. Try different value of 'socket_name'.")
+            message = "Unable to find keepassxc socket. Try different value of 'socket_name'."
+            raise RuntimeError(message)
 
         self.connection.connect()
         self.connection.change_public_keys(self.id)
@@ -85,7 +86,8 @@ class KeepassxcAuth:
             # will raise exception AssertionError: {'action': 'database-locked'}
             # if KeePass is configured to lock database on minimalization
             if not self.connection.associate(self.id):
-                raise RuntimeError("could not associate")
+                message = "could not associate"
+                raise RuntimeError(message)
             if self.state_file:
                 data = self.id.serialize()
                 with self.state_file.open("w", encoding="utf-8") as f:
@@ -113,20 +115,22 @@ class KeepassxcAuth:
         try:
             logins = self.connection.get_logins(self.id, url=access_url)
             if len(logins) != 1:
-                raise RuntimeError("could not get login data")
+                message = "could not get login data"
+                raise RuntimeError(message)
             data = logins[0]
             login = {"login": data.get("login"), "password": data.get("password")}
         except ProtocolError as exc:
             _LOGGER.exception("failed to get auth data")
-            raise LockedKPXCException() from exc
+            raise LockedKPXCError from exc
         except AssertionError as exc:
             _LOGGER.exception("failed to get auth data")
-            raise LockedKPXCException() from exc
+            raise LockedKPXCError from exc
         return login
 
     def _checkConnection(self):
         if self.connection is None:
-            raise RuntimeError("not connected")
+            message = "not connected"
+            raise RuntimeError(message)
 
     def _establishConnection(self, socket_name=None):
         try:
@@ -141,29 +145,34 @@ auth: KeepassxcAuth = None
 
 
 def get_auth_data(access_url):
+    # ruff: noqa: PLW0603
     global auth  # pylint: disable=W0603
     if not auth:
-        for _i in range(0, 3):
+        for _i in range(3):
             try:
                 auth = KeepassxcAuth()
                 auth.connect()
                 auth.unlockDatabase()
                 break
-            except Exception as exc:  # # pylint: disable=W0718
-                _LOGGER.exception("failed to unlock database: %s, retrying", exc)
+            except Exception:  # # pylint: disable=W0718
+                _LOGGER.exception("failed to unlock database, retrying")
                 time.sleep(1.0)
         else:
             # loop finished without database unlock
-            raise RuntimeError("failed to unlock database")
+            message = "failed to unlock database"
+            raise RuntimeError(message)
 
     while True:
         try:
             login_data = auth.getAuthData(access_url)
             if login_data:
                 return login_data
-        except LockedKPXCException as exc:
+
+        # ruff: noqa: PERF203
+        except LockedKPXCError as exc:
             _LOGGER.warning("failed to get auth data: %s", exc)
             time.sleep(1)
+
         except BrokenPipeError as exc:
             _LOGGER.info("failed to get auth data: %s, retrying", exc)
             time.sleep(1)
@@ -172,6 +181,7 @@ def get_auth_data(access_url):
 
 
 def close():
+    # ruff: noqa: PLW0602
     global auth  # pylint: disable=W0602
     if auth:
         _LOGGER.info("closing keepass connection")

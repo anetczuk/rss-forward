@@ -10,7 +10,6 @@
 
 import logging
 import time
-from typing import Dict
 from enum import Enum, unique
 
 import random
@@ -40,7 +39,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class BullDogJobGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -52,7 +50,7 @@ class BullDogJobGenerator(RSSGenerator):
     def authenticate(self, login, password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running bulldogjob scraper ==========")
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
@@ -77,7 +75,8 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
     if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
 
     feed_gen = init_feed_gen(MAIN_URL)
@@ -96,8 +95,7 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
         offer_url = offer_item["href"]
         add_offer(feed_gen, label, offer_url)
 
-    content = dumps_feed_gen(feed_gen)
-    return content
+    return dumps_feed_gen(feed_gen)
 
 
 def add_offer(feed_gen, label, offer_url):
@@ -181,6 +179,7 @@ def match_nested(item_list, nested_list):
 
 
 def sleep_random(max_seconds):
+    # ruff: noqa: S311
     rand_secs = random.randint(1, max_seconds)  # nosec
     time.sleep(rand_secs)
 

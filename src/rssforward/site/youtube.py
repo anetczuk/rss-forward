@@ -7,7 +7,6 @@
 #
 
 import logging
-from typing import Dict
 import datetime
 from enum import Enum, unique
 
@@ -27,7 +26,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class YouTubeGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -42,7 +40,7 @@ class YouTubeGenerator(RSSGenerator):
         # nothing to authenticate
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running YouTube scraper ==========")
 
         if not self.url:

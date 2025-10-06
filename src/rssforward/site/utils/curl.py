@@ -25,7 +25,7 @@ def get_curl_session(user_agent=None):
     if user_agent is None:
         user_agent = "curl/7.58.0"
     session.setopt(pycurl.USERAGENT, user_agent)
-    session.setopt(pycurl.FOLLOWLOCATION, True)  ## follow redirects
+    session.setopt(pycurl.FOLLOWLOCATION, value=True)  ## follow redirects
     session.setopt(pycurl.CONNECTTIMEOUT, 60)  ## connection phase timeout
     #         session.setopt( pycurl.TIMEOUT, 60 )                 ## whole request timeout (transfer?)
     #         c.setopt( c.VERBOSE, 1 )
@@ -101,13 +101,17 @@ def curl_post(session, targetUrl, dataDict, header_list=None, verbose=False):
 
 def curl_download(session, sourceUrl, outputFile, repeatsOnFail=0):
     repeatsOnFail = max(repeatsOnFail, 0)
-    for _ in range(0, repeatsOnFail):
+    for _i in range(repeatsOnFail):
         try:
             curl_download_raw(session, sourceUrl, outputFile)
-            ## done -- returning
-            return
+
+        # ruff: noqa: PERF203
         except pycurl.error:
             _LOGGER.exception("could not download file")
+
+        else:
+            ## done -- returning
+            return
 
     curl_download_raw(session, sourceUrl, outputFile)
 

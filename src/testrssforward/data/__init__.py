@@ -31,11 +31,11 @@ def get_data_root_path() -> str:
     return script_dir
 
 
-def get_data_path(fileName: str) -> str:
-    return os.path.join(script_dir, fileName)
+def get_data_path(file_name: str) -> str:
+    return os.path.join(script_dir, file_name)
 
 
-def read_data(fileName: str) -> str:
-    filePath = get_data_path(fileName)
-    with open(filePath, "r", encoding="utf-8") as file:
+def read_data(file_name: str) -> str:
+    file_path = get_data_path(file_name)
+    with open(file_path, encoding="utf-8") as file:
         return file.read()

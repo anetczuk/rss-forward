@@ -23,22 +23,28 @@
 # SOFTWARE.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 import sys
+import logging
 import pprint
 
 from rssforward import logger
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.site.untswawpl import get_generator, get_news_links, extract_news_data
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 page = "szlakgier"
@@ -47,7 +53,7 @@ page = "szlakgier"
 def grab_by_generator():
     generator: RSSGenerator = get_generator()
     gen_data = generator.generate()
-    pprint.pprint(gen_data)
+    _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
 
 
 def main():
@@ -55,14 +61,14 @@ def main():
 
     # grab_by_generator()
 
-    news_links = get_news_links(1, True)
+    news_links = get_news_links(1, throw=True)
     if len(news_links) != 1:
-        print("FAILED")
+        _LOGGER.error("FAILED")
         sys.exit(1)
 
     full_url = news_links[0]
     offer_data = extract_news_data(full_url)
-    pprint.pprint(offer_data)
+    _LOGGER.info("offer_data:\n%s", pprint.pformat(offer_data))
 
 
 if __name__ == "__main__":

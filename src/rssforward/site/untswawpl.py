@@ -10,7 +10,6 @@
 
 import logging
 import time
-from typing import Dict
 
 import random
 from urllib.parse import urljoin
@@ -32,20 +31,19 @@ MAIN_NAME = "UNTS Warszawa"
 MAIN_URL = "http://unts.waw.pl/"
 
 
-#
 class UNTSGenerator(RSSGenerator):
 
     def authenticate(self, _login, _password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
         content = get_content()
         return {"news.xml": content}
 
 
 def get_content():
-    news_links = get_news_links(10, False)
+    news_links = get_news_links(10, throw=False)
     if not news_links:
         return None
 
@@ -58,10 +56,11 @@ def get_content():
 
     try:
         content = dumps_feed_gen(feed_gen)
-        return content
     except ValueError:
         _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
         raise
+
+    return content
 
 
 def get_news_links(posts_num, throw=True):
@@ -70,7 +69,8 @@ def get_news_links(posts_num, throw=True):
 
     if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
 
     content_bytes = response.content
@@ -96,8 +96,7 @@ def get_news_links(posts_num, throw=True):
             news_date = news_date[:space_index]
             full_list.append((full_url, news_date))
     items_num = min(posts_num, len(full_list))
-    full_list = full_list[0:items_num]
-    return full_list
+    return full_list[0:items_num]
 
 
 def add_news(feed_gen, full_url):
@@ -105,7 +104,7 @@ def add_news(feed_gen, full_url):
     add_data_to_feed(feed_gen, offer_data)
 
 
-def extract_news_data(news_data=None, content=None):
+def extract_news_data(news_data=None, content: str = None):
     news_url = news_data[0]
     news_date = news_data[1]
 
@@ -119,8 +118,8 @@ def extract_news_data(news_data=None, content=None):
             _LOGGER.warning("unable to get job offer content")
             return None
 
-        content = response.content
-        content = content.decode("utf-8")
+        content_bytes = response.content
+        content = content_bytes.decode("utf-8")
 
     soup = BeautifulSoup(content, "html.parser")
 
@@ -128,14 +127,14 @@ def extract_news_data(news_data=None, content=None):
     id_value = news_url[id_pos + 3 :]
 
     content_list = soup.find_all("div", attrs={"class": "Fullcontent"})
-    content = content_list[0]
+    content_tag = content_list[0]
 
-    titles_list = content.find_all("h2", attrs={"class": "title"})
+    titles_list = content_tag.find_all("h2", attrs={"class": "title"})
     title_item = titles_list[0]
     title_span = title_item.select_one("span")
     title_text = title_span.text
 
-    item_desc = str(content)
+    item_desc = str(content_tag)
     item_desc = normalize_string(item_desc)
     # item_desc = convert_to_html(item_desc)
 
@@ -152,9 +151,7 @@ def extract_news_data(news_data=None, content=None):
 
 
 def convert_work_schedule(work_schedule_list):
-    content_list = []
-    for item in work_schedule_list:
-        content_list.append(item["name"])
+    content_list = [item["name"] for item in work_schedule_list]
     if not content_list:
         return ""
     output = convert_list("Wymiar godzin:", content_list)
@@ -178,9 +175,7 @@ def convert_contract_data(contract_data_list):
 
 
 def convert_work_mode(work_mode_list):
-    content_list = []
-    for item in work_mode_list:
-        content_list.append(item["name"])
+    content_list = [item["name"] for item in work_mode_list]
     if not content_list:
         return ""
     output = convert_list("Tryb pracy:", content_list)
@@ -266,6 +261,7 @@ def convert_model(model_data):
 
 
 def sleep_random(max_seconds):
+    # ruff: noqa: S311
     rand_secs = random.randint(1, max_seconds)  # nosec
     time.sleep(rand_secs)
 

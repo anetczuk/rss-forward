@@ -7,22 +7,29 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 
 import os
+import logging
 import pprint
+
 from rssforward import logger
 from rssforward.site.theprotocol import get_generator
 from rssforward.utils import write_data
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def main():
@@ -37,20 +44,20 @@ def main():
             "url": "https://theprotocol.it/filtry/c++;t/zdalna;rw?sort=date",  # pylint: disable=C0301
             "itemsperfetch": 2,
             "outfile": "c_warsaw.xml",
-        }
+        },
     ]
     params = {"filter": filters}
 
     generator = get_generator(params)
     generator.authenticate(login, password)
     generator_data = generator.generate()
-    pprint.pprint(generator_data)
+    _LOGGER.info("generator_data:\n%s", pprint.pformat(generator_data))
     for rss_out, content in generator_data.items():
         out_dir = os.path.join("/tmp", "rss-forward", "theprotocol")  # nosec
         feed_path = os.path.join(out_dir, rss_out)
         feed_dir = os.path.dirname(feed_path)
         os.makedirs(feed_dir, exist_ok=True)
-        print(f"writing content to file: {feed_path}")
+        _LOGGER.info(f"writing content to file: {feed_path}")
         write_data(feed_path, content)
 
 

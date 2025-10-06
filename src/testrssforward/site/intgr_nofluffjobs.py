@@ -23,15 +23,17 @@
 # SOFTWARE.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 import sys
 import logging
@@ -61,11 +63,13 @@ def main():
     # gen_data = generator.generate()
     # print( gen_data.keys())
 
+    # ruff: noqa: S108
     offers_content = get_offers_content("xxx", url, 1, "/tmp/nofluffjobs.html")
     if not offers_content:
-        print("FAILED")
+        _LOGGER.error("FAILED")
         sys.exit(1)
 
+    # ruff: noqa: S108
     out_path = "/tmp/nofluffjobs.xml"
     _LOGGER.info("writing rss to file: file://%s", out_path)
     write_data(out_path, offers_content)

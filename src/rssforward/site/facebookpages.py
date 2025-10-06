@@ -9,7 +9,6 @@
 # pylint: disable=E0401 (import-error)
 
 import logging
-from typing import Dict
 from enum import Enum, unique
 
 from feedgen.feed import FeedGenerator
@@ -36,7 +35,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class FacebookPagesGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -48,7 +46,7 @@ class FacebookPagesGenerator(RSSGenerator):
     def authenticate(self, login, password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
@@ -85,10 +83,11 @@ def get_page_content(label, page_id, posts_num):
 
         try:
             content = dumps_feed_gen(feed_gen)
-            return content
         except ValueError:
             _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
             raise
+
+        return content
 
 
 def get_posts_links(scraper: FacebookScraper, page_id, posts_num):
@@ -100,6 +99,7 @@ def get_posts_links(scraper: FacebookScraper, page_id, posts_num):
 
 def convert_item_data(page_title, post_details, html_out_path=None):
     item_id = post_details["id"]
+    pub_date = post_details["pub_date"]
     # fill description
     item_desc = post_details["content"]
     item_desc = item_desc.replace("\n", "</br>")
@@ -126,6 +126,7 @@ def convert_item_data(page_title, post_details, html_out_path=None):
 <br/>
 Id: {item_id}<br/>
 Type: {post_details["type"]}<br/>
+Pub date: {pub_date}<br/>
 Content:<br/>
 {desc_b64}
 """

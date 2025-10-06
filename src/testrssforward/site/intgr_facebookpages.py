@@ -23,16 +23,19 @@
 # SOFTWARE.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
+import logging
 import pprint
 
 from rssforward import logger
@@ -40,7 +43,11 @@ from rssforward.site.facebookpages import (
     ParamsField,
     get_generator,
 )
+
 from rssforward.rssgenerator import RSSGenerator
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 page_id = "facebookai"
@@ -54,12 +61,12 @@ def grab_by_generator():
                 ParamsField.PAGE.value: page_id,
                 ParamsField.ITEMSPERFETCH.value: 2,
                 # ParamsField.OUTFILE.value: f"{page_id}.xml",
-            }
-        ]
+            },
+        ],
     }
     generator: RSSGenerator = get_generator(params)
     gen_data = generator.generate()
-    pprint.pprint(gen_data)
+    _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
 
 
 def main():

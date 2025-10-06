@@ -23,21 +23,27 @@
 # SOFTWARE.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 import sys
+import logging
 
 from rssforward import logger
 from rssforward.site.justjoinit import get_description
 from rssforward.utils import write_data
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def main():
@@ -50,9 +56,10 @@ def main():
     url = "https://justjoin.it/job-offer/link-group-c-and-qt-qml-software-engineer-poznan-c"
     desc = get_description(url)
     if not desc:
-        print("FAILED")
+        _LOGGER.error("FAILED")
         sys.exit(1)
 
+    # ruff: noqa: S108
     write_data("/tmp/justjoinit.html", desc)
 
 

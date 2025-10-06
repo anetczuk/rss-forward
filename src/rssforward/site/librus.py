@@ -9,7 +9,7 @@
 # pylint: disable=E0401 (import-error)
 
 import logging
-from typing import Dict, Any
+from typing import Any
 import datetime
 
 from librus_apix.exceptions import MaintananceError, TokenError
@@ -35,7 +35,6 @@ _LOGGER = logging.getLogger(__name__)
 MAIN_URL = "https://synergia.librus.pl/"
 
 
-#
 class LibusGenerator(RSSGenerator):
     def __init__(self):
         super().__init__()
@@ -49,7 +48,7 @@ class LibusGenerator(RSSGenerator):
         self._getToken()
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running librus scraper ==========")
 
         try:
@@ -74,7 +73,7 @@ class LibusGenerator(RSSGenerator):
 def get_messages_by_date(token, start_datetime=None):
     ret_messages: list[Any] = []
     max_page_index = get_max_page_number(token)
-    for pi in range(0, max_page_index + 1):
+    for pi in range(max_page_index + 1):
         messages = get_recieved(token, page=pi)
         _LOGGER.info("received %s messages from page %s", len(messages), pi)
         for item in messages:
@@ -97,12 +96,12 @@ def get_announcements_by_date(token, start_datetime=None):
     return ret_announcements
 
 
-def generate_content(token) -> Dict[str, str]:
+def generate_content(token) -> dict[str, str]:
     if token is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
         return None
 
-    ret_dict: Dict[str, str] = {}
+    ret_dict: dict[str, str] = {}
 
     recent_datetime = read_recent_date()
     _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
@@ -131,7 +130,7 @@ def generate_content(token) -> Dict[str, str]:
     ret_dict.update(gen_data)
 
     # ========= schedule =========
-    curr_dt = datetime.datetime.today()
+    curr_dt = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
     year = curr_dt.year
     month = curr_dt.month
     _LOGGER.info("accessing schedule in %s-%s", year, month)
@@ -143,9 +142,9 @@ def generate_content(token) -> Dict[str, str]:
     # date from-to up to 1 month
     # date_from = '2023-09-01'
     # date_to = '2023-09-30'
-    start_dt = datetime.datetime.today()
+    start_dt = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
     start_dt = start_dt.replace(day=1)
-    end_dt = datetime.datetime.today()
+    end_dt = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
     end_dt = end_dt.replace(day=28) + datetime.timedelta(days=4)
     # subtracting the number of the current day brings us back one month
     end_dt = end_dt - datetime.timedelta(days=end_dt.day)
@@ -178,7 +177,7 @@ def generate_grades_feed(grades, _, grades_desc):
 
     # grades: List of semesters
     for sem_grades in grades:
-        # sem_grades: Dict of subject and list of grades
+        # sem_grades: dict of subject and list of grades
         for subject_grades in sem_grades.values():
             for item in subject_grades:
                 data_dict = {
@@ -193,7 +192,7 @@ def generate_grades_feed(grades, _, grades_desc):
 
     # grades: List of semesters
     for sem_grades in grades_desc:
-        # sem_grades: Dict of subject and list of grades
+        # sem_grades: dict of subject and list of grades
         for subject_grades in sem_grades.values():
             for item in subject_grades:
                 data_dict = {
@@ -417,7 +416,7 @@ def generate_schedule_feed(schedule, year, month):
             #     details = schedule_detail(token, prefix, href)
             #     pprint.pprint(details)
 
-            item_date = datetime.datetime(year, month, int(item.day))
+            item_date = datetime.datetime(year, month, int(item.day), tzinfo=datetime.timezone.utc)
             item_date_str = item_date.strftime("%Y-%m-%d")
 
             data_dict = {

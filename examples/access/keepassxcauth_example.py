@@ -9,20 +9,27 @@
 
 # pylint: disable=E0401
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
+
+import logging
 
 from rssforward import logger
 from rssforward.access.keepassxcauth import KeepassxcAuth
 from rssforward.site.earlystage import MAIN_URL
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def main():
@@ -32,7 +39,7 @@ def main():
     auth.connect()
 
     auth_data = auth.getAuthData(MAIN_URL)
-    print("unlocking done, login:", auth_data.get("login"))
+    _LOGGER.info("unlocking done, login: %s", auth_data.get("login"))
 
 
 if __name__ == "__main__":

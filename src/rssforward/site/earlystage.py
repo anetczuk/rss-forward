@@ -7,7 +7,6 @@
 #
 
 import logging
-from typing import Dict
 import datetime
 
 from rssforward.utils import convert_to_html, string_to_date, add_timezone, calculate_dict_hash, string_to_date_general
@@ -22,7 +21,6 @@ _LOGGER = logging.getLogger(__name__)
 MAIN_URL = "https://online.earlystage.pl/"
 
 
-#
 class EarlyStageGenerator(RSSGenerator):
     def __init__(self):
         super().__init__()
@@ -38,7 +36,7 @@ class EarlyStageGenerator(RSSGenerator):
             self._student_id = students_list[0]
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running earlystage scraper ==========")
 
         if not self._student_id:
@@ -49,7 +47,7 @@ class EarlyStageGenerator(RSSGenerator):
             _LOGGER.warning("unable to generate content, because generator is not authenticated")
             return None
 
-        ret_dict: Dict[str, str] = {}
+        ret_dict: dict[str, str] = {}
 
         _LOGGER.info("accessing attendances")
         attendances = get_attendances(self._token, self._student_id)
@@ -296,10 +294,10 @@ def generate_grades_feed(grades):
         month = grade_desc.get("month")
         year = grade_desc.get("year")
         # grade_month = grade_desc.get("lesson", {}).get("date")
-        grade_date = datetime.datetime(year=year, month=month, day=1).date()
+        grade_date = datetime.datetime(year=year, month=month, day=1, tzinfo=datetime.timezone.utc).date()
         grade_date_str = grade_date.strftime("%Y-%m-%d")
 
-        grade_datetime = datetime.datetime(year=year, month=month, day=1)
+        grade_datetime = datetime.datetime(year=year, month=month, day=1, tzinfo=datetime.timezone.utc)
         grade_datetime = add_timezone(grade_datetime)
         grade = item.get("grades", {}).get("_gradeFormat")
         grade_points = item.get("points")

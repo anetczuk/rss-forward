@@ -7,7 +7,7 @@
 #
 
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from feedgen.feed import FeedGenerator
 
@@ -22,7 +22,7 @@ def init_feed_gen(main_link, lang="pl") -> FeedGenerator:
     return feed_gen
 
 
-def add_data_to_feed(feed_gen: FeedGenerator, data_dict: Dict[str, Any]):
+def add_data_to_feed(feed_gen: FeedGenerator, data_dict: dict[str, Any]):
     feed_item = feed_gen.add_entry()
 
     feed_item.id(data_dict["id"])
@@ -35,7 +35,9 @@ def add_data_to_feed(feed_gen: FeedGenerator, data_dict: Dict[str, Any]):
 
 
 def dumps_feed_gen(feed_gen: FeedGenerator):
-    items_num = len(feed_gen._FeedGenerator__feed_entries)  # pylint: disable=W0212
+    # pylint: disable=W0212
+    # ruff: noqa: SLF001
+    items_num = len(feed_gen._FeedGenerator__feed_entries)
     _LOGGER.info("generating %s feed items", items_num)
     content_bytes = feed_gen.rss_str(pretty=True)
     return content_bytes.decode()

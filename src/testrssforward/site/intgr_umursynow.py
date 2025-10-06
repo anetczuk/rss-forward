@@ -23,15 +23,17 @@
 # SOFTWARE.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
 import sys
 import logging
@@ -49,7 +51,7 @@ _LOGGER = logging.getLogger(__name__)
 def grab_by_generator():
     generator: RSSGenerator = get_generator()
     gen_data = generator.generate()
-    pprint.pprint(gen_data)
+    _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
 
 
 def main():
@@ -59,15 +61,17 @@ def main():
 
     links = get_news_links()
     if not links:
-        print("FAILED")
+        _LOGGER.error("FAILED")
         sys.exit(1)
 
+    # ruff: noqa: S108
     out_path = f"/tmp/{MAIN_NAME}.html"
     offers_content = get_content(1, html_output=out_path)
     if not offers_content:
-        print("FAILED")
+        _LOGGER.error("FAILED")
         sys.exit(1)
 
+    # ruff: noqa: S108
     out_path = f"/tmp/{MAIN_NAME}.xml"
     _LOGGER.info("writing rss to file: file://%s", out_path)
     write_data(out_path, offers_content)

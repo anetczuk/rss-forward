@@ -22,8 +22,7 @@ def extract_data_dict(soup):
         return None
 
     json_content = offer_json_list[0].string
-    data_dict = json.loads(json_content)
-    return data_dict
+    return json.loads(json_content)
 
 
 def get_nested_dict(data_dict, key_list):

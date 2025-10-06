@@ -9,7 +9,6 @@
 # pylint: disable=E0401 (import-error)
 
 import logging
-from typing import Dict
 from enum import Enum, unique
 import time
 
@@ -39,7 +38,6 @@ class ParamsField(Enum):
     OUTFILE = "outfile"
 
 
-#
 class JustJoinItGenerator(RSSGenerator):
     def __init__(self, params_dict=None):
         super().__init__()
@@ -52,7 +50,7 @@ class JustJoinItGenerator(RSSGenerator):
     def authenticate(self, login, password):
         return True
 
-    def generate(self) -> Dict[str, str]:
+    def generate(self) -> dict[str, str]:
         _LOGGER.info("========== running justjoinit scraper ==========")
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
@@ -78,7 +76,8 @@ def get_offers_content(label, filter_url, filter_items, throw=True, attempts=3):
 
     if response.status_code not in (200, 204):
         if throw:
-            raise RuntimeError(f"unable to get data: {response.status_code}")
+            message = f"unable to get data: {response.status_code}"
+            raise RuntimeError(message)
         return None
 
     response_json = json.loads(response.text)
@@ -95,8 +94,7 @@ def get_offers_content(label, filter_url, filter_items, throw=True, attempts=3):
     for offer in json_offers_list:
         add_offer(feed_gen, label, offer, attempts=attempts)
 
-    content = dumps_feed_gen(feed_gen)
-    return content
+    return dumps_feed_gen(feed_gen)
 
 
 def add_offer(feed_gen, label, data_dict, attempts=3):
@@ -128,7 +126,7 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
     desc_url = f"https://justjoin.it/offers/{slug}"
     _LOGGER.info(f"getting offer details: {desc_url}")
 
-    for rep in range(0, attempts):
+    for rep in range(attempts):
         offer_desc = get_description(desc_url)
         if offer_desc is not None:
             break
@@ -151,11 +149,7 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
         emp_type = item["type"]
         emp_gross = item["gross"]
         emp_currency = emp_currency.upper()
-        gross_label = ""
-        if emp_gross:
-            gross_label = "Gross"
-        else:
-            gross_label = "Net"
+        gross_label = "Gross" if emp_gross else "Net"
         employment_details += (
             f"<div><b>Wynagrodzenie:</b> {emp_from} - {emp_to} {emp_currency} {gross_label} {emp_type}</div>\n"
         )
@@ -208,7 +202,7 @@ def get_description(url):
         "Version": "2",
     }
 
-    for _i in range(0, 2):
+    for _i in range(2):
         try:
             response = requests.get(url, headers=headers, timeout=30)
             if response.status_code in (200, 204):
@@ -271,8 +265,7 @@ def get_description(url):
     if len(content_list) == 2:
         content_list.insert(1, "")
 
-    ret_content = "\n".join(content_list)
-    return ret_content
+    return "\n".join(content_list)
 
 
 # ============================================================

@@ -23,7 +23,7 @@
 
 import logging
 import datetime
-from typing import List, Dict, Any
+from typing import Any
 
 from xml.sax.saxutils import escape  # nosec
 
@@ -36,7 +36,7 @@ _LOGGER = logging.getLogger(__name__)
 ## ============================================================
 
 
-def parse_playlist(page_url, known_items=None, max_fetch=10) -> Dict[str, Any]:
+def parse_playlist(page_url, known_items=None, max_fetch=10) -> dict[str, Any]:
     _LOGGER.info("parsing youtube url %s", page_url)
 
     if not known_items:
@@ -69,7 +69,7 @@ def parse_playlist(page_url, known_items=None, max_fetch=10) -> Dict[str, Any]:
             sub_items = sub_info_dict.get("entries")
             if sub_items is not None:
                 # sublist case - append to current list
-                new_list: List[str] = []
+                new_list: list[str] = []
                 new_list.extend(entries_gen[0:i])
                 new_list.extend(sub_items)
                 new_list.extend(entries_gen[i + 1 :])
@@ -92,7 +92,7 @@ def parse_playlist(page_url, known_items=None, max_fetch=10) -> Dict[str, Any]:
     return convert_info_to_channel(info_dict)
 
 
-def convert_info_to_channel(info_dict) -> Dict[str, Any]:
+def convert_info_to_channel(info_dict) -> dict[str, Any]:
     epoch_date = info_dict.get("epoch")
     published_date = epoch_to_datetime(epoch_date)
 
@@ -128,14 +128,14 @@ def convert_info_to_channel(info_dict) -> Dict[str, Any]:
         }
         data_entries.append(item)
 
-    feedContent = {"feed": data_feed, "entries": data_entries}
+    feed_content = {"feed": data_feed, "entries": data_entries}
 
     # import pprint
     # pprint.pprint(info_dict)
-    # pprint.pprint(feedContent)
+    # pprint.pprint(feed_content)
 
     _LOGGER.info("feed parsing done")
-    return feedContent
+    return feed_content
 
 
 class YTDLPLogger:
@@ -143,19 +143,19 @@ class YTDLPLogger:
     ENABLED = True
 
     @staticmethod
-    def error(msg):
+    def error(msg) -> None:
         if YTDLPLogger.ENABLED:
             _LOGGER.error(msg)
         # print("Captured Error: " + msg)
 
     @staticmethod
-    def warning(msg):
+    def warning(msg) -> None:
         if YTDLPLogger.ENABLED:
             _LOGGER.warning(msg)
         # print("Captured Warning: " + msg)
 
     @staticmethod
-    def debug(msg):
+    def debug(msg) -> None:
         if YTDLPLogger.ENABLED:
             _LOGGER.debug(msg)
         # print("Captured Log: " + msg)
