@@ -17,6 +17,7 @@ import locale
 import threading
 from contextlib import contextmanager
 
+import selenium.common
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -26,6 +27,7 @@ from rssforward.utils import read_data, write_data, add_timezone, calculate_str_
 
 
 _LOGGER = logging.getLogger(__name__)
+
 
 lib_logger = logging.getLogger("selenium.webdriver")
 lib_logger.setLevel(logging.WARNING)
@@ -146,7 +148,13 @@ class FacebookScraper:
             if post_messages:
                 ## regular post case
                 post_item = post_messages[0]
-                self._expand_see_more(post_item)
+
+                ## expand description
+                see_more_expanded = self._expand_see_more(post_item)
+                if see_more_expanded is False:
+                    _LOGGER.warning("could not expand description")
+                else:
+                    _LOGGER.debug("'See more' expanded")
 
                 post_href = None
                 pub_date = None
@@ -310,6 +318,7 @@ class FacebookScraper:
     #             ret_list.append(item)
     #     return ret_list
 
+    ## expand post description to see whole content
     def _expand_see_more(self, item) -> bool:
         mainbutton_list = item.find_elements(By.CSS_SELECTOR, "[role='button']")
         for button in mainbutton_list:
@@ -318,7 +327,13 @@ class FacebookScraper:
                 continue
             if "See more" not in button.text:
                 continue
-            button.click()
+
+            try:
+                button.click()
+            except selenium.common.exceptions.ElementClickInterceptedException:
+                ## obscured by other element - try to hide by CSS
+                return False
+
             return True
         return False
 

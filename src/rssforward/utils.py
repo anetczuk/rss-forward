@@ -73,7 +73,8 @@ def string_to_date_general(date_string) -> datetime.datetime:
 
 def timestamp_to_date(timestamp) -> datetime.datetime:
     item_date = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
-    return add_timezone(item_date)
+    tz_info = pytz.timezone("Europe/Warsaw")
+    return item_date.astimezone(tz=tz_info)
 
 
 # iso format: '2024-06-04T14:23:41Z'

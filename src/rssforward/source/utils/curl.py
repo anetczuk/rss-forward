@@ -25,7 +25,8 @@ def get_curl_session(user_agent=None):
     if user_agent is None:
         user_agent = "curl/7.58.0"
     session.setopt(pycurl.USERAGENT, user_agent)
-    session.setopt(pycurl.FOLLOWLOCATION, value=True)  ## follow redirects
+    # ruff: noqa: FBT003
+    session.setopt(pycurl.FOLLOWLOCATION, True)  ## follow redirects
     session.setopt(pycurl.CONNECTTIMEOUT, 60)  ## connection phase timeout
     #         session.setopt( pycurl.TIMEOUT, 60 )                 ## whole request timeout (transfer?)
     #         c.setopt( c.VERBOSE, 1 )
