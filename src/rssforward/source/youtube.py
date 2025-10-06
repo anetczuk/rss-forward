@@ -36,7 +36,7 @@ class YouTubeGenerator(RSSGenerator):
         self.items_per_fetch = self.params.get(ParamsField.ITEMSPERFETCH.value, 30)
         self.out_file = self.params.get(ParamsField.OUTFILE.value)
 
-    def authenticate(self, login, password):
+    def authenticate(self, _login, _password):
         # nothing to authenticate
         return True
 

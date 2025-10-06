@@ -47,7 +47,7 @@ class BullDogJobGenerator(RSSGenerator):
             self.params = params_dict.copy()
         self.filters_list = self.params.get(ParamsField.FILTER.value)
 
-    def authenticate(self, login, password):
+    def authenticate(self, _login, _password):
         return True
 
     def generate(self) -> dict[str, str]:
@@ -100,12 +100,12 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 
 def add_offer(feed_gen, label, offer_url):
     # sleep_random(4)
-    _LOGGER.info(f"getting offer details: {offer_url}")
+    _LOGGER.info("getting offer details: %s", offer_url)
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(offer_url, headers=headers, timeout=10)
 
     if response.status_code not in (200, 204):
-        _LOGGER.warning(f"unable to get job offer content, response status: {response.status_code}")
+        _LOGGER.warning("unable to get job offer content, response status: %s", response.status_code)
         return
 
     content_bytes = response.content

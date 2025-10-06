@@ -71,7 +71,7 @@ def curl_get_content(url, session=None):
     response = curl_get(session, url)
     response_code = get_status_code(session)
     if response_code not in (200, 204):
-        _LOGGER.warning(f"unable to get content, code: {response_code} url: {url}")
+        _LOGGER.warning("unable to get content, code: %s url: %s", response_code, url)
         return None
 
     response_text: str = response.getvalue().decode("utf-8")

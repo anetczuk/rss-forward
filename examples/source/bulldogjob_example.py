@@ -55,7 +55,7 @@ def main():
         feed_path = os.path.join(out_dir, rss_out)
         feed_dir = os.path.dirname(feed_path)
         os.makedirs(feed_dir, exist_ok=True)
-        _LOGGER.info(f"writing content to file: {feed_path}")
+        _LOGGER.info("writing content to file: %s", feed_path)
         write_data(feed_path, content)
 
 

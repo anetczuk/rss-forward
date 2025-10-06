@@ -47,7 +47,7 @@ class JustJoinItGenerator(RSSGenerator):
 
         self.filters_list = self.params.get(ParamsField.FILTER.value)
 
-    def authenticate(self, login, password):
+    def authenticate(self, _login, _password):
         return True
 
     def generate(self) -> dict[str, str]:
@@ -124,7 +124,7 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
 
     # fill description
     desc_url = f"https://justjoin.it/offers/{slug}"
-    _LOGGER.info(f"getting offer details: {desc_url}")
+    _LOGGER.info("getting offer details: %s", desc_url)
 
     for rep in range(attempts):
         offer_desc = get_description(desc_url)
@@ -209,14 +209,14 @@ def get_description(url):
                 # got response - break the loop
                 break
             # sometimes server responds witn code 500 - in this case send another request
-            _LOGGER.warning(f"unable to get description from url: {url} response: {response.status_code}")
+            _LOGGER.warning("unable to get description from url: %s response: %s", url, response.status_code)
         except requests.exceptions.ReadTimeout as exc:
-            _LOGGER.warning(f"unable to get description from url: {url} exception: {exc}")
+            _LOGGER.warning("unable to get description from url: %s exception: %s", url, exc)
         # next iteration
         time.sleep(2.0)
     else:
         # could not reach description page
-        _LOGGER.warning(f"unable to get description from url: {url} after several attempts")
+        _LOGGER.warning("unable to get description from url: %s after several attempts", url)
         return None
 
     content_bytes = response.content
@@ -229,7 +229,7 @@ def get_description(url):
 
     # data_dict = extract_data_dict(soup)
     # if data_dict is None:
-    #     _LOGGER.warning(f"unable to extract data from response: {url}\nsoup object: %s", soup)
+    #     _LOGGER.warning("unable to extract data from response: %s\nsoup object: %s", url, soup)
     #     return None
     # data_dict = get_nested_dict(data_dict, ["props", "pageProps", "offer"])
     # # pprint.pprint(data_dict)

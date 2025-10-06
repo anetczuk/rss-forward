@@ -105,7 +105,7 @@ class TrayManager:
 
     # =================================================
 
-    def _onRSSServerClicked(self, icon, item):  # pylint: disable=W0613
+    def _onRSSServerClicked(self, _icon, item):  # pylint: disable=W0613
         self._server_state = not item.checked
         self._setIcon()
         # icon.notify("server clicked")
@@ -115,7 +115,7 @@ class TrayManager:
             return
         self.server_callback(self._server_state)
 
-    def _onRefreshClicked(self, icon, item):  # pylint: disable=W0613
+    def _onRefreshClicked(self, _icon, _item):  # pylint: disable=W0613
         _LOGGER.info("refresh clicked")
         # icon.notify("refresh clicked")
         if self.refresh_callback is None:
@@ -123,7 +123,7 @@ class TrayManager:
             return
         self.refresh_callback()
 
-    def _onOpenLogClicked(self, icon, item):  # pylint: disable=W0613
+    def _onOpenLogClicked(self, _icon, _item):  # pylint: disable=W0613
         _LOGGER.info("open log clicked")
         # icon.notify("refresh clicked")
         if self.open_log_callback is None:
@@ -131,7 +131,7 @@ class TrayManager:
             return
         self.open_log_callback()
 
-    def _onQuitClicked(self, icon, item):  # pylint: disable=W0613
+    def _onQuitClicked(self, icon, _item):  # pylint: disable=W0613
         _LOGGER.info("quit clicked")
         icon.remove_notification()
         self.tray_icon.stop()

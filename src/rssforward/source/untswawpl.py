@@ -37,7 +37,7 @@ class UNTSGenerator(RSSGenerator):
         return True
 
     def generate(self) -> dict[str, str]:
-        _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
+        _LOGGER.info("========== running %s scraper ==========", MAIN_NAME)
         content = get_content()
         return {"news.xml": content}
 
@@ -57,7 +57,7 @@ def get_content():
     try:
         content = dumps_feed_gen(feed_gen)
     except ValueError:
-        _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
+        _LOGGER.error("unable to dump feed, content:\n%s", feed_gen)
         raise
 
     return content
@@ -110,7 +110,7 @@ def extract_news_data(news_data=None, content: str = None):
 
     # sleep_random(3)
     if news_url is not None:
-        _LOGGER.info(f"getting offer details: {news_url}")
+        _LOGGER.info("getting offer details: %s", news_url)
         headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
         response = requests.get(news_url, headers=headers, timeout=10)
 

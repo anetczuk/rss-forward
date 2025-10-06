@@ -49,7 +49,7 @@ class TheProtocolGenerator(RSSGenerator):
             self.params = params_dict.copy()
         self.filters_list = self.params.get(ParamsField.FILTER.value)
 
-    def authenticate(self, login, password):
+    def authenticate(self, _login, _password):
         return True
 
     def generate(self) -> dict[str, str]:
@@ -100,7 +100,7 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
     try:
         content = dumps_feed_gen(feed_gen)
     except ValueError:
-        _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
+        _LOGGER.error("unable to dump feed, content:\n%s", feed_gen)
         raise
 
     return content
@@ -109,7 +109,7 @@ def get_offers_content(label, filter_url, filter_items, throw=True):
 def add_offer(feed_gen, label, offer_url=None, content=None):
     # sleep_random(3)
     if offer_url is not None:
-        _LOGGER.info(f"getting offer details: {offer_url}")
+        _LOGGER.info("getting offer details: %s", offer_url)
         headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
         response = requests.get(offer_url, headers=headers, timeout=10)
 

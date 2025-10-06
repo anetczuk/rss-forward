@@ -178,16 +178,14 @@ run_ruff() {
     ignore_errors+=(S108)       ## S108 Probable insecure usage of temporary file or directory: "/tmp/"
     ignore_errors+=(TC001)      ## TC001 Move application import `rssforward.rssgenerator.RSSGenerator` into a type-checking block
     ignore_errors+=(TC002)      ## TC002 Move third-party import `feedgen.feed.FeedGenerator` into a type-checking block
+    ignore_errors+=(FIX002)     ## FIX002 Line contains TODO, consider resolving the issue
 
     ## TODO: fix    
     ignore_errors+=(N806)       ## N806 Variable `testsLoader` in function should be lowercase
     ignore_errors+=(N803)       ## N803 Argument name `testsList` should be lowercase
-    ignore_errors+=(ARG002)     ## ARG002 Unused method argument: `icon`
+    ignore_errors+=(N802)       ## N802 Function name `_callGen` should be lowercase
     ignore_errors+=(C901)       ## C901 `convert_to_section` is too complex (24 > 10)
     ignore_errors+=(FBT002)     ## FBT002 Boolean default positional argument in function definition
-    ignore_errors+=(FIX002)     ## FIX002 Line contains TODO, consider resolving the issue
-    ignore_errors+=(G004)       ## G004 Logging statement uses f-string
-    ignore_errors+=(N802)       ## N802 Function name `_callGen` should be lowercase
     ignore_errors+=(PLR0911)    ## PLR0911 Too many return statements (24 > 6)
     ignore_errors+=(PLR0912)    ## PLR0912 Too many branches (23 > 12)
     ignore_errors+=(PLR0915)    ## PLR0915 Too many statements (69 > 50)

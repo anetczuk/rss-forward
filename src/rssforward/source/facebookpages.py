@@ -43,11 +43,11 @@ class FacebookPagesGenerator(RSSGenerator):
             self.params = params_dict.copy()
         self.filters_list = self.params.get(ParamsField.FILTER.value)
 
-    def authenticate(self, login, password):
+    def authenticate(self, _login, _password):
         return True
 
     def generate(self) -> dict[str, str]:
-        _LOGGER.info(f"========== running {MAIN_NAME} scraper ==========")
+        _LOGGER.info("========== running %s scraper ==========", MAIN_NAME)
         if self.filters_list is None:
             _LOGGER.info("nothing to get - no filters")
             return {}
@@ -84,7 +84,7 @@ def get_page_content(label, page_id, posts_num):
         try:
             content = dumps_feed_gen(feed_gen)
         except ValueError:
-            _LOGGER.error(f"unable to dump feed, content:\n{feed_gen}")
+            _LOGGER.error("unable to dump feed, content:\n%s", feed_gen)
             raise
 
         return content
