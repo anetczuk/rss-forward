@@ -40,34 +40,39 @@ import logging
 import pprint
 
 from rssforward import logger
-from rssforward.rssgenerator import RSSGenerator
-from rssforward.site.untswawpl import get_generator, get_news_links, extract_news_data
+from rssforward.source.pracujpl import (
+    get_offers_links,
+    extract_offer_data,
+)
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
-page = "szlakgier"
-
-
-def grab_by_generator():
-    generator: RSSGenerator = get_generator()
-    gen_data = generator.generate()
-    _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
-
-
 def main():
     logger.configure_console()
 
-    # grab_by_generator()
+    url = "https://it.pracuj.pl/praca/warszawa;wp?sc=0&itth=41"
 
-    news_links = get_news_links(1, throw=True)
-    if len(news_links) != 1:
+    # params = {
+    #     ParamsField.FILTER.value: [
+    #         {   ParamsField.LABEL.value: "Offers C++ Warsaw",
+    #             ParamsField.URL.value: url,
+    #             ParamsField.ITEMSPERFETCH.value: 2
+    #         }
+    #     ]
+    # }
+    # generator: RSSGenerator = get_generator(params)
+    # gen_data = generator.generate()
+    # print( gen_data.keys())
+
+    offers_list = get_offers_links(url, 1)
+    if len(offers_list) != 1:
         _LOGGER.error("FAILED")
         sys.exit(1)
 
-    full_url = news_links[0]
-    offer_data = extract_news_data(full_url)
+    full_url = offers_list[0]
+    offer_data = extract_offer_data(full_url)
     _LOGGER.info("offer_data:\n%s", pprint.pformat(offer_data))
 
 

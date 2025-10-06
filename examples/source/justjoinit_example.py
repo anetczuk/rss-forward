@@ -22,14 +22,17 @@ with contextlib.suppress(ImportError):
 
 import os
 import logging
-import pprint
 
 from rssforward import logger
-from rssforward.site.bulldogjob import get_generator
+from rssforward.source.justjoinit import get_generator
 from rssforward.utils import write_data
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TMP_DIR = os.path.join(SCRIPT_DIR, os.pardir, os.pardir, "tmp", "examples")
 
 
 def main():
@@ -40,7 +43,7 @@ def main():
     filters = [
         {
             "label": "Offers C++ Warsaw",
-            "url": "https://bulldogjob.pl/companies/jobs/s/city,Warszawa/skills,C++/order,published,desc",  # pylint: disable=C0301
+            "url": "https://api.justjoin.it/v2/user-panel/offers?categories[]=9&city=Warszawa&page=1&sortBy=newest&orderBy=DESC&perPage=100&salaryCurrencies=PLN",  # pylint: disable=C0301
             "outfile": "c_warsaw.xml",
         },
     ]
@@ -49,9 +52,9 @@ def main():
     generator = get_generator(params)
     generator.authenticate(login, password)
     generator_data = generator.generate()
-    _LOGGER.info("generator_data:\n%s", pprint.pformat(generator_data))
+    # pprint.pprint(generator_data)
     for rss_out, content in generator_data.items():
-        out_dir = os.path.join("/tmp", "rss-forward", "bulldog")  # nosec
+        out_dir = os.path.join(TMP_DIR, "rss-forward", "justjoin")  # nosec
         feed_path = os.path.join(out_dir, rss_out)
         feed_dir = os.path.dirname(feed_path)
         os.makedirs(feed_dir, exist_ok=True)

@@ -22,8 +22,8 @@ from bs4 import BeautifulSoup
 from rssforward.utils import convert_to_html, stringisoauto_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
-from rssforward.site.utils.react import extract_data_dict, get_nested_dict
-from rssforward.site.utils.htmlbuild import convert_line, convert_list
+from rssforward.source.utils.react import extract_data_dict, get_nested_dict
+from rssforward.source.utils.htmlbuild import convert_line, convert_list
 
 
 _LOGGER = logging.getLogger(__name__)

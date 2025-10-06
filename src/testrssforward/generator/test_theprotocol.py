@@ -9,7 +9,7 @@
 import unittest
 from testrssforward.data import read_data
 
-from rssforward.site.theprotocol import add_offer
+from rssforward.source.theprotocol import add_offer
 from rssforward.rss.utils import dumps_feed_gen, init_feed_gen
 
 

@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2021 Arkadiusz Netczuk <dev.arnet@gmail.com>
+# Copyright (c) 2025 Arkadiusz Netczuk <dev.arnet@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ import sys
 import logging
 
 from rssforward import logger
-from rssforward.site.justjoinit import get_description
+from rssforward.source.nofluffjobs import get_offers_content
 from rssforward.utils import write_data
 
 
@@ -49,18 +49,30 @@ _LOGGER = logging.getLogger(__name__)
 def main():
     logger.configure_console()
 
-    # generator: RSSGenerator = get_generator()
-    # gen_data = generator.generate()
-    # print(gen_data)
+    url = "https://nofluffjobs.com/pl/warszawa/C%2B%2B?sort=newest"
 
-    url = "https://justjoin.it/job-offer/link-group-c-and-qt-qml-software-engineer-poznan-c"
-    desc = get_description(url)
-    if not desc:
+    # params = {
+    #     ParamsField.FILTER.value: [
+    #         {   ParamsField.LABEL.value: "Offers C++ Warsaw",
+    #             ParamsField.URL.value: url,
+    #             ParamsField.ITEMSPERFETCH.value: 2
+    #         }
+    #     ]
+    # }
+    # generator: RSSGenerator = get_generator(params)
+    # gen_data = generator.generate()
+    # print( gen_data.keys())
+
+    # ruff: noqa: S108
+    offers_content = get_offers_content("xxx", url, 1, "/tmp/nofluffjobs.html")
+    if not offers_content:
         _LOGGER.error("FAILED")
         sys.exit(1)
 
     # ruff: noqa: S108
-    write_data("/tmp/justjoinit.html", desc)
+    out_path = "/tmp/nofluffjobs.xml"
+    _LOGGER.info("writing rss to file: file://%s", out_path)
+    write_data(out_path, offers_content)
 
 
 if __name__ == "__main__":

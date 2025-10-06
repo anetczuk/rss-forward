@@ -35,21 +35,36 @@ with contextlib.suppress(ImportError):
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
 
-import sys
 import logging
 import pprint
 
 from rssforward import logger
+from rssforward.source.facebookpages import (
+    ParamsField,
+    get_generator,
+)
+
 from rssforward.rssgenerator import RSSGenerator
-from rssforward.site.umursynow import get_generator, get_content, MAIN_NAME, get_news_links
-from rssforward.utils import write_data
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
+page_id = "facebookai"
+
+
 def grab_by_generator():
-    generator: RSSGenerator = get_generator()
+    params = {
+        ParamsField.FILTER.value: [
+            {
+                ParamsField.LABEL.value: "Facebook AI",
+                ParamsField.PAGE.value: page_id,
+                ParamsField.ITEMSPERFETCH.value: 2,
+                # ParamsField.OUTFILE.value: f"{page_id}.xml",
+            },
+        ],
+    }
+    generator: RSSGenerator = get_generator(params)
     gen_data = generator.generate()
     _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
 
@@ -57,24 +72,9 @@ def grab_by_generator():
 def main():
     logger.configure_console()
 
-    # grab_by_generator()
+    # FacebookScraper.HEADLESS = False
 
-    links = get_news_links()
-    if not links:
-        _LOGGER.error("FAILED")
-        sys.exit(1)
-
-    # ruff: noqa: S108
-    out_path = f"/tmp/{MAIN_NAME}.html"
-    offers_content = get_content(1, html_output=out_path)
-    if not offers_content:
-        _LOGGER.error("FAILED")
-        sys.exit(1)
-
-    # ruff: noqa: S108
-    out_path = f"/tmp/{MAIN_NAME}.xml"
-    _LOGGER.info("writing rss to file: file://%s", out_path)
-    write_data(out_path, offers_content)
+    grab_by_generator()
 
 
 if __name__ == "__main__":

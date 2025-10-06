@@ -23,9 +23,9 @@ from feedgen.feed import FeedGenerator
 from rssforward.utils import stringisoauto_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
-from rssforward.site.utils.react import extract_data_dict, get_nested_dict
-from rssforward.site.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
-from rssforward.site.utils.curl import curl_get_content
+from rssforward.source.utils.react import extract_data_dict, get_nested_dict
+from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
+from rssforward.source.utils.curl import curl_get_content
 
 
 _LOGGER = logging.getLogger(__name__)

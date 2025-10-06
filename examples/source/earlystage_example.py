@@ -20,7 +20,7 @@ with contextlib.suppress(ImportError):
     ## in this case __init__ is already loaded
 
 from rssforward import logger
-from rssforward.site.earlystage import get_generator
+from rssforward.source.earlystage import get_generator
 from rssforward.rssmanager import get_auth_data
 
 

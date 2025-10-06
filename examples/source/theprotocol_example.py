@@ -22,17 +22,14 @@ with contextlib.suppress(ImportError):
 
 import os
 import logging
+import pprint
 
 from rssforward import logger
-from rssforward.site.justjoinit import get_generator
+from rssforward.source.theprotocol import get_generator
 from rssforward.utils import write_data
 
 
 _LOGGER = logging.getLogger(__name__)
-
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-TMP_DIR = os.path.join(SCRIPT_DIR, os.pardir, os.pardir, "tmp", "examples")
 
 
 def main():
@@ -43,7 +40,9 @@ def main():
     filters = [
         {
             "label": "Offers C++ Warsaw",
-            "url": "https://api.justjoin.it/v2/user-panel/offers?categories[]=9&city=Warszawa&page=1&sortBy=newest&orderBy=DESC&perPage=100&salaryCurrencies=PLN",  # pylint: disable=C0301
+            # "url": "https://theprotocol.it/filtry/c++;t/warszawa;wp?sort=date",  # pylint: disable=C0301
+            "url": "https://theprotocol.it/filtry/c++;t/zdalna;rw?sort=date",  # pylint: disable=C0301
+            "itemsperfetch": 2,
             "outfile": "c_warsaw.xml",
         },
     ]
@@ -52,9 +51,9 @@ def main():
     generator = get_generator(params)
     generator.authenticate(login, password)
     generator_data = generator.generate()
-    # pprint.pprint(generator_data)
+    _LOGGER.info("generator_data:\n%s", pprint.pformat(generator_data))
     for rss_out, content in generator_data.items():
-        out_dir = os.path.join(TMP_DIR, "rss-forward", "justjoin")  # nosec
+        out_dir = os.path.join("/tmp", "rss-forward", "theprotocol")  # nosec
         feed_path = os.path.join(out_dir, rss_out)
         feed_dir = os.path.dirname(feed_path)
         os.makedirs(feed_dir, exist_ok=True)

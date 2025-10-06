@@ -18,7 +18,7 @@ from rssforward.utils import (
 )
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
-from rssforward.site.utils.curl import get_curl_session, curl_post, curl_get, get_status_code
+from rssforward.source.utils.curl import get_curl_session, curl_post, curl_get, get_status_code
 
 
 _LOGGER = logging.getLogger(__name__)

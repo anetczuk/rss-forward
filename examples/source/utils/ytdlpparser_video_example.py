@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 #
 # Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -19,22 +19,36 @@ with contextlib.suppress(ImportError):
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
 
+import sys
+import logging
+import json
+import pprint
 
 from rssforward import logger
-from rssforward.site.librus import get_generator
-from rssforward.rssmanager import get_auth_data
+from rssforward.source.utils.ytdlpparser import fetch_info
+
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def get_json(obj):
+    return json.loads(json.dumps(obj, default=lambda o: getattr(o, "__dict__", str(o))))
 
 
 def main():
     logger.configure()
 
-    auth_params = {"type": "KEEPASSXC", "itemurl": "https://portal.librus.pl/rodzina/synergia/loguj"}
-    login, password = get_auth_data(auth_params)
+    # url = "https://www.youtube.com/watch?v=1LFHUJO-JvI"    # exists
+    # url = "https://www.youtube.com/watch?v=FwzslavNmDQ"    # not exist
+    url = "https://www.youtube.com/watch?v=L-ZQSi3gM9U"  # very long
 
-    generator = get_generator()
-    generator.authenticate(login, password)
-    generator.generate()
+    info_dict = fetch_info(url)
+    _LOGGER.info("fetched info:\n%s", pprint.pformat(info_dict))
+
+
+# =============================================================
 
 
 if __name__ == "__main__":
     main()
+    sys.exit(0)

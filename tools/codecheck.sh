@@ -192,7 +192,6 @@ run_ruff() {
     ignore_errors+=(PLR0912)    ## PLR0912 Too many branches (23 > 12)
     ignore_errors+=(PLR0915)    ## PLR0915 Too many statements (69 > 50)
     ignore_errors+=(S301)       ## S301 `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
-    ignore_errors+=(A005)       ## A005 Module `site` shadows a Python standard-library module
 
     ignore_string="${ignore_errors[*]}"
     ignore_string="${ignore_string//${IFS:0:1}/,}"

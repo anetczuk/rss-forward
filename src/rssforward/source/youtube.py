@@ -13,7 +13,7 @@ from enum import Enum, unique
 from rssforward.utils import convert_to_html
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
-from rssforward.site.utils.ytdlpparser import parse_playlist
+from rssforward.source.utils.ytdlpparser import parse_playlist
 
 
 _LOGGER = logging.getLogger(__name__)

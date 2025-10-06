@@ -17,7 +17,7 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.configfile import ConfigField, ConfigKey, AuthType
 from rssforward.access.keepassxcauth import get_auth_data as get_keepassxc_auth_data, close as keepassxc_close
 
-import rssforward.site
+import rssforward.source
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 def get_generators() -> dict[str, RSSGenerator]:
     ret_data = {}
 
-    generators_module = rssforward.site
+    generators_module = rssforward.source
     generators_path = os.path.dirname(generators_module.__file__)
 
     modules_list = pkgutil.iter_modules([generators_path])
@@ -41,7 +41,7 @@ def get_generators() -> dict[str, RSSGenerator]:
 
 
 def get_generator(generator_id, generator_params_dict=None) -> RSSGenerator:
-    generators_module = rssforward.site
+    generators_module = rssforward.source
     mod_full_name = f"{generators_module.__name__}.{generator_id}"
     mod = __import__(mod_full_name, fromlist=[""])
     try:

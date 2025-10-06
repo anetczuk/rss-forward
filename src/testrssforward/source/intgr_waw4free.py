@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2025 Arkadiusz Netczuk <dev.arnet@gmail.com>
+# Copyright (c) 2021 Arkadiusz Netczuk <dev.arnet@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,40 +37,35 @@ with contextlib.suppress(ImportError):
 
 import sys
 import logging
+import pprint
 
 from rssforward import logger
-from rssforward.site.nofluffjobs import get_offers_content
+from rssforward.rssgenerator import RSSGenerator
+from rssforward.source.waw4free import get_generator, get_content, MAIN_NAME
 from rssforward.utils import write_data
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
+def grab_by_generator():
+    generator: RSSGenerator = get_generator()
+    gen_data = generator.generate()
+    _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
+
+
 def main():
     logger.configure_console()
 
-    url = "https://nofluffjobs.com/pl/warszawa/C%2B%2B?sort=newest"
+    # grab_by_generator()
 
-    # params = {
-    #     ParamsField.FILTER.value: [
-    #         {   ParamsField.LABEL.value: "Offers C++ Warsaw",
-    #             ParamsField.URL.value: url,
-    #             ParamsField.ITEMSPERFETCH.value: 2
-    #         }
-    #     ]
-    # }
-    # generator: RSSGenerator = get_generator(params)
-    # gen_data = generator.generate()
-    # print( gen_data.keys())
-
-    # ruff: noqa: S108
-    offers_content = get_offers_content("xxx", url, 1, "/tmp/nofluffjobs.html")
+    offers_content = get_content(1)
     if not offers_content:
         _LOGGER.error("FAILED")
         sys.exit(1)
 
     # ruff: noqa: S108
-    out_path = "/tmp/nofluffjobs.xml"
+    out_path = f"/tmp/{MAIN_NAME}.xml"
     _LOGGER.info("writing rss to file: file://%s", out_path)
     write_data(out_path, offers_content)
 

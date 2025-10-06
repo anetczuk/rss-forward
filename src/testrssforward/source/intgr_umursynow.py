@@ -41,7 +41,7 @@ import pprint
 
 from rssforward import logger
 from rssforward.rssgenerator import RSSGenerator
-from rssforward.site.waw4free import get_generator, get_content, MAIN_NAME
+from rssforward.source.umursynow import get_generator, get_content, MAIN_NAME, get_news_links
 from rssforward.utils import write_data
 
 
@@ -59,7 +59,14 @@ def main():
 
     # grab_by_generator()
 
-    offers_content = get_content(1)
+    links = get_news_links()
+    if not links:
+        _LOGGER.error("FAILED")
+        sys.exit(1)
+
+    # ruff: noqa: S108
+    out_path = f"/tmp/{MAIN_NAME}.html"
+    offers_content = get_content(1, html_output=out_path)
     if not offers_content:
         _LOGGER.error("FAILED")
         sys.exit(1)

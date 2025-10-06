@@ -25,7 +25,7 @@ import json
 import pprint
 
 from rssforward import logger
-from rssforward.site.utils.ytdlpparser import parse_playlist
+from rssforward.source.utils.ytdlpparser import parse_playlist
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,10 +38,24 @@ def get_json(obj):
 def main():
     logger.configure()
 
-    # przygody przedsiebiorcow
-    url = "https://www.youtube.com/@PrzygodyPrzedsiebiorcow/featured"
-    ret_dict = parse_playlist(url)
+    # ## playlist - gwiazdowski
+    # url = "https://www.youtube.com/playlist?list=PLC9xjKm8G0LpgFgi-eF4YgvtMuogd1dHw"
+    # info_dict = fetch_info(url, items_num=999999)
+    # info_dict["entries"] = "xxx"
+    # pprint.pprint( info_dict )
+    # return
+
+    ## playlist - youtube latino
+    url = "https://www.youtube.com/playlist?list=PL1ebpFrA3ctH0QN6bribofTNpG4z2loWy"
+    known = ["https://www.youtube.com/watch?v=aAbfzUJLJJE", "https://www.youtube.com/watch?v=3Q1DIHK2AIw"]
+
+    ret_dict = parse_playlist(url, known)
     _LOGGER.info("extracted rss channel data:\n%s", pprint.pformat(ret_dict))
+
+    # rss_content = generate_items_rss(channel_data, host="the_host",
+    #                                  url_dir_path="url_dir", local_dir_path="local_dir",
+    #                                  store=False, check_local=False)
+    # print(rss_content)
 
 
 # =============================================================

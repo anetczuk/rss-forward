@@ -168,7 +168,7 @@ required and just `requests` library can be used.
 
 ## How to add new generator/scraper?
 
-It's quite easy. Just put scraper module inside `rssforward.site` package. The module have to contain free function
+It's quite easy. Just put scraper module inside `rssforward.source` package. The module have to contain free function
 `get_generator()` returning instance/object of the scraper. Moreover scraper class have to inherit from `RSSGenerator`
 class. Then comes difficult part: implementation of the scraper.
 

@@ -10,7 +10,6 @@
 
 import logging
 import time
-import datetime
 
 import random
 from urllib.parse import urljoin
@@ -19,20 +18,20 @@ import requests
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
 
-from rssforward.utils import normalize_string
+from rssforward.utils import normalize_string, string2_to_date
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
-from rssforward.site.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
+from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
-MAIN_NAME = "waw4free.pl"
-MAIN_URL = "https://waw4free.pl/"
+MAIN_NAME = "UNTS Warszawa"
+MAIN_URL = "http://unts.waw.pl/"
 
 
-class Waw4FreeGenerator(RSSGenerator):
+class UNTSGenerator(RSSGenerator):
 
     def authenticate(self, _login, _password):
         return True
@@ -43,8 +42,8 @@ class Waw4FreeGenerator(RSSGenerator):
         return {"news.xml": content}
 
 
-def get_content(items_num=20):
-    news_links = get_news_links(items_num, throw=False)
+def get_content():
+    news_links = get_news_links(10, throw=False)
     if not news_links:
         return None
 
@@ -66,7 +65,7 @@ def get_content(items_num=20):
 
 def get_news_links(posts_num, throw=True):
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get("https://waw4free.pl/?wydarzenia=dzisiaj&kolejne_dni=tak", headers=headers, timeout=10)
+    response = requests.get(MAIN_URL, headers=headers, timeout=10)
 
     if response.status_code not in (200, 204):
         if throw:
@@ -80,30 +79,35 @@ def get_news_links(posts_num, throw=True):
     soup = BeautifulSoup(content, "html.parser")
 
     full_list = []
-    articles_list = soup.find_all("div", attrs={"class": "box"})
-    for article in articles_list:
-        link = article.select("a")[0]
-        item_url = link["href"]
-        full_url = urljoin(MAIN_URL, item_url)
-        autopromocja_list = article.find_all("div", attrs={"class": "b-c-border"})
-        if autopromocja_list:
-            ## skipping autopromocja item
-            _LOGGER.debug("skipping autopromocja item: %s", full_url)
+    sections_list = soup.find_all("div", attrs={"class": "appBoxOuter"})
+    for section in sections_list:
+        if "Aktualności" not in section.text:
             continue
-        full_list.append(full_url)
+        articles_list = section.find_all("div", attrs={"class": "article"})
+        for article in articles_list:
+            news_title = article.find_all("h3", attrs={"class": "title"})[0]
+            link = news_title.select("a")[0]
+            item_url = link["href"]
+            full_url = urljoin(MAIN_URL, item_url)
 
+            news_date = article.find_all("span", attrs={"class": "date"})[0]
+            news_date = news_date.text
+            space_index = news_date.index(" ")
+            news_date = news_date[:space_index]
+            full_list.append((full_url, news_date))
     items_num = min(posts_num, len(full_list))
     return full_list[0:items_num]
 
 
 def add_news(feed_gen, full_url):
     offer_data = extract_news_data(full_url)
-    if not offer_data:
-        return
     add_data_to_feed(feed_gen, offer_data)
 
 
-def extract_news_data(news_url=None, content=None):
+def extract_news_data(news_data=None, content: str = None):
+    news_url = news_data[0]
+    news_date = news_data[1]
+
     # sleep_random(3)
     if news_url is not None:
         _LOGGER.info(f"getting offer details: {news_url}")
@@ -114,44 +118,27 @@ def extract_news_data(news_url=None, content=None):
             _LOGGER.warning("unable to get job offer content")
             return None
 
-        content = response.content
-        content = content.decode("utf-8")
+        content_bytes = response.content
+        content = content_bytes.decode("utf-8")
 
     soup = BeautifulSoup(content, "html.parser")
 
-    id_value = news_url.rsplit("/", 1)[-1]
+    id_pos = news_url.index("id=")
+    id_value = news_url[id_pos + 3 :]
 
-    articles_list = soup.find_all("div", attrs={"class": "article"})
-    article = articles_list[0]
+    content_list = soup.find_all("div", attrs={"class": "Fullcontent"})
+    content_tag = content_list[0]
 
-    article_title_list = article.find_all("h1", attrs={"itemprop": "name"})
-    if not article_title_list:
-        _LOGGER.warning("unable to get event from: %s", news_url)
-        return None
-    title_text = article_title_list[0].text
+    titles_list = content_tag.find_all("h2", attrs={"class": "title"})
+    title_item = titles_list[0]
+    title_span = title_item.select_one("span")
+    title_text = title_span.text
 
-    article_element = article.find_all("div", attrs={"class": "box-category"})[0]
-    article_element.clear()
-
-    article_element = article.find_all("div", attrs={"id": "article_share"})[0]
-    article_element.clear()
-
-    article_element_list = article.find_all("div", attrs={"id": "inrebox"})
-    for item in article_element_list:
-        item.clear()
-
-    article_element = article.find_all("div", attrs={"id": "stopka_ogloszenia"})[0]
-    article_element.clear()
-
-    article_element = article.find_all("div", attrs={"class": "zobacz-box-text"})[0]
-    article_element.clear()
-
-    item_desc = str(article)
+    item_desc = str(content_tag)
     item_desc = normalize_string(item_desc)
     # item_desc = convert_to_html(item_desc)
 
-    utc_dt = datetime.datetime.now(datetime.timezone.utc)
-    item_date = utc_dt.astimezone()
+    item_date = string2_to_date(news_date)
 
     return {
         "id": id_value,
@@ -283,4 +270,4 @@ def sleep_random(max_seconds):
 
 
 def get_generator(_gen_params=None) -> RSSGenerator:
-    return Waw4FreeGenerator()
+    return UNTSGenerator()
