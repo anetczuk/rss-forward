@@ -148,7 +148,10 @@ def extract_news_data(news_url=None, content=None):
 
     content = f"""\
 <style>
-
+.highlighted-image {{
+    max-width: 300px;
+    max-height: 300px;
+}}
 </style>
 
 {item_desc}
@@ -158,7 +161,7 @@ def extract_news_data(news_url=None, content=None):
         "id": id_value,
         "title": title_text,
         "author": {"name": MAIN_NAME, "email": MAIN_NAME},
-        "content": item_desc,
+        "content": content,
         "pub_date": item_date,
         "link": news_url,
     }
