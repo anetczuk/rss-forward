@@ -166,7 +166,7 @@ class YTDLPLogger:
 # order of items in list seems to be random
 # youtube_url can be URL to channel or playlist or URL to video
 # returns None if failed/invalid url/video not available
-def fetch_info(youtube_url, items_num=15, reduce=True):
+def fetch_info(youtube_url, items_num=15, *, reduce=True):
     params = {
         "skip_download": True,
         "simulate": True,

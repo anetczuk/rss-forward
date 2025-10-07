@@ -23,7 +23,7 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
 
 
 class TrayManager:
-    def __init__(self, server_state=True):
+    def __init__(self, *, server_state=True):
         self._server_state: bool = server_state
         self._is_error: bool = False
         self.server_callback = None
@@ -37,18 +37,18 @@ class TrayManager:
 
         rss_server_item = pystray.MenuItem(
             "Run RSS Server",
-            self._onRSSServerClicked,
+            self._on_rss_server_clicked,
             checked=lambda _item: self._server_state,
         )
 
-        rss_refresh_item = pystray.MenuItem("Refresh RSS", self._onRefreshClicked)
-        open_log_item = pystray.MenuItem("Open log", self._onOpenLogClicked)
-        quit_item = pystray.MenuItem("Quit", self._onQuitClicked)
+        rss_refresh_item = pystray.MenuItem("Refresh RSS", self._on_refresh_clicked)
+        open_log_item = pystray.MenuItem("Open log", self._on_open_log_clicked)
+        quit_item = pystray.MenuItem("Quit", self._on_quit_clicked)
 
         menu = pystray.Menu(rss_server_item, rss_refresh_item, open_log_item, quit_item)
 
         self.tray_icon = pystray.Icon(name="rss-forward", title="RSS Forward", menu=menu)
-        self._setIcon()
+        self._set_icon()
 
     @property
     def server_state(self):
@@ -57,7 +57,7 @@ class TrayManager:
     @server_state.setter
     def server_state(self, new_state):
         self._server_state = new_state
-        self._setIcon()
+        self._set_icon()
 
     @property
     def is_error(self):
@@ -66,13 +66,13 @@ class TrayManager:
     @is_error.setter
     def is_error(self, new_state: bool):
         self._is_error = new_state
-        self._setIcon()
+        self._set_icon()
 
     # ruff: noqa: FBT001
-    def setValid(self, new_state: bool):
+    def set_valid(self, new_state: bool):
         self.is_error = not new_state
 
-    def _setIcon(self):
+    def _set_icon(self):
         if self._is_error:
             _LOGGER.info("error detected - setting red icon")
             self.tray_icon.icon = self.red_icon_image
@@ -84,7 +84,7 @@ class TrayManager:
             _LOGGER.info("server disabled - setting green icon")
             self.tray_icon.icon = self.green_icon_image
 
-    def runLoop(self):
+    def run_loop(self):
         """Execute event loop. Method have to be executed from main thread."""
         _LOGGER.info("starting systray loop")
         self.tray_icon.run()
@@ -92,22 +92,22 @@ class TrayManager:
     # =================================================
 
     # set callback for enable/disable RSS server
-    def setRSSServerCallback(self, callback):
+    def set_rss_server_callback(self, callback):
         self.server_callback = callback
 
     # set "refresh" callback
-    def setRefreshCallback(self, callback):
+    def set_refresh_callback(self, callback):
         self.refresh_callback = callback
 
     # set open log callback
-    def setOpenLogCallback(self, callback):
+    def set_open_log_callback(self, callback):
         self.open_log_callback = callback
 
     # =================================================
 
-    def _onRSSServerClicked(self, _icon, item):  # pylint: disable=W0613
+    def _on_rss_server_clicked(self, _icon, item):  # pylint: disable=W0613
         self._server_state = not item.checked
-        self._setIcon()
+        self._set_icon()
         # icon.notify("server clicked")
         _LOGGER.info("server clicked to state %s", self._server_state)
         if self.server_callback is None:
@@ -115,7 +115,7 @@ class TrayManager:
             return
         self.server_callback(self._server_state)
 
-    def _onRefreshClicked(self, _icon, _item):  # pylint: disable=W0613
+    def _on_refresh_clicked(self, _icon, _item):  # pylint: disable=W0613
         _LOGGER.info("refresh clicked")
         # icon.notify("refresh clicked")
         if self.refresh_callback is None:
@@ -123,7 +123,7 @@ class TrayManager:
             return
         self.refresh_callback()
 
-    def _onOpenLogClicked(self, _icon, _item):  # pylint: disable=W0613
+    def _on_open_log_clicked(self, _icon, _item):  # pylint: disable=W0613
         _LOGGER.info("open log clicked")
         # icon.notify("refresh clicked")
         if self.open_log_callback is None:
@@ -131,7 +131,7 @@ class TrayManager:
             return
         self.open_log_callback()
 
-    def _onQuitClicked(self, icon, _item):  # pylint: disable=W0613
+    def _on_quit_clicked(self, icon, _item):  # pylint: disable=W0613
         _LOGGER.info("quit clicked")
         icon.remove_notification()
         self.tray_icon.stop()

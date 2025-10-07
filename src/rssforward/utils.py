@@ -132,7 +132,7 @@ def add_timezone(dt: datetime.datetime) -> datetime.datetime:
     return tz_info.localize(dt)
 
 
-def convert_to_html(content: str, preserve_newline=False) -> str:
+def convert_to_html(content: str, *, preserve_newline=False) -> str:
     if content is None:
         return None
     if preserve_newline:
@@ -200,7 +200,7 @@ class ObjRepr:
     def __init__(self):
         self._visited = set()
 
-    def reprObj(self, obj):
+    def repr_obj(self, obj):
         self._visited.clear()
         return self._visit(obj)
 
@@ -241,4 +241,4 @@ class ObjRepr:
 
 def obj_to_dict(obj):
     repr_obj = ObjRepr()
-    return repr_obj.reprObj(obj)
+    return repr_obj.repr_obj(obj)

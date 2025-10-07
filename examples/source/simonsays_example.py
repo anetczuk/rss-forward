@@ -37,7 +37,7 @@ def main():
         ],
     }
     manager = RSSManager(parameters)
-    manager.generateData()
+    manager.generate_data()
 
 
 if __name__ == "__main__":

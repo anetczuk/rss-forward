@@ -94,7 +94,7 @@ class RSSManager:
         if generators:
             self._generators = generators
 
-    def isGenValid(self):
+    def is_gen_valid(self):
         """Check if all generators are valid.
 
         Return 'True' if valid, otherwise 'False'.
@@ -110,9 +110,9 @@ class RSSManager:
         return True
 
     # returns 'True' if everything is OK, otherwise 'False'
-    def generateData(self):
+    def generate_data(self):
         if self._generators is None:
-            self._initializeGenerators()
+            self._initialize_generators()
         if not self._generators:
             _LOGGER.warning("generators not initialized")
             return
@@ -135,7 +135,7 @@ class RSSManager:
                 gen_state.valid = False
             else:
                 gen_state.valid = True
-                self._writeData(gen_id, gen_data)
+                self._write_data(gen_id, gen_data)
 
         save_recent_date(recent_datetime)
         _LOGGER.info("========== generation ended ==========")
@@ -148,7 +148,7 @@ class RSSManager:
                 gen.close()
         keepassxc_close()
 
-    def _initializeGenerators(self):
+    def _initialize_generators(self):
         self._generators = []
 
         gen_items = self._params.get(ConfigKey.GENITEM.value, [])  # list of dicts
@@ -187,7 +187,7 @@ class RSSManager:
 
         _LOGGER.info("generators initialized: %s", len(self._generators))
 
-    def _writeData(self, generator_id, generator_data: dict[str, str]):
+    def _write_data(self, generator_id, generator_data: dict[str, str]):
         if not generator_data:
             return
         data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
@@ -213,7 +213,7 @@ class ThreadedRSSManager:
         self._thread = None
 
     # set generator state (error) callback
-    def setStateCallback(self, callback):
+    def set_state_callback(self, callback):
         self._state_callback = callback
 
     def start(self, refresh_time, startupdelay):
@@ -223,7 +223,7 @@ class ThreadedRSSManager:
                 _LOGGER.warning("thread already running")
                 return
             self._execute_loop = True
-            self._thread = threading.Thread(target=self._runLoop, args=[refresh_time, startupdelay])
+            self._thread = threading.Thread(target=self._run_loop, args=[refresh_time, startupdelay])
             _LOGGER.info("starting thread")
             self._thread.start()
 
@@ -241,18 +241,18 @@ class ThreadedRSSManager:
                 # no threads wait for notification
                 _LOGGER.info("thread does not wait")
 
-    def executeLoop(self, refresh_time, startupdelay):
+    def execute_loop(self, refresh_time, startupdelay):
         """Start run loop without additional threads."""
         with self._lock:
             self._execute_loop = True
-        self._runLoop(refresh_time, startupdelay)
+        self._run_loop(refresh_time, startupdelay)
 
-    def executeSingle(self):
+    def execute_single(self):
         """Trigger single generation."""
         with self._lock:
             if not self._thread:
                 _LOGGER.info("executing RSS manager")
-                self._callGen()
+                self._call_gen()
                 return
 
             try:
@@ -263,7 +263,7 @@ class ThreadedRSSManager:
                 # no threads wait for notification
                 _LOGGER.info("thread does not wait")
 
-    def _runLoop(self, refresh_time, startupdelay):
+    def _run_loop(self, refresh_time, startupdelay):
         try:
             if startupdelay > 0:
                 _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
@@ -275,7 +275,7 @@ class ThreadedRSSManager:
                     if not self._execute_loop:
                         break
 
-                self._callGen()
+                self._call_gen()
 
                 with self._wait_object:  # lock the object
                     with self._lock:
@@ -300,18 +300,18 @@ class ThreadedRSSManager:
             with self._lock:
                 self._execute_loop = False
 
-    def _callGen(self):
+    def _call_gen(self):
         if self._state_callback:
             self._state_callback(new_state=False)
 
         try:
-            self._manager.generateData()
+            self._manager.generate_data()
 
         except RuntimeError as exc:
             _LOGGER.error("exception occurred when calling generator: %s", exc)
 
         if self._state_callback:
-            valid = self._manager.isGenValid()
+            valid = self._manager.is_gen_valid()
             self._state_callback(valid)
 
     def join(self):

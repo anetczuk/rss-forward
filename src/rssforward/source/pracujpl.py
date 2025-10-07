@@ -73,8 +73,8 @@ class PracujPlGenerator(RSSGenerator):
         return ret_dict
 
 
-def get_offers_content(label, filter_url, filter_items, throw=True):
-    offers_links_list = get_offers_links(filter_url, filter_items, throw)
+def get_offers_content(label, filter_url, filter_items, *, throw=True):
+    offers_links_list = get_offers_links(filter_url, filter_items, throw=throw)
     if not offers_links_list:
         return None
 
@@ -110,7 +110,7 @@ def add_offer(feed_gen, label, full_url, html_out_path=None):
     add_data_to_feed(feed_gen, offer_data)
 
 
-def get_offers_links(filter_url, filter_items, throw=True):
+def get_offers_links(filter_url, filter_items, *, throw=True):
     response_text: str = curl_get_content(filter_url)
     if not response_text:
         if throw:

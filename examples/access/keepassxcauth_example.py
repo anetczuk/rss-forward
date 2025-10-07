@@ -38,7 +38,7 @@ def main():
     auth = KeepassxcAuth(client_id="xxx", state_file_path="/tmp/xxx.assoc")  # nosec
     auth.connect()
 
-    auth_data = auth.getAuthData(MAIN_URL)
+    auth_data = auth.get_auth_data(MAIN_URL)
     _LOGGER.info("unlocking done, login: %s", auth_data.get("login"))
 
 

@@ -179,17 +179,13 @@ run_ruff() {
     ignore_errors+=(TC001)      ## TC001 Move application import `rssforward.rssgenerator.RSSGenerator` into a type-checking block
     ignore_errors+=(TC002)      ## TC002 Move third-party import `feedgen.feed.FeedGenerator` into a type-checking block
     ignore_errors+=(FIX002)     ## FIX002 Line contains TODO, consider resolving the issue
+    ignore_errors+=(S301)       ## S301 `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
 
     ## TODO: fix    
-    ignore_errors+=(N806)       ## N806 Variable `testsLoader` in function should be lowercase
-    ignore_errors+=(N803)       ## N803 Argument name `testsList` should be lowercase
-    ignore_errors+=(N802)       ## N802 Function name `_callGen` should be lowercase
     ignore_errors+=(C901)       ## C901 `convert_to_section` is too complex (24 > 10)
-    ignore_errors+=(FBT002)     ## FBT002 Boolean default positional argument in function definition
     ignore_errors+=(PLR0911)    ## PLR0911 Too many return statements (24 > 6)
     ignore_errors+=(PLR0912)    ## PLR0912 Too many branches (23 > 12)
     ignore_errors+=(PLR0915)    ## PLR0915 Too many statements (69 > 50)
-    ignore_errors+=(S301)       ## S301 `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
 
     ignore_string="${ignore_errors[*]}"
     ignore_string="${ignore_string//${IFS:0:1}/,}"

@@ -67,7 +67,7 @@ class JustJoinItGenerator(RSSGenerator):
         return ret_dict
 
 
-def get_offers_content(label, filter_url, filter_items, throw=True, attempts=3):
+def get_offers_content(label, filter_url, filter_items, attempts=3, *, throw=True):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0",
         "Version": "2",
@@ -105,9 +105,9 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
 
     ########
 
-    requiredSkills = data_dict.get("requiredSkills")
-    if isinstance(requiredSkills, list):
-        data_dict["requiredSkills"] = sorted(requiredSkills)
+    required_skills = data_dict.get("requiredSkills")
+    if isinstance(required_skills, list):
+        data_dict["requiredSkills"] = sorted(required_skills)
 
     feed_item = feed_gen.add_entry()
 

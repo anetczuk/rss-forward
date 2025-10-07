@@ -33,7 +33,7 @@ def main():
     logger.configure()
 
     manager = TrayManager()
-    manager.runLoop()
+    manager.run_loop()
 
     _LOGGER.info("execution completed")
 

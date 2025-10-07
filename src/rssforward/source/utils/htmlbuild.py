@@ -36,7 +36,7 @@ def convert_list(title, elements_list):
     return f"<!-- convert_list -->{content}\n"
 
 
-def convert_line(title, elements_list, inline=True):
+def convert_line(title, elements_list, *, inline=True):
     content = wrap_list(elements_list, inline=True)
     if title:
         title_content = convert_title(title)
@@ -47,7 +47,7 @@ def convert_line(title, elements_list, inline=True):
     return f"<!-- convert_line -->{content}"
 
 
-def wrap_list(elements_list, inline=False):
+def wrap_list(elements_list, *, inline=False):
     li_style = ""
     separator = " "
     if inline:

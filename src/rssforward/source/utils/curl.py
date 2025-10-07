@@ -40,18 +40,18 @@ def get_status_code(session):
 
 
 ## perform 'GET' request on curl session
-def curl_get(session, targetUrl, params_dict=None, header_list=None):
-    #     _LOGGER.info( "accessing url: %s params: %s", targetUrl, dataDict )
+def curl_get(session, target_url, params_dict=None, header_list=None):
+    #     _LOGGER.info( "accessing url: %s params: %s", target_url, dataDict )
 
-    dataBuffer = BytesIO()
+    data_buffer = BytesIO()
     #     try:
 
     session.setopt(pycurl.POST, 0)  ## disable POST
     if params_dict:
-        session.setopt(session.URL, targetUrl + "?" + urlencode(params_dict))
+        session.setopt(session.URL, target_url + "?" + urlencode(params_dict))
     else:
-        session.setopt(pycurl.URL, targetUrl)
-    session.setopt(pycurl.WRITEDATA, dataBuffer)
+        session.setopt(pycurl.URL, target_url)
+    session.setopt(pycurl.WRITEDATA, data_buffer)
 
     if header_list:
         session.setopt(pycurl.HTTPHEADER, header_list)
@@ -62,7 +62,7 @@ def curl_get(session, targetUrl, params_dict=None, header_list=None):
     #             return ""
     #     finally:
     #         session.close()
-    return dataBuffer
+    return data_buffer
 
 
 def curl_get_content(url, session=None):
@@ -79,14 +79,14 @@ def curl_get_content(url, session=None):
 
 
 ## perform 'POST' request on curl session
-def curl_post(session, targetUrl, dataDict, header_list=None, verbose=False):
-    #     _LOGGER.info( "accessing url: %s params: %s", targetUrl, dataDict )
+def curl_post(session, target_url, data_dict, header_list=None, *, verbose=False):
+    #     _LOGGER.info( "accessing url: %s params: %s", target_url, data_dict )
 
-    dataBuffer = BytesIO()
-    session.setopt(pycurl.URL, targetUrl)
+    data_buffer = BytesIO()
+    session.setopt(pycurl.URL, target_url)
     session.setopt(pycurl.POST, 1)
-    session.setopt(pycurl.POSTFIELDS, urlencode(dataDict))
-    session.setopt(pycurl.WRITEDATA, dataBuffer)
+    session.setopt(pycurl.POSTFIELDS, urlencode(data_dict))
+    session.setopt(pycurl.WRITEDATA, data_buffer)
 
     if header_list:
         session.setopt(pycurl.HTTPHEADER, header_list)
@@ -97,14 +97,14 @@ def curl_post(session, targetUrl, dataDict, header_list=None, verbose=False):
         session.setopt(pycurl.VERBOSE, 0)
 
     session.perform()
-    return dataBuffer
+    return data_buffer
 
 
-def curl_download(session, sourceUrl, outputFile, repeatsOnFail=0):
-    repeatsOnFail = max(repeatsOnFail, 0)
-    for _i in range(repeatsOnFail):
+def curl_download(session, source_url, output_file, repeats_on_fail=0):
+    repeats_on_fail = max(repeats_on_fail, 0)
+    for _i in range(repeats_on_fail):
         try:
-            curl_download_raw(session, sourceUrl, outputFile)
+            curl_download_raw(session, source_url, output_file)
 
         # ruff: noqa: PERF203
         except pycurl.error:
@@ -114,18 +114,18 @@ def curl_download(session, sourceUrl, outputFile, repeatsOnFail=0):
             ## done -- returning
             return
 
-    curl_download_raw(session, sourceUrl, outputFile)
+    curl_download_raw(session, source_url, output_file)
 
 
-def curl_download_raw(session, sourceUrl, outputFile):
+def curl_download_raw(session, source_url, output_file):
     fd, path = tempfile.mkstemp()
     try:
-        session.setopt(pycurl.URL, sourceUrl)
+        session.setopt(pycurl.URL, source_url)
         session.setopt(pycurl.POST, 0)
         with os.fdopen(fd, "wb") as tmp:
             session.setopt(session.WRITEFUNCTION, tmp.write)
             session.perform()
-        copyfile(path, outputFile)
+        copyfile(path, output_file)
     finally:
         _LOGGER.info("removing temporary file: %s", path)
         os.remove(path)

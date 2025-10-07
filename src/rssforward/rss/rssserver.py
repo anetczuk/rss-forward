@@ -58,8 +58,8 @@ class RootedHTTPRequestHandler(SimpleHTTPRequestHandler):
 
 
 class RSSServer(socketserver.TCPServer):
-    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
-        super().__init__(server_address, RequestHandlerClass, bind_and_activate)
+    def __init__(self, server_address, request_handler_class, *, bind_and_activate=True):
+        super().__init__(server_address, request_handler_class, bind_and_activate)
         self.base_path = None
 
 
@@ -89,18 +89,18 @@ class RSSServerManager:
         self.lock = threading.RLock()
 
     @staticmethod
-    def getPrimaryIp() -> None:
+    def get_primary_ip() -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             # doesn't even have to be reachable
             sock.connect(("10.255.255.255", 1))
-            IP = sock.getsockname()[0] + ":" + str(RSSServerManager.DEFAULT_PORT)
+            address_ip = sock.getsockname()[0] + ":" + str(RSSServerManager.DEFAULT_PORT)
         # ruff: noqa: BLE001
         except Exception:  # pylint: disable=W0718
-            IP = "127.0.0.1" + ":" + str(RSSServerManager.DEFAULT_PORT)
+            address_ip = "127.0.0.1" + ":" + str(RSSServerManager.DEFAULT_PORT)
         finally:
             sock.close()
-        return IP
+        return address_ip
 
     #         hostname = socket.gethostname()
     #         local_ip = socket.gethostbyname(hostname)
@@ -108,13 +108,13 @@ class RSSServerManager:
 
     #         return socket.gethostbyname( socket.getfqdn() )
 
-    def getStatus(self) -> "RSSServerManager.Status":
+    def get_status(self) -> "RSSServerManager.Status":
         with self.lock:
             if self._service is not None:
                 return RSSServerManager.Status.STARTED
             return RSSServerManager.Status.STOPPED
 
-    def switchState(self, new_state):
+    def switch_state(self, new_state):
         if new_state:
             _LOGGER.info("starting server")
             self.start()
@@ -125,13 +125,13 @@ class RSSServerManager:
     # asynchronous call
     # 'rootDir' - path to directory containing RSS feeds (feeds can be in any subfolder)
     # relative path will be reflected in URL address of the feed
-    def start(self, rootDir=None):
+    def start(self, root_dir=None):
         with self.lock:
             if self._service is not None:
                 ## already started
                 return
-            if rootDir:
-                self.rootDir = rootDir
+            if root_dir:
+                self.rootDir = root_dir
             self._thread = threading.Thread(target=self._run, args=[])
             self._thread.start()
 
@@ -141,7 +141,7 @@ class RSSServerManager:
                 ## not started
                 return
             _LOGGER.info("stopping feed server")
-            self._shutdownService()
+            self._shutdown_service()
             self._thread.join()
             self._thread = None
 
@@ -151,10 +151,10 @@ class RSSServerManager:
     # blocking execution
     # 'rootDir' - path to directory containing RSS feeds (feeds can be in any subfolder)
     # relative path will be reflected in URL address of the feed
-    def execute(self, rootDir=None):
+    def execute(self, root_dir=None):
         with self.lock:
-            if rootDir:
-                self.rootDir = rootDir
+            if root_dir:
+                self.rootDir = root_dir
             self._run()
 
     def _run(self):
@@ -168,13 +168,13 @@ class RSSServerManager:
                 try:
                     _LOGGER.info("serving at port %s", self.port)
                     httpd.allow_reuse_address = True
-                    self._notifyStarted()
+                    self._notify_started()
                     httpd.serve_forever()
                 #             httpd.handle_request()
                 finally:
                     self._service.server_close()
                     self._service = None
-                    self._notifyStopped()
+                    self._notify_stopped()
             _LOGGER.info("server thread ended")
         except OSError:
             _LOGGER.exception("unable to start server on port: %s", self.port)
@@ -183,18 +183,18 @@ class RSSServerManager:
             _LOGGER.exception("unhandled exception occur - terminating server thread")
             raise
 
-    def _shutdownService(self):
+    def _shutdown_service(self):
         if self._service is None:
             return
         self._service.shutdown()
 
-    def _notifyStarted(self):
+    def _notify_started(self):
         if not callable(self.startedCallback):
             return
         # pylint: disable=E1102
         self.startedCallback()
 
-    def _notifyStopped(self):
+    def _notify_stopped(self):
         if not callable(self.stoppedCallback):
             return
         # pylint: disable=E1102

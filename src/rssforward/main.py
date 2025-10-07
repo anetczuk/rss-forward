@@ -50,13 +50,13 @@ def start_with_tray(parameters):
     manager = RSSManager(parameters)
     threaded_manager = ThreadedRSSManager(manager)
 
-    tray_manager.setRSSServerCallback(rss_server.switchState)
-    tray_manager.setRefreshCallback(threaded_manager.executeSingle)
+    tray_manager.set_rss_server_callback(rss_server.switch_state)
+    tray_manager.set_refresh_callback(threaded_manager.execute_single)
 
-    threaded_manager.setStateCallback(tray_manager.setValid)
+    threaded_manager.set_state_callback(tray_manager.set_valid)
 
     log_path = os.path.join(log_dir, "log.txt")
-    tray_manager.setOpenLogCallback(lambda: open_log(log_viewer, log_path))
+    tray_manager.set_open_log_callback(lambda: open_log(log_viewer, log_path))
 
     # data generation main loop
     exit_code = 0
@@ -64,14 +64,14 @@ def start_with_tray(parameters):
         if genloop:
             # run in loop
             threaded_manager.start(refresh_time, startupdelay)
-            tray_manager.runLoop()  # run tray main loop
+            tray_manager.run_loop()  # run tray main loop
         else:
             # generate data only once
             _LOGGER.info("generating RSS data only once")
             if startupdelay > 0:
                 _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
                 time.sleep(startupdelay)
-            manager.generateData()
+            manager.generate_data()
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
@@ -110,14 +110,14 @@ def start_no_tray(parameters):
     exit_code = 0
     try:
         if genloop:
-            threaded_manager.executeLoop(refresh_time, startupdelay)
+            threaded_manager.execute_loop(refresh_time, startupdelay)
         else:
             # generate data and keep server running
             if startupdelay > 0:
                 _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
                 time.sleep(startupdelay)
             _LOGGER.info("generating RSS data only once")
-            manager.generateData()
+            manager.generate_data()
             rss_server.join()
 
     except KeyboardInterrupt:
@@ -147,14 +147,14 @@ def start_raw(parameters):
     exit_code = 0
     try:
         if genloop:
-            threaded_manager.executeLoop(refresh_time, startupdelay)
+            threaded_manager.execute_loop(refresh_time, startupdelay)
         else:
             # generate data and exit
             if startupdelay > 0:
                 _LOGGER.info("waiting %s seconds (startup delay)", startupdelay)
                 time.sleep(startupdelay)
             _LOGGER.info("generating RSS data only once")
-            manager.generateData()
+            manager.generate_data()
 
     except KeyboardInterrupt:
         _LOGGER.info("keyboard interrupt detected - stopping")
@@ -231,7 +231,7 @@ def main():
 
     general_section = parameters.get(ConfigKey.GENERAL.value, {})
     log_dir = general_section.get(ConfigField.LOGDIR.value)
-    logger.configure(logDir=log_dir)
+    logger.configure(log_dir=log_dir)
 
     _LOGGER.info("============================== starting application ==============================")
     _LOGGER.info("Log output dir: %s", log_dir)

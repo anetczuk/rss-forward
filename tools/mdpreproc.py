@@ -93,7 +93,6 @@ class MDPreprocessor:
         content_after = self._output_content[space_end_index:]
         self._output_content = f"{content_before}{pre_content}{include_content}{post_content}{content_after}"
 
-    # pylint: disable=C0103
     def _find_replace_list(self):
         replace_list = []
         while True:
@@ -103,7 +102,6 @@ class MDPreprocessor:
             replace_list.append(replace_pair)
         return replace_list
 
-    # pylint: disable=C0103
     def _find_replace_item(self, curr_index):
         if curr_index >= len(self._items):
             return ()
@@ -124,7 +122,6 @@ class MDPreprocessor:
         del self._items[curr_index]
         return (curr_item, next_item)
 
-    # pylint: disable=C0103
     def _find_tags(self):
         tag_list = []
         start_pattern = re.compile("<!--.*?(insertstart|insertend).*?-->", re.MULTILINE | re.DOTALL)

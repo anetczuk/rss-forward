@@ -45,7 +45,7 @@ class LibusGenerator(RSSGenerator):
     def authenticate(self, login, password):
         self._username = login
         self._password = password
-        self._getToken()
+        self._get_token()
         return True
 
     def generate(self) -> dict[str, str]:
@@ -56,10 +56,10 @@ class LibusGenerator(RSSGenerator):
         except TokenError as exc:
             _LOGGER.debug("token error - try one more time with new token (%s)", exc)
 
-        self._getToken()
+        self._get_token()
         return generate_content(self._token)
 
-    def _getToken(self):
+    def _get_token(self):
         self._token = None
         try:
             self._token = get_token(self._username, self._password)

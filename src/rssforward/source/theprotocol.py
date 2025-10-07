@@ -70,7 +70,7 @@ class TheProtocolGenerator(RSSGenerator):
         return ret_dict
 
 
-def get_offers_content(label, filter_url, filter_items, throw=True):
+def get_offers_content(label, filter_url, filter_items, *, throw=True):
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(filter_url, headers=headers, timeout=10)
 

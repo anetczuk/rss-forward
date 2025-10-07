@@ -72,8 +72,8 @@ class NoFluffJobsGenerator(RSSGenerator):
         return ret_dict
 
 
-def get_offers_content(label, filter_url, filter_items, throw=True, html_out_path=None):
-    offers_links_list = get_offers_links(filter_url, throw)
+def get_offers_content(label, filter_url, filter_items, html_out_path=None, *, throw=True):
+    offers_links_list = get_offers_links(filter_url, throw=throw)
     if not offers_links_list:
         return None
 
@@ -97,7 +97,7 @@ def get_offers_content(label, filter_url, filter_items, throw=True, html_out_pat
     return content
 
 
-def get_offers_links(filter_url, throw=True):
+def get_offers_links(filter_url, *, throw=True):
     # sleep_random(4)
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(filter_url, headers=headers, timeout=10)

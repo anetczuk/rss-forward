@@ -64,7 +64,7 @@ def get_content(items_num=20):
     return content
 
 
-def get_news_links(posts_num, throw=True):
+def get_news_links(posts_num, *, throw=True):
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get("https://waw4free.pl/?wydarzenia=dzisiaj&kolejne_dni=tak", headers=headers, timeout=10)
 

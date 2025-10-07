@@ -53,9 +53,9 @@ class YouTubeGenerator(RSSGenerator):
         # _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
 
         data = parse_playlist(self.url, max_fetch=self.items_per_fetch)
-        return self._generateFeed(data)
+        return self._generate_feed(data)
 
-    def _generateFeed(self, yt_data):
+    def _generate_feed(self, yt_data):
         feed_gen = init_feed_gen(self.url, lang="en")
         feed_gen.title(yt_data["feed"]["title"])
         feed_gen.description(" ")  # required non-emptyfield

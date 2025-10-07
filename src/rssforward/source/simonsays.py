@@ -79,7 +79,7 @@ class SimonSaysGenerator(RSSGenerator):
 
         self._auth_header_list = [f"Authorization: Bearer {self._token}", "Type: application/json"]
 
-        user_id = self._getStudentId()
+        user_id = self._get_student_id()
         if user_id is None:
             _LOGGER.error("unable to user id")
             return None
@@ -90,28 +90,28 @@ class SimonSaysGenerator(RSSGenerator):
         # url = "https://simonsays.langlion.com/api/wall"
 
         _LOGGER.info("accessing messages")
-        messages_data = self._getMessages()
+        messages_data = self._get_messages()
         if messages_data is None:
             return None
         gen_data = generate_messages_feed(messages_data)
         ret_dict.update(gen_data)
 
         _LOGGER.info("accessing marks")
-        marks_data = self._getMarks(user_id)
+        marks_data = self._get_marks(user_id)
         if marks_data is None:
             return None
         gen_data = generate_marks_feed(marks_data)
         ret_dict.update(gen_data)
 
         _LOGGER.info("accessing documents")
-        docs_data = self._getDocuments(user_id)
+        docs_data = self._get_documents(user_id)
         if docs_data is None:
             return None
         gen_data = generate_documents_feed(docs_data)
         ret_dict.update(gen_data)
 
         _LOGGER.info("accessing classes")
-        classes_data = self._getClasses(user_id)
+        classes_data = self._get_classes(user_id)
         if classes_data is None:
             return None
         gen_data = generate_classes_feed(classes_data)
@@ -119,7 +119,7 @@ class SimonSaysGenerator(RSSGenerator):
 
         return ret_dict
 
-    def _getStudentId(self):
+    def _get_student_id(self):
         url = "https://simonsays.langlion.com/api/appData"
         response = curl_get(self._session, url, header_list=self._auth_header_list)
         response_code = get_status_code(self._session)
@@ -134,10 +134,10 @@ class SimonSaysGenerator(RSSGenerator):
             return linked_users[0].get("id")
         return None
 
-    def _getMessages(self):
+    def _get_messages(self):
         url = "https://simonsays.langlion.com//api/messages"
         params_dict = {"mailbox": "inbox"}
-        data_dict = self._fetchDataDict(url, params_dict)
+        data_dict = self._fetch_data_dict(url, params_dict)
         if data_dict is None:
             return None
 
@@ -152,7 +152,7 @@ class SimonSaysGenerator(RSSGenerator):
 
             url = "https://simonsays.langlion.com//api/message"
             params_dict = {"id": msg_id}
-            message_details_data = self._fetchDataDict(url, params_dict)
+            message_details_data = self._fetch_data_dict(url, params_dict)
             if message_details_data is None:
                 return None
 
@@ -165,13 +165,13 @@ class SimonSaysGenerator(RSSGenerator):
 
         return ret_list
 
-    def _getMarks(self, _student_id):
+    def _get_marks(self, _student_id):
         # TODO: finish marks scrapping
         return []
 
         # url = "https://simonsays.langlion.com//api/marks"
         # params_dict = {"student_user_id": student_id}
-        # data_dict = self._fetchDataDict(url, params_dict)
+        # data_dict = self._fetch_data_dict(url, params_dict)
         # if data_dict is None:
         #     return None
         #
@@ -195,10 +195,10 @@ class SimonSaysGenerator(RSSGenerator):
         #
         # return ret_list
 
-    def _getDocuments(self, student_id):
+    def _get_documents(self, student_id):
         url = "https://simonsays.langlion.com//api/student/userDocuments"
         params_dict = {"student_user_id": student_id}
-        data_dict = self._fetchDataDict(url, params_dict)
+        data_dict = self._fetch_data_dict(url, params_dict)
         if data_dict is None:
             return None
 
@@ -207,10 +207,10 @@ class SimonSaysGenerator(RSSGenerator):
         items_list = data_dict.get("data", {}).get("userDocuments", [])
         return list(items_list)
 
-    def _getClasses(self, student_id):
+    def _get_classes(self, student_id):
         url = "https://simonsays.langlion.com//api/student/classes"
         params_dict = {"student_user_id": student_id}
-        data_dict = self._fetchDataDict(url, params_dict)
+        data_dict = self._fetch_data_dict(url, params_dict)
         if data_dict is None:
             return None
 
@@ -223,7 +223,7 @@ class SimonSaysGenerator(RSSGenerator):
             class_id = data_item["id"]
             url = "https://simonsays.langlion.com//api/lessonDetails"
             params_dict = {"lesson_id": class_id, "student_user_id": student_id}
-            lesson_dict = self._fetchDataDict(url, params_dict)
+            lesson_dict = self._fetch_data_dict(url, params_dict)
             if lesson_dict is None:
                 return None
 
@@ -243,7 +243,7 @@ class SimonSaysGenerator(RSSGenerator):
 
         return ret_list
 
-    def _fetchDataDict(self, url, params_dict=None):
+    def _fetch_data_dict(self, url, params_dict=None):
         response = curl_get(self._session, url, params_dict, header_list=self._auth_header_list)
         response_code = get_status_code(self._session)
         if response_code != 200:

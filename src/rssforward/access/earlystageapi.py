@@ -53,7 +53,7 @@ def get_auth_header(token):
     return {"X-AUTH-TOKEN": token}
 
 
-def get_json_data(token, url, throw=True):
+def get_json_data(token, url, *, throw=True):
     headers = get_auth_header(token)
     response = requests.get(url, headers=headers, timeout=30)
     if response.status_code != 200:
