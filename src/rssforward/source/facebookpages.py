@@ -10,6 +10,7 @@
 
 import logging
 from enum import Enum, unique
+import datetime
 
 from feedgen.feed import FeedGenerator
 
@@ -100,6 +101,10 @@ def get_posts_links(scraper: FacebookScraper, page_id, posts_num):
 def convert_item_data(page_title, post_details, html_out_path=None):
     item_id = post_details["id"]
     pub_date = post_details["pub_date"]
+    if pub_date is None:
+        utc_dt = datetime.datetime.now(datetime.timezone.utc)
+        pub_date = utc_dt.astimezone()
+
     # fill description
     item_desc = post_details["content"]
     item_desc = item_desc.replace("\n", "</br>")
@@ -111,7 +116,7 @@ def convert_item_data(page_title, post_details, html_out_path=None):
     event_date = post_details["event_date"]
     if event_date:
         date_string = escape_html(event_date)
-        date_content = """\
+        date_content = f"""\
 <b>Date</b>: {date_string}
 <br/>
 <br/>"""
@@ -148,7 +153,7 @@ Content:<br/>
         "title": title,
         "author": {"name": page_title, "email": page_title},
         "content": item_desc,
-        "pub_date": post_details["pub_date"],
+        "pub_date": pub_date,
         "link": post_details["url"],
     }
 

@@ -87,8 +87,7 @@ class FacebookScraper:
                 post_content = item[4]
                 ## extracting post_id from post url is not reliable - facebook changes the value more or less once a day
                 ## so we need to calculate hash from content
-                hash_input = f"{post_date}_{post_content}"
-                post_id = calculate_str_hash(hash_input)
+                post_id = calculate_str_hash(post_content)
                 # post_id = extract_post_id_from_url(post_link)
                 # if post_id is None:
                 #     _LOGGER.error("skipping post - could not get required data")
