@@ -11,6 +11,7 @@
 import logging
 import time
 from enum import Enum, unique
+import datetime
 import pprint
 
 import random
@@ -132,8 +133,18 @@ def add_offer(feed_gen, label, offer_url=None, content=None):
     offer_id = data_dict["id"]
     offer_title = attributes["title"]["value"]
     offer_company = attributes["employer"]["name"]
-    offer_published = data_dict["publicationDetails"]["lastPublishedUtc"]
     offer_url = data_dict["offerUrl"]
+
+    offer_published = data_dict["publicationDetails"]["lastPublishedUtc"]
+    item_date = stringisoauto_to_date(offer_published)
+
+    curr_time = datetime.datetime.now(tz=datetime.timezone.utc)
+    time_diff = curr_time - item_date
+    diff_days = time_diff.total_seconds() / (60 * 60 * 24)
+    if diff_days > 7:
+        ## do not add older offers - on the site refreshed/renewed offers change its ID, so
+        ## the offer will appear again in RSS with original publish date
+        return
 
     ########
 
@@ -178,7 +189,6 @@ Data:<br/>
     feed_item.content(item_desc)
 
     # fill publish date
-    item_date = stringisoauto_to_date(offer_published)
     feed_item.pubDate(item_date)
 
     feed_item.link(href=offer_url, rel="alternate")
