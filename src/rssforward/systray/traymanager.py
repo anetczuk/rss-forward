@@ -25,12 +25,17 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
 class TrayManager:
     def __init__(self, *, server_state=True):
         self._server_state: bool = server_state
-        self._is_error: bool = False
+        ## new_state values:
+        ##    - negative - invalid
+        ##    - 0 - in progress
+        ##    - positive - succeed
+        self._valid_state: int = 0
         self.server_callback = None
         self.refresh_callback = None
         self.open_log_callback = None
 
         self.red_icon_image = load_icon("rss-forward-red-64.png")
+        self.yellow_icon_image = load_icon("rss-forward-yellow-64.png")
         self.green_icon_image = load_icon("rss-forward-green-64.png")
         self.blue_icon_image = load_icon("rss-forward-blue-64.png")
         self.gray_icon_image = load_icon("rss-gray-64.png")
@@ -61,21 +66,38 @@ class TrayManager:
 
     @property
     def is_error(self):
-        return self._is_error
+        return self._valid_state < 0
 
     @is_error.setter
     def is_error(self, new_state: bool):
-        self._is_error = new_state
+        if new_state:
+            self._valid_state = 1
+        else:
+            self._valid_state = -1
         self._set_icon()
+
+    ##self.yellow_icon_image
 
     # ruff: noqa: FBT001
     def set_valid(self, new_state: bool):
         self.is_error = not new_state
 
+    ## new_state values:
+    ##    - negative - invalid
+    ##    - 0 - in progress
+    ##    - positive - succeed
+    def set_state(self, new_state: int):
+        self._valid_state = new_state
+        self._set_icon()
+
     def _set_icon(self):
-        if self._is_error:
+        if self._valid_state < 0:
             _LOGGER.info("error detected - setting red icon")
             self.tray_icon.icon = self.red_icon_image
+            return
+        if self._valid_state == 0:
+            _LOGGER.info("in progress - setting yellow icon")
+            self.tray_icon.icon = self.yellow_icon_image
             return
         if self._server_state:
             _LOGGER.info("server operational - setting blue icon")

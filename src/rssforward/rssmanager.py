@@ -94,7 +94,7 @@ class RSSManager:
         if generators:
             self._generators = generators
 
-    def is_gen_valid(self):
+    def is_gen_valid(self) -> bool:
         """Check if all generators are valid.
 
         Return 'True' if valid, otherwise 'False'.
@@ -302,7 +302,7 @@ class ThreadedRSSManager:
 
     def _call_gen(self):
         if self._state_callback:
-            self._state_callback(new_state=False)
+            self._state_callback(new_state=0)
 
         try:
             self._manager.generate_data()
@@ -311,8 +311,11 @@ class ThreadedRSSManager:
             _LOGGER.error("exception occurred when calling generator: %s", exc)
 
         if self._state_callback:
-            valid = self._manager.is_gen_valid()
-            self._state_callback(valid)
+            valid: bool = self._manager.is_gen_valid()
+            if valid:
+                self._state_callback(new_state=1)
+            else:
+                self._state_callback(new_state=-1)
 
     def join(self):
         with self._lock:
