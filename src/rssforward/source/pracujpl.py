@@ -137,7 +137,7 @@ def extract_offer_data(offer_url=None, content: str = None, html_out_path=None):
 
     if offer_url:
         _LOGGER.info("extracting offer data: %s", offer_url)
-        content: str = selenium_get_content(offer_url)
+        content = selenium_get_content(offer_url)
         if not content:
             _LOGGER.warning("unable to get job offer content")
             return None
