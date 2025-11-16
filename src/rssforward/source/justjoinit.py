@@ -127,18 +127,14 @@ def add_offer(feed_gen, label, data_dict, attempts=3):
     _LOGGER.info("getting offer details: %s", desc_url)
 
     for rep in range(attempts):
-        offer_desc = get_description(desc_url)
-        if offer_desc is not None:
+        item_desc = get_description(desc_url)
+        if item_desc is not None:
             break
         time.sleep(1.5)
         _LOGGER.error("no description for url (attempt: %s) %s", rep + 1, desc_url)
     else:
         _LOGGER.error("no description for url after %s attempts: %s", attempts, desc_url)
-        offer_desc = ""
-
-    item_desc = offer_desc
-    item_desc = normalize_string(item_desc)
-    item_desc = convert_to_html(item_desc)
+        item_desc = ""
 
     employment_details = ""
     employment_types = data_dict["employmentTypes"]
@@ -265,7 +261,9 @@ def get_description(url):
     if len(content_list) == 2:
         content_list.insert(1, "")
 
-    return "\n".join(content_list)
+    item_desc = "\n".join(content_list)
+    item_desc = normalize_string(item_desc)
+    return convert_to_html(item_desc)
 
 
 # ============================================================

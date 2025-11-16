@@ -37,13 +37,15 @@ with contextlib.suppress(ImportError):
 
 import sys
 import logging
-import pprint
+
+# import pprint
 
 from rssforward import logger
 from rssforward.source.pracujpl import (
     get_offers_links,
     extract_offer_data,
 )
+from rssforward.utils import write_data
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -73,7 +75,13 @@ def main():
 
     full_url = offers_list[0]
     offer_data = extract_offer_data(full_url)
-    _LOGGER.info("offer_data:\n%s", pprint.pformat(offer_data))
+    # _LOGGER.info("offer_data:\n%s", pprint.pformat(offer_data))
+
+    desc = offer_data["content"]
+
+    content_path = "/tmp/pracujpl.html"
+    write_data(content_path, desc)
+    _LOGGER.info("content written to: %s", content_path)
 
 
 if __name__ == "__main__":

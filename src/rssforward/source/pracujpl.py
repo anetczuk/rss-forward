@@ -25,7 +25,7 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.react import extract_data_dict, get_nested_dict
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
-from rssforward.source.utils.curl import curl_get_content
+from rssforward.source.utils.selenium import selenium_get_content
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -111,7 +111,8 @@ def add_offer(feed_gen, label, full_url, html_out_path=None):
 
 
 def get_offers_links(filter_url, filter_items, *, throw=True):
-    response_text: str = curl_get_content(filter_url)
+    _LOGGER.info("accessing offers list: %s", filter_url)
+    response_text: str = selenium_get_content(filter_url)
     if not response_text:
         if throw:
             message = f"unable to get content from url: {filter_url}"
@@ -135,7 +136,8 @@ def extract_offer_data(offer_url=None, content: str = None, html_out_path=None):
     # sleep_random(3)
 
     if offer_url:
-        content = curl_get_content(offer_url)
+        _LOGGER.info("extracting offer data: %s", offer_url)
+        content: str = selenium_get_content(offer_url)
         if not content:
             _LOGGER.warning("unable to get job offer content")
             return None
@@ -330,9 +332,10 @@ def convert_model(model_data):
 
 
 def sleep_random(max_seconds):
+    factor = 1000
     # ruff: noqa: S311
-    rand_secs = random.randint(1, max_seconds)  # nosec
-    time.sleep(rand_secs)
+    rand_secs = random.randint(1, max_seconds * factor)  # nosec
+    time.sleep(rand_secs / factor)
 
 
 # ============================================================

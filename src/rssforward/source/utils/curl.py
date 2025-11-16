@@ -67,7 +67,8 @@ def curl_get(session, target_url, params_dict=None, header_list=None):
 
 def curl_get_content(url, session=None):
     if session is None:
-        session = get_curl_session("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0")
+        # session = get_curl_session("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0")
+        session = get_curl_session()
     response = curl_get(session, url)
     response_code = get_status_code(session)
     if response_code not in (200, 204):

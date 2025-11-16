@@ -20,10 +20,9 @@ from contextlib import contextmanager
 import selenium.common
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from webdriver_manager.firefox import GeckoDriverManager
 
-from rssforward.utils import read_data, write_data, add_timezone, calculate_str_hash
+from rssforward.utils import add_timezone, calculate_str_hash
+from rssforward.source.utils.selenium import init_selenium_driver
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -369,30 +368,8 @@ class FacebookScraper:
         for item in bottom_list:
             self.driver.execute_script("arguments[0].style.visibility='hidden'", item)
 
-    def _init_driver(self):
-        options = Options()
-        if self.headless:
-            options.add_argument("--headless")
-
-        driver = None
-
-        gecko_config_path = "/tmp/gecko_path.txt"
-
-        try:
-            gecko_path = read_data(gecko_config_path)
-        except FileNotFoundError:
-            gecko_path = None
-
-        if gecko_path:
-            # driver = webdriver.Firefox()
-            driver = webdriver.Firefox(executable_path=gecko_path, options=options)
-        else:
-            # driver = webdriver.Firefox()
-            gecko_path = GeckoDriverManager().install()
-            driver = webdriver.Firefox(executable_path=gecko_path, options=options)
-            write_data(gecko_config_path, gecko_path)
-
-        return driver
+    def _init_driver(self) -> webdriver.Firefox:
+        return init_selenium_driver(headless=self.headless)
 
 
 ## datetime format fields:
