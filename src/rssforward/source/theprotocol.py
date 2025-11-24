@@ -16,15 +16,15 @@ import pprint
 
 import random
 from urllib.parse import urljoin
-import requests
 
 from bs4 import BeautifulSoup
 
 from rssforward.utils import convert_to_html, stringisoauto_to_date, escape_html, normalize_string
 from rssforward.rssgenerator import RSSGenerator
-from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
+from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.react import extract_data_dict, get_nested_dict
 from rssforward.source.utils.htmlbuild import convert_line, convert_list
+from rssforward.source.utils.selenium import selenium_get_content
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,29 +72,15 @@ class TheProtocolGenerator(RSSGenerator):
 
 
 def get_offers_content(label, filter_url, filter_items, *, throw=True):
-    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get(filter_url, headers=headers, timeout=10)
-
-    if response.status_code not in (200, 204):
-        if throw:
-            message = f"unable to get data: {response.status_code}"
-            raise RuntimeError(message)
+    offers_links_list = get_offers_links(filter_url, filter_items, throw=throw)
+    if not offers_links_list:
         return None
 
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title(label)
     feed_gen.description(label)
 
-    content_bytes = response.content
-    content = content_bytes.decode("utf-8")
-    soup = BeautifulSoup(content, "html.parser")
-
-    offers_content_list = soup.select('a[href*="szczegoly/praca"]')
-    items_num = min(filter_items, len(offers_content_list))
-    offers_content_tags = offers_content_list[0:items_num]
-
-    for offer_item in offers_content_tags:
-        offer_url = offer_item["href"]
+    for offer_url in offers_links_list:
         full_url = urljoin(filter_url, offer_url)
         add_offer(feed_gen, label, full_url)
 
@@ -107,25 +93,58 @@ def get_offers_content(label, filter_url, filter_items, *, throw=True):
     return content
 
 
+def get_offers_links(filter_url, filter_items, *, throw=True):
+    _LOGGER.info("accessing offers list: %s", filter_url)
+    response_text: str = selenium_get_content(filter_url)
+    if not response_text:
+        if throw:
+            message = f"unable to get content from url: {filter_url}"
+            raise RuntimeError(message)
+        return None
+    soup = BeautifulSoup(response_text, "html.parser")
+
+    offers_content_list = soup.select('a[href*="szczegoly/praca"]')
+    items_num = min(filter_items, len(offers_content_list))
+    offers_links_tags = offers_content_list[0:items_num]
+
+    full_list = []
+    for offer_item in offers_links_tags:
+        offer_url = offer_item["href"]
+        full_url = urljoin(filter_url, offer_url)
+        full_list.append(full_url)
+    return full_list
+
+
 def add_offer(feed_gen, label, offer_url=None, content=None):
+    offer_data = extract_offer_data(offer_url, content=content)
+
+    pub_date: datetime.datetime = offer_data["pub_date"]
+    curr_time = datetime.datetime.now(tz=datetime.timezone.utc)
+    time_diff = curr_time - pub_date
+    diff_days = time_diff.total_seconds() / (60 * 60 * 24)
+    if diff_days > 7:
+        ## do not add older offers - on the site refreshed/renewed offers change its ID, so
+        ## the offer will appear again in RSS with original publish date
+        return
+
+    offer_data["title"] = label + ": " + offer_data["title"]
+    add_data_to_feed(feed_gen, offer_data)
+
+
+def extract_offer_data(offer_url=None, content: str = None):
     # sleep_random(3)
-    if offer_url is not None:
-        _LOGGER.info("getting offer details: %s", offer_url)
-        headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-        response = requests.get(offer_url, headers=headers, timeout=10)
 
-        if response.status_code not in (200, 204):
+    if offer_url:
+        _LOGGER.info("extracting offer data: %s", offer_url)
+        content = selenium_get_content(offer_url)
+        if not content:
             _LOGGER.warning("unable to get job offer content")
-            return
-
-        content = response.content
-        content = content.decode("utf-8")
-
+            return None
     soup = BeautifulSoup(content, "html.parser")
 
     data_dict = extract_data_dict(soup)
     if data_dict is None:
-        return
+        return None
     data_dict = get_nested_dict(data_dict, ["props", "pageProps", "offer"])
 
     attributes = data_dict["attributes"]
@@ -137,23 +156,6 @@ def add_offer(feed_gen, label, offer_url=None, content=None):
 
     offer_published = data_dict["publicationDetails"]["lastPublishedUtc"]
     item_date = stringisoauto_to_date(offer_published)
-
-    curr_time = datetime.datetime.now(tz=datetime.timezone.utc)
-    time_diff = curr_time - item_date
-    diff_days = time_diff.total_seconds() / (60 * 60 * 24)
-    if diff_days > 7:
-        ## do not add older offers - on the site refreshed/renewed offers change its ID, so
-        ## the offer will appear again in RSS with original publish date
-        return
-
-    ########
-
-    feed_item = feed_gen.add_entry()
-
-    feed_item.id(offer_id)
-
-    feed_item.title(f"{label}: {offer_company} - {offer_title}")
-    feed_item.author({"name": "theprotocol.it", "email": "theprotocol.it"})
 
     # fill description
     desc_sections = data_dict["textSections"]
@@ -186,13 +188,15 @@ Data:<br/>
 </pre>
 </div>
 """
-    feed_item.content(item_desc)
 
-    # fill publish date
-    feed_item.pubDate(item_date)
-
-    feed_item.link(href=offer_url, rel="alternate")
-    # feed_item.link( href=offer_url, rel='via')        # does not work in thunderbird
+    return {
+        "id": offer_id,
+        "title": f"{offer_company} - {offer_title}",
+        "author": {"name": "theprotocol.it", "email": "theprotocol.it"},
+        "content": item_desc,
+        "pub_date": item_date,
+        "link": offer_url,
+    }
 
 
 def convert_to_section(section_data):
