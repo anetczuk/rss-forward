@@ -23,6 +23,10 @@ from rssforward.utils import normalize_string, write_data
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
+from rssforward.source.utils.selenium import init_selenium_driver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,31 +69,30 @@ def get_content(items_num=20, html_output=None):
 
 
 def get_news_links(posts_num=9999, *, throw=True):
-    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get("https://ursynow.um.warszawa.pl/kalendarz?delta=75", headers=headers, timeout=10)
+    url = "https://ursynow.um.warszawa.pl/kalendarz?delta=75"
 
-    if response.status_code not in (200, 204):
-        if throw:
-            message = f"unable to get data: {response.status_code}"
-            raise RuntimeError(message)
-        return None
+    with init_selenium_driver(headless=True) as driver:
+        driver.get(url)
 
-    content_bytes = response.content
-    content = content_bytes.decode("utf-8")
+        WebDriverWait(driver, 10).until(
+            expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "div.events-search-results"))
+        )
 
-    soup = BeautifulSoup(content, "html.parser")
+        content = driver.page_source
 
-    full_list = []
-    articles_list = soup.find_all("li", attrs={"class": "search-results__item"})
-    for article in articles_list:
-        article_header = article.find_all("h2", attrs={"class": "search-results__title"})[0]
-        link = article_header.select("a")[0]
-        item_url = link["href"]
-        full_url = urljoin(MAIN_URL, item_url)
-        full_list.append(full_url)
-
-    items_num = min(posts_num, len(full_list))
-    return full_list[0:items_num]
+        soup = BeautifulSoup(content, "html.parser")
+        full_list = []
+        articles_list = soup.find_all("li", attrs={"class": "search-results__item"})
+        _LOGGER.info("got articles: %s", len(articles_list))
+        for article in articles_list:
+            article_header = article.find_all("h2", attrs={"class": "search-results__title"})[0]
+            link = article_header.select("a")[0]
+            item_url = link["href"]
+            full_url = urljoin(MAIN_URL, item_url)
+            full_list.append(full_url)
+        
+        items_num = min(posts_num, len(full_list))
+        return full_list[0:items_num]
 
 
 def add_news(feed_gen, full_url, html_output=None):
@@ -103,19 +106,19 @@ def add_news(feed_gen, full_url, html_output=None):
     add_data_to_feed(feed_gen, offer_data)
 
 
-def extract_news_data(news_url=None, content=None):
+def extract_news_data(news_url):
     # sleep_random(3)
-    if news_url is not None:
-        _LOGGER.info("getting offer details: %s", news_url)
-        headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-        response = requests.get(news_url, headers=headers, timeout=10)
 
-        if response.status_code not in (200, 204):
-            _LOGGER.warning("unable to get job offer content")
-            return None
+    _LOGGER.info("getting offer details: %s", news_url)
 
-        content = response.content
-        content = content.decode("utf-8")
+    with init_selenium_driver(headless=True) as driver:
+        driver.get(news_url)
+    
+        WebDriverWait(driver, 10).until(
+            expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "div.asset-full-content"))
+        )
+    
+        content = driver.page_source
 
     soup = BeautifulSoup(content, "html.parser")
 

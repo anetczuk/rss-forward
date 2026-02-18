@@ -15,6 +15,7 @@ from io import BytesIO
 from urllib.parse import urlencode
 
 import pycurl
+import certifi
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,10 @@ def get_curl_session(user_agent=None):
     #         c.setopt( c.VERBOSE, 1 )
     session.setopt(pycurl.COOKIEJAR, "/tmp/cookie.txt")  ## save cookies to a file
     session.setopt(pycurl.COOKIEFILE, "/tmp/cookie.txt")  ## load cookies from a file
+
+    session.setopt(pycurl.CAINFO, certifi.where())
+    session.setopt(pycurl.SSL_VERIFYPEER, 0)
+    session.setopt(pycurl.SSL_VERIFYHOST, 0) 
     return session
 
 

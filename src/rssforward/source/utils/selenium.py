@@ -39,19 +39,23 @@ def init_selenium_driver(*, headless=True) -> webdriver.Firefox:
     except FileNotFoundError:
         gecko_path = None
 
+    capabilities = webdriver.DesiredCapabilities().FIREFOX.copy()
+    capabilities['acceptInsecureCerts'] = True
+    # capabilities['marionette'] = True
+
     if gecko_path:
         # driver = webdriver.Firefox()
-        driver = webdriver.Firefox(executable_path=gecko_path, options=options)
+        driver = webdriver.Firefox(executable_path=gecko_path, options=options, capabilities=capabilities)
     else:
         # driver = webdriver.Firefox()
         gecko_path = GeckoDriverManager().install()
-        driver = webdriver.Firefox(executable_path=gecko_path, options=options)
+        driver = webdriver.Firefox(executable_path=gecko_path, options=options, capabilities=capabilities)
         write_data(gecko_config_path, gecko_path)
 
     return driver
 
 
-def selenium_get_content(url: str):
-    with init_selenium_driver() as driver:
+def selenium_get_content(url: str, *, headless=True):
+    with init_selenium_driver(headless=headless) as driver:
         driver.get(url)
         return driver.page_source
