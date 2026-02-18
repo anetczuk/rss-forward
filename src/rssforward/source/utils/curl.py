@@ -36,7 +36,7 @@ def get_curl_session(user_agent=None):
 
     session.setopt(pycurl.CAINFO, certifi.where())
     session.setopt(pycurl.SSL_VERIFYPEER, 0)
-    session.setopt(pycurl.SSL_VERIFYHOST, 0) 
+    session.setopt(pycurl.SSL_VERIFYHOST, 0)
     return session
 
 

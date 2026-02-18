@@ -14,19 +14,19 @@ import datetime
 
 import random
 from urllib.parse import urljoin
-import requests
 
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 
 from rssforward.utils import normalize_string, write_data
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
 from rssforward.source.utils.selenium import init_selenium_driver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class UMUrsynowGenerator(RSSGenerator):
 
 
 def get_content(items_num=20, html_output=None):
-    news_links = get_news_links(items_num, throw=False)
+    news_links = get_news_links(items_num, _throw=False)
     if not news_links:
         return None
 
@@ -68,14 +68,14 @@ def get_content(items_num=20, html_output=None):
     return content
 
 
-def get_news_links(posts_num=9999, *, throw=True):
+def get_news_links(posts_num=9999, *, _throw=True):
     url = "https://ursynow.um.warszawa.pl/kalendarz?delta=75"
 
     with init_selenium_driver(headless=True) as driver:
         driver.get(url)
 
         WebDriverWait(driver, 10).until(
-            expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "div.events-search-results"))
+            expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "div.events-search-results")),
         )
 
         content = driver.page_source
@@ -90,7 +90,7 @@ def get_news_links(posts_num=9999, *, throw=True):
             item_url = link["href"]
             full_url = urljoin(MAIN_URL, item_url)
             full_list.append(full_url)
-        
+
         items_num = min(posts_num, len(full_list))
         return full_list[0:items_num]
 
@@ -113,11 +113,11 @@ def extract_news_data(news_url):
 
     with init_selenium_driver(headless=True) as driver:
         driver.get(news_url)
-    
+
         WebDriverWait(driver, 10).until(
-            expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "div.asset-full-content"))
+            expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, "div.asset-full-content")),
         )
-    
+
         content = driver.page_source
 
     soup = BeautifulSoup(content, "html.parser")

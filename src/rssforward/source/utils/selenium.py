@@ -40,7 +40,7 @@ def init_selenium_driver(*, headless=True) -> webdriver.Firefox:
         gecko_path = None
 
     capabilities = webdriver.DesiredCapabilities().FIREFOX.copy()
-    capabilities['acceptInsecureCerts'] = True
+    capabilities["acceptInsecureCerts"] = True
     # capabilities['marionette'] = True
 
     if gecko_path:
