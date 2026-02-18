@@ -19,7 +19,7 @@ import requests
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
 
-from rssforward.utils import normalize_string
+from rssforward.utils import normalize_string, write_data
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
@@ -66,7 +66,8 @@ def get_content(items_num=20):
 
 def get_news_links(posts_num, *, throw=True):
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
-    response = requests.get("https://waw4free.pl/?wydarzenia=dzisiaj&kolejne_dni=tak", headers=headers, timeout=10)
+    response = requests.get("https://waw4free.pl/", headers=headers, timeout=10)
+    # response = requests.get("https://waw4free.pl/?wydarzenia=dzisiaj&kolejne_dni=tak", headers=headers, timeout=10)
 
     if response.status_code not in (200, 204):
         if throw:
@@ -76,20 +77,37 @@ def get_news_links(posts_num, *, throw=True):
 
     content_bytes = response.content
     content = content_bytes.decode("utf-8")
+    write_data("/tmp/waw4free.html", content)
 
     soup = BeautifulSoup(content, "html.parser")
 
     full_list = []
     articles_list = soup.find_all("div", attrs={"class": "box"})
     for article in articles_list:
+        article_classes = article.get("class")
         link = article.select("a")[0]
         item_url = link["href"]
         full_url = urljoin(MAIN_URL, item_url)
+        if "info-box" in article_classes:
+            ## skipping info (e.g. newsletter box)
+            _LOGGER.debug("skipping info item: %s", full_url)
+            continue
+        link_title = link.get("title")
+        if link_title in ("Informacje związane z Warszawą", "Wesprzyj działalność waw4free"):
+            ## skipping info (e.g. newsletter box)
+            _LOGGER.debug("skipping more info item: %s", full_url)
+            continue
+        see_box_list = article.find_all("div", attrs={"class": "zobacz-box-image"})
+        if see_box_list:
+            ## skipping
+            _LOGGER.debug("skipping see box item: %s", full_url)
+            continue
         autopromocja_list = article.find_all("div", attrs={"class": "b-c-border"})
         if autopromocja_list:
             ## skipping autopromocja item
             _LOGGER.debug("skipping autopromocja item: %s", full_url)
             continue
+        _LOGGER.debug("found item: %s", full_url)
         full_list.append(full_url)
 
     items_num = min(posts_num, len(full_list))
