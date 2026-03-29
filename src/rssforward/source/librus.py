@@ -13,7 +13,7 @@ from typing import Any
 import datetime
 
 from librus_apix.exceptions import MaintananceError, TokenError
-from librus_apix.get_token import get_token
+from librus_apix.get_token import get_token, Token
 from librus_apix.grades import get_grades
 from librus_apix.announcements import get_announcements
 from librus_apix.attendance import get_attendance
@@ -40,7 +40,7 @@ class LibusGenerator(RSSGenerator):
         super().__init__()
         self._username = None
         self._password = None
-        self._token = None
+        self._token: Token = None
 
     def authenticate(self, login, password):
         self._username = login
@@ -54,7 +54,7 @@ class LibusGenerator(RSSGenerator):
         try:
             return generate_content(self._token)
         except TokenError as exc:
-            _LOGGER.debug("token error - try one more time with new token (%s)", exc)
+            _LOGGER.warning("token error - try one more time with new token (%s)", exc)
 
         self._get_token()
         return generate_content(self._token)
@@ -107,7 +107,11 @@ def generate_content(token) -> dict[str, str]:
     _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
 
     _LOGGER.info("accessing grades")
-    grades, average_grades, grades_desc = get_grades(token)
+    try:
+        grades, average_grades, grades_desc = get_grades(token)
+    except TokenError as exp:
+        _LOGGER.error("token error: %s", exp)
+        raise
     gen_data = generate_grades_feed(grades, average_grades, grades_desc)
     ret_dict.update(gen_data)
 

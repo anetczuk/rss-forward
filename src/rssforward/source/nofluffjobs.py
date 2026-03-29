@@ -11,6 +11,8 @@
 import logging
 from enum import Enum, unique
 import datetime
+from typing import Any
+import contextlib
 
 import json
 import requests
@@ -73,9 +75,12 @@ class NoFluffJobsGenerator(RSSGenerator):
 
 
 def get_offers_content(label, filter_url, filter_items, html_out_path=None, *, throw=True):
-    offers_links_list = get_offers_links(filter_url, throw=throw)
+    offers_links_list: list[Any] = get_offers_links(filter_url, throw=throw)
     if not offers_links_list:
         return None
+
+    offers_links_list.sort(key=lambda item: item["pub_date"])
+    _LOGGER.debug("found offers: %s", len(offers_links_list))
 
     if filter_items:
         recent_items = min(filter_items, len(offers_links_list))
@@ -99,6 +104,7 @@ def get_offers_content(label, filter_url, filter_items, html_out_path=None, *, t
 
 def get_offers_links(filter_url, *, throw=True):
     # sleep_random(4)
+    _LOGGER.info("getting offers list from: %s", filter_url)
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(filter_url, headers=headers, timeout=10)
 
@@ -122,7 +128,11 @@ def get_offers_links(filter_url, *, throw=True):
     del data_dict["USER_COUNTRY"]
     del data_dict["__nghData__"]
     del data_dict["translations_pl-PL"]
-    del data_dict["assigned on server"]
+    try:
+        del data_dict["assigned on server"]
+    except KeyError:
+        contextlib.suppress(KeyError)
+
     for key in list(data_dict.keys()):
         if key.startswith("assets/"):
             del data_dict[key]
@@ -158,6 +168,7 @@ def get_offers_links(filter_url, *, throw=True):
 def add_offer(feed_gen, label, offer_data, html_out_path=None):
     offer_data = add_offer_content(offer_data, html_out_path=html_out_path)
     if not offer_data:
+        _LOGGER.warning("could not get offer data")
         return
 
     pub_date: datetime.datetime = offer_data["pub_date"]
@@ -167,6 +178,7 @@ def add_offer(feed_gen, label, offer_data, html_out_path=None):
     if diff_days > 7:
         ## do not add older offers - on the site refreshed/renewed offers change its ID, so
         ## the offer will appear again in RSS with original publish date
+        _LOGGER.debug("skipping old offer, pub date: %s", pub_date)
         return
 
     offer_data["title"] = label + ": " + offer_data["title"]
@@ -176,6 +188,7 @@ def add_offer(feed_gen, label, offer_data, html_out_path=None):
 def add_offer_content(offer_data, html_out_path=None):
     offer_url = offer_data["link"]
 
+    _LOGGER.debug("getting offer info: %s", offer_url)
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(offer_url, headers=headers, timeout=10)
 
