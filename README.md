@@ -43,6 +43,15 @@ If executed in tray, then state of application will be indicated by following ic
 - ![blue](src/rssforward/systray/rss-forward-blue-64.png) meaning RSS server enabled, generation completed
 
 
+## Installation
+
+Easiest way to install project is to run `./tools/installvenv.sh` script that will create virtual environment with 
+all required packages. Then just run `./venv/startrssforward.sh` to run the project.
+
+To run the project directly from repository first install dependencies by `./src/install-deps.sh` and then start 
+application by `./src/startrssforward.py`.
+
+
 ## Config file
 
 There is [example configuration file](examples/config_example.toml) in examples. It has following content:

@@ -10,6 +10,7 @@ SRC_DIR=$(realpath "$SCRIPT_DIR/../src")
 
 ARGS=()
 NO_PROMPT=false
+DEV_MODE=false
 
 while :; do
     if [ -z "${1+x}" ]; then
@@ -19,6 +20,8 @@ while :; do
 
     case "$1" in
       --no-prompt)  NO_PROMPT=true 
+                    shift ;;
+      --dev)        DEV_MODE=true 
                     shift ;;
       *)  ARGS+=("$1")
           shift ;;
@@ -59,8 +62,6 @@ VENV_DIR=$(realpath "$VENV_DIR")
 echo "Creating virtual environment in $VENV_DIR"
 
 python3 -m venv "$VENV_DIR"
-# python3.8 -m venv "$VENV_DIR"
-# python2 -m virtualenv "$VENV_DIR"
 
 
 ### creating venv start script
@@ -79,40 +80,37 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 VENV_DIR="$VENV_ROOT_DIR"
 
 
-START_COMMAND=
-if [ "$#" -ge 1 ]; then
-    START_COMMAND=$(cat <<EOL
-## executing command
-echo "executing: $@"
-eval "$@"
-EOL
-)
+if [ "$#" -eq 0 ]; then
+    ##
+    ## command not given - start virtual environment in interactive mode
+    ##
+
+    set +e      ## prevent closing interactive session in case of error of any command
+    echo "Starting virtual env"
+    ## `exec < /dev/tty` prevents immediate exit from interactive mode
+    bash -i <<< "source $VENV_DIR/bin/activate && exec < /dev/tty"
+    exit 0
 fi
 
 
-### create temporary file
-tmpfile=$(mktemp venv.run.XXXXXX.sh --tmpdir)
+##
+## running given command inside virtual environment
+##
 
-### write content to temporary
-cat > $tmpfile <<EOL
+bash <<EOL
 source $VENV_DIR/bin/activate
 if [ \$? -ne 0 ]; then
     echo -e "Unable to activate virtual environment, exiting"
     exit 1
 fi
 
-$START_COMMAND
+set -e
 
-exec </dev/tty 
+## executing command
+echo "Executing inside venv: $@"
+eval "$@"
+
 EOL
-
-
-echo "Starting virtual env"
-
-bash -i <<< "source $tmpfile"
-
-
-rm $tmpfile
 '
 
 # shellcheck disable=SC2016
@@ -131,7 +129,7 @@ create_venv_shortcut() {
     
     local SCRIPT_CONTENT='#!/bin/bash
 ##
-## File was generated automatically. Any change will be lost. 
+## File was generated automatically using "installvenv.sh" script. Any change will be lost. 
 ##
 
 set -eu
@@ -146,7 +144,7 @@ set -eu
 }
 
 
-### creating project start script
+### creating project start scripts
 pushd "${SRC_DIR}" > /dev/null
 # shellcheck disable=SC2010,SC2035
 TEST_DIRS=$(ls -d */ | grep test)
@@ -157,17 +155,29 @@ if [[ ${TEST_DIRS_NUM} -ne 1 ]]; then
     exit 1
 fi
 TEST_SCRIPT="${SRC_DIR}/${TEST_DIRS}runtests.py"
-create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; ${TEST_SCRIPT} \$@; exit\"" "$VENV_DIR/runtests.py"
+create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; ${TEST_SCRIPT} \$@\"" "$VENV_DIR/runtests.sh"
+
+## create package starter
+for dir in ${SRC_DIR}/*/; do
+    if [[ -f "${dir}__main__.py" ]]; then
+        package_name=$(basename ${dir})
+        starter_path="${VENV_DIR}/start${package_name}.sh"
+        create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; python3 -m ${package_name} \$@\"" "$VENV_DIR/start${package_name}.sh"
+    fi
+done
 
 
 ### install required packages
 
-#### installing package does not work - fails running tests under nodejs 
-##echo "Installing package"
-##$ACTIVATE_VENV_PATH "$SCRIPT_DIR/../src/install-package.sh --system; exit"
+echo "Installing project and dependencies"
 
-echo "Installing dependencies"
-$ACTIVATE_VENV_PATH "$SCRIPT_DIR/../src/install-deps.sh; exit"
+$ACTIVATE_VENV_PATH "python3 -m pip install --upgrade pip"
+
+if [ "$DEV_MODE" = false ]; then
+    $ACTIVATE_VENV_PATH "$SCRIPT_DIR/../src/install-app.sh"
+else
+    $ACTIVATE_VENV_PATH "$SCRIPT_DIR/../src/install-app.sh --dev"
+fi
 
 
-echo "to activate environment run: $VENV_DIR/activatevenv.sh"
+echo "To activate environment run: $VENV_DIR/activatevenv.sh"

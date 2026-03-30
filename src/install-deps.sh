@@ -18,4 +18,6 @@ fi
 pip3 install $PIP_ARGS -r "$SCRIPT_DIR/requirements.txt"
 
 
-echo -e "\ninstallation done\n"
+echo
+echo "dependencies installation done"
+echo
