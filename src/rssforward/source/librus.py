@@ -13,13 +13,14 @@ from typing import Any
 import datetime
 
 from librus_apix.exceptions import MaintananceError, TokenError
-from librus_apix.get_token import get_token, Token
 from librus_apix.grades import get_grades
 from librus_apix.announcements import get_announcements
 from librus_apix.attendance import get_attendance
 from librus_apix.homework import get_homework, homework_detail
-from librus_apix.messages import get_recieved, message_content, get_max_page_number
+from librus_apix.messages import get_received, message_content, get_max_page_number, MessageData, Message
 from librus_apix.schedule import get_schedule
+
+from librus_apix.client import Client, new_client
 
 # from librus_apix.schedule import schedule_detail
 # from librus_apix.timetable import get_timetable
@@ -40,7 +41,7 @@ class LibusGenerator(RSSGenerator):
         super().__init__()
         self._username = None
         self._password = None
-        self._token: Token = None
+        self._client: Client = None
 
     def authenticate(self, login, password):
         self._username = login
@@ -52,17 +53,17 @@ class LibusGenerator(RSSGenerator):
         _LOGGER.info("========== running librus scraper ==========")
 
         try:
-            return generate_content(self._token)
+            return generate_content(self._client)
         except TokenError as exc:
             _LOGGER.warning("token error - try one more time with new token (%s)", exc)
 
         self._get_token()
-        return generate_content(self._token)
+        return generate_content(self._client)
 
     def _get_token(self):
-        self._token = None
         try:
-            self._token = get_token(self._username, self._password)
+            self._client = new_client()
+            self._client.get_token(self._username, self._password)
         except MaintananceError as exc:
             _LOGGER.warning("librus system under maintenance: %s", exc)
 
@@ -74,7 +75,7 @@ def get_messages_by_date(token, start_datetime=None):
     ret_messages: list[Any] = []
     max_page_index = get_max_page_number(token)
     for pi in range(max_page_index + 1):
-        messages = get_recieved(token, page=pi)
+        messages = get_received(token, page=pi)
         _LOGGER.info("received %s messages from page %s", len(messages), pi)
         for item in messages:
             item_date = string_to_datetime(item.date)
@@ -96,19 +97,20 @@ def get_announcements_by_date(token, start_datetime=None):
     return ret_announcements
 
 
-def generate_content(token) -> dict[str, str]:
-    if token is None:
+def generate_content(client: Client) -> dict[str, str]:
+    if client is None:
         _LOGGER.warning("unable to generate content, because generator is not authenticated")
         return None
 
     ret_dict: dict[str, str] = {}
 
     recent_datetime = read_recent_date()
+    recent_datetime = None
     _LOGGER.info("getting librus data, recent date: %s", recent_datetime)
 
     _LOGGER.info("accessing grades")
     try:
-        grades, average_grades, grades_desc = get_grades(token)
+        grades, average_grades, grades_desc = get_grades(client)
     except TokenError as exp:
         _LOGGER.error("token error: %s", exp)
         raise
@@ -116,19 +118,19 @@ def generate_content(token) -> dict[str, str]:
     ret_dict.update(gen_data)
 
     _LOGGER.info("accessing attendance")
-    first_semester, second_semester = get_attendance(token)
+    first_semester, second_semester = get_attendance(client)
     attendence = first_semester + second_semester
     gen_data = generate_attendance_feed(attendence)
     ret_dict.update(gen_data)
 
     _LOGGER.info("accessing messages")
-    messages = get_messages_by_date(token, recent_datetime)
+    messages = get_messages_by_date(client, recent_datetime)
     _LOGGER.info("got %s messages since reference date %s", len(messages), recent_datetime)
-    gen_data = generate_messages_feed(messages, token)
+    gen_data = generate_messages_feed(messages, client)
     ret_dict.update(gen_data)
 
     _LOGGER.info("accessing announcements")
-    announcements = get_announcements_by_date(token, recent_datetime)
+    announcements = get_announcements_by_date(client, recent_datetime)
     _LOGGER.info("got %s announcements since reference date %s", len(announcements), recent_datetime)
     gen_data = generate_announcements_feed(announcements)
     ret_dict.update(gen_data)
@@ -138,7 +140,7 @@ def generate_content(token) -> dict[str, str]:
     year = curr_dt.year
     month = curr_dt.month
     _LOGGER.info("accessing schedule in %s-%s", year, month)
-    schedule = get_schedule(token, month, year)
+    schedule = get_schedule(client, month, year)
     gen_data = generate_schedule_feed(schedule, year, month)
     ret_dict.update(gen_data)
 
@@ -157,8 +159,8 @@ def generate_content(token) -> dict[str, str]:
     end_dt_str = end_dt.date().strftime("%Y-%m-%d")
     # end_dt = str(end_dt.date())
     _LOGGER.info("accessing homework: %s %s", start_dt_str, end_dt_str)
-    homework = get_homework(token, start_dt_str, end_dt_str)  # dates in format %Y-%m-%d
-    gen_data = generate_homework_feed(homework, token)
+    homework = get_homework(client, start_dt_str, end_dt_str)  # dates in format %Y-%m-%d
+    gen_data = generate_homework_feed(homework, client)
     ret_dict.update(gen_data)
 
     # print("========= timetable =========")
@@ -320,19 +322,19 @@ Czy wycieczka: {excursion}
     feed_item.pubDate(item_date)
 
 
-def generate_messages_feed(messages, token):
+def generate_messages_feed(messages: list[Message], token):
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Wiadomości")
     feed_gen.description("wiadomości")
 
     for item in messages:
         # pprint.pprint(item)
-        item_desc = message_content(token, item.href)
+        item_desc: MessageData = message_content(token, item.href)
         data_dict = {
             "item_date": item.date,
             "title": item.title,
             "author": item.author,
-            "content": item_desc,
+            "content": item_desc.content,
             "has_attachment": item.has_attachment,
         }
         add_message(feed_gen, data_dict)
