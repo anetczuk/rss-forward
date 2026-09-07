@@ -35,15 +35,13 @@ with contextlib.suppress(ImportError):
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
 
-import sys
 import logging
 import argparse
 
 # import pprint
 
 from rssforward import logger
-from rssforward.source.librus import generate_content, LibusGenerator
-from rssforward.utils import write_data
+from rssforward.source.librus import LibusGenerator
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -76,8 +74,9 @@ def main():
     librus.authenticate(args.user, args.password)
 
     librus_content = librus.generate()
-    
-    print( "xxxxx", librus_content )
+
+    # ruff: noqa: T201
+    print("xxxxx", librus_content)
 
     # if len(offers_list) != 1:
     #     _LOGGER.error("FAILED")

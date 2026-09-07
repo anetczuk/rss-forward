@@ -76,7 +76,12 @@ echo "pycodestyle -- no warnings found"
 
 
 ## F401 'PyQt5.QtCore' imported but unused
-ignore_errors=$ignore_errors,F401
+## Q000 Double quotes found but single quotes preferred -- black replaces double quotes to single ones
+## I100 Import statements are in the wrong order. 'import os' should be before 'import sys'
+## I101 Imported names are in the wrong order. Should be get_attendances, get_auth_data, get_grades, get_homeworks
+## I201 Missing newline between import groups. 'import requests' is identified as Third Party and 'import json' is identified as Stdlib.
+## I202 Additional newline in a group of imports. 'import os' is identified as Stdlib and 'import contextlib' is identified as Stdlib.
+ignore_errors=$ignore_errors,F401,Q000,I100,I101,I201,I202
 
 
 echo

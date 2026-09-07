@@ -33,7 +33,7 @@ while :; do
 done
 
 
-if [ ! -z ${VIRTUAL_ENV+x} ]; then
+if [[ -n ${VIRTUAL_ENV+x} ]]; then
     ## Python virtual environment detected -- installing to system directory
     SYSTEM_MODE=true
 fi
