@@ -11,6 +11,7 @@ import logging
 import time
 import socket
 
+from typing import Any
 from pathlib import Path
 
 from keepassxc_browser import Connection, Identity, ProtocolError
@@ -35,7 +36,7 @@ class KeepassxcAuth:
         self.state_file = Path(state_file_path)  # state file reduces number of authentications
 
         self.id = None
-        self.connection = None
+        self.connection: Connection = None  ## keepass connection
 
         if client_id is None:
             client_id = "rss-forward"
@@ -108,14 +109,21 @@ class KeepassxcAuth:
             _LOGGER.warning("exception occur while checking if database is open: %s", exc)
         return False
 
-    def get_auth_data(self, access_url):
+    def get_auth_data(self, access_url, entry_title: str = None) -> dict[str, Any]:
         self._check_connection()
         self.unlock_database()
         login = {}
         try:
             logins = self.connection.get_logins(self.id, url=access_url)
-            if len(logins) != 1:
+            if entry_title:
+                ## title given - filter logins
+                logins = [item for item in logins if item.get("name") == entry_title]
+            if len(logins) < 1:
                 message = "could not get login data"
+                raise RuntimeError(message)
+            if len(logins) > 1:
+                entries_list = [item.get("name") for item in logins]
+                message = f"got multiple login data: {entries_list}"
                 raise RuntimeError(message)
             data = logins[0]
             login = {"login": data.get("login"), "password": data.get("password")}
@@ -132,7 +140,7 @@ class KeepassxcAuth:
             message = "not connected"
             raise RuntimeError(message)
 
-    def _establish_connection(self, socket_name=None):
+    def _establish_connection(self, socket_name=None) -> Connection:
         try:
             if socket_name:
                 return Connection(socket_name)
@@ -144,27 +152,33 @@ class KeepassxcAuth:
 auth: KeepassxcAuth = None
 
 
-def get_auth_data(access_url):
-    # ruff: noqa: PLW0603
+def ensure_auth():
     global auth  # pylint: disable=W0603
-    if not auth:
-        for _i in range(3):
-            try:
-                auth = KeepassxcAuth()
-                auth.connect()
-                auth.unlock_database()
-                break
-            except Exception:  # # pylint: disable=W0718
-                _LOGGER.exception("failed to unlock database, retrying")
-                time.sleep(1.0)
-        else:
-            # loop finished without database unlock
-            message = "failed to unlock database"
-            raise RuntimeError(message)
+    if auth:
+        return
+    for _i in range(3):
+        try:
+            auth = KeepassxcAuth()
+            auth.connect()
+            auth.unlock_database()
+            break
+        except Exception:  # # pylint: disable=W0718
+            _LOGGER.exception("failed to unlock database, retrying")
+            time.sleep(1.0)
+    else:
+        # loop finished without database unlock
+        message = "failed to unlock database"
+        raise RuntimeError(message)
+
+
+def get_auth_data(access_url, entry_title: str = None):
+    # ruff: noqa: PLW0603
+    global auth  # pylint: disable=W0602
+    ensure_auth()
 
     while True:
         try:
-            login_data = auth.get_auth_data(access_url)
+            login_data = auth.get_auth_data(access_url, entry_title=entry_title)
             if login_data:
                 return login_data
 

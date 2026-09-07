@@ -62,7 +62,8 @@ def get_auth_data(auth_params):
     if auth_type == AuthType.KEEPASSXC.name:
         _LOGGER.info("authenticate using keepassxc")
         itemurl = auth_params.get(ConfigField.AUTH_ITEMURL.value)
-        auth_data = get_keepassxc_auth_data(itemurl)
+        entry_title = auth_params.get(ConfigField.AUTH_ENTRYTITLE.value)
+        auth_data = get_keepassxc_auth_data(itemurl, entry_title=entry_title)
         login = auth_data.get("login")
         password = auth_data.get("password")
         return (login, password)

@@ -51,6 +51,7 @@ class ConfigField(Enum):
     # ruff: noqa: S105
     AUTH_PASS = "pass"  # nosec
     AUTH_ITEMURL = "itemurl"  # nosec
+    AUTH_ENTRYTITLE = "entrytitle"
 
 
 # ==================================================

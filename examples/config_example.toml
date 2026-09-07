@@ -29,6 +29,7 @@ enabled = true                                              # enable or disable 
 datasubdir = "bob"                                          # optional subdirectory for output
 auth.type = "KEEPASSXC"                                     # authenticate by accessing keepassxc deamon
 auth.itemurl = "https://online.earlystage.pl/logowanie/"    # URL of keepassxc item (proper user/pass is identified by the URL)
+auth.entrytitle = "my login entry"                          # entry title if multiple entries occur with the same login URL
 
 [[item]]
 generator = "youtube"
