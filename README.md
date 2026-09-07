@@ -79,6 +79,7 @@ logviewer = "mousepad %s"   # command line to view log file, %s will be replaced
 [[item]]
 generator = "librus"
 enabled = true                      # enable or disable scraper
+datasubdir = "alice"                # optional subdirectory for output
 auth.type = "RAW"                   # authenticate by providing unencrypted user and password
 auth.user = "12345678"              # login example (librus id)
 auth.pass = "user_secret"           # password example
@@ -86,12 +87,14 @@ auth.pass = "user_secret"           # password example
 [[item]]
 generator = "earlystage"
 enabled = true                                              # enable or disable scraper
+datasubdir = "bob"                                          # optional subdirectory for output
 auth.type = "KEEPASSXC"                                     # authenticate by accessing keepassxc deamon
 auth.itemurl = "https://online.earlystage.pl/logowanie/"    # URL of keepassxc item (proper user/pass is identified by the URL)
 
 [[item]]
 generator = "youtube"
 enabled = true
+datasubdir = "YT"                                           # optional subdirectory for output
 params.url = "https://www.youtube.com/@YouTube/videos"      # YT content link
 params.itemsperfetch = 20                                   # how many items to fetch during each generation
 params.outfile = "the-yt-videos.xml"                        # output subpath with RSS content

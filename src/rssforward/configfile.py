@@ -43,6 +43,7 @@ class ConfigField(Enum):
 
     GEN_ID = "generator"
     ENABLED = "enabled"
+    DATASUBDIR = "datasubdir"
     GEN_PARAMS = "params"
 
     AUTH_TYPE = "type"

@@ -72,13 +72,16 @@ def get_auth_data(auth_params):
 
 
 class RSSManager:
+    """Contains all generators."""
+
     class State:
         """Container for generator and it's state."""
 
-        def __init__(self, generator: RSSGenerator = None):
+        def __init__(self, generator: RSSGenerator = None, generator_output_dir=None):
             self.generator: RSSGenerator = generator
             self.valid = True  # answers question: is problem with generator?
             # self.auth_data = auth_data
+            self.generator_output_dir = generator_output_dir
 
         # def authenticate(self):
         #     login, password = self.auth_data
@@ -90,6 +93,7 @@ class RSSManager:
         if parameters is None:
             parameters = {}
         self._params = parameters.copy()
+        ## first value of tuple is relative output path
         self._generators: list[tuple[str, RSSManager.State]] = None
         if generators:
             self._generators = generators
@@ -135,7 +139,7 @@ class RSSManager:
                 gen_state.valid = False
             else:
                 gen_state.valid = True
-                self._write_data(gen_id, gen_data)
+                self._write_data(gen_id, gen_data, gen_state.generator_output_dir)
 
         save_recent_date(recent_datetime)
         _LOGGER.info("========== generation ended ==========")
@@ -156,6 +160,9 @@ class RSSManager:
             _LOGGER.warning("could not get configured generators")
             return
 
+        general_data = self._params.get(ConfigKey.GENERAL.value, {})
+        data_root_dir = general_data.get(ConfigField.DATAROOT.value)
+
         for gen_params in gen_items:
             gen_id = gen_params.get(ConfigField.GEN_ID.value)
             if not gen_id:
@@ -166,6 +173,11 @@ class RSSManager:
                 continue
 
             try:
+                gen_subdir = gen_params.get(ConfigField.DATASUBDIR.value)
+                gen_out_dir = os.path.join(data_root_dir, gen_id)
+                if gen_subdir is not None:
+                    gen_out_dir = os.path.join(gen_out_dir, gen_subdir)
+
                 gen_inner_params = gen_params.get(ConfigField.GEN_PARAMS.value, {})
                 generator: RSSGenerator = get_generator(gen_id, gen_inner_params)
                 if not generator:
@@ -173,7 +185,7 @@ class RSSManager:
                     continue
                 auth_params = gen_params.get(ConfigKey.AUTH.value, {})
                 auth_data = get_auth_data(auth_params)
-                gen_state = RSSManager.State(generator)
+                gen_state = RSSManager.State(generator, gen_out_dir)
 
                 # gen_state.authenticate()
                 login, password = auth_data
@@ -187,13 +199,11 @@ class RSSManager:
 
         _LOGGER.info("generators initialized: %s", len(self._generators))
 
-    def _write_data(self, generator_id, generator_data: dict[str, str]):
+    def _write_data(self, generator_id, generator_data: dict[str, str], generator_output_dir):
         if not generator_data:
             return
-        data_root_dir = self._params.get(ConfigKey.GENERAL.value, {}).get(ConfigField.DATAROOT.value)
         for rss_out, content in generator_data.items():
-            out_dir = os.path.join(data_root_dir, generator_id)
-            feed_path = os.path.join(out_dir, rss_out)
+            feed_path = os.path.join(generator_output_dir, rss_out)
             feed_dir = os.path.dirname(feed_path)
             os.makedirs(feed_dir, exist_ok=True)
             if content is None:

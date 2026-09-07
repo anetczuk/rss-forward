@@ -38,7 +38,7 @@ class FacebookScraperTest(unittest.TestCase):
         date: datetime.datetime = pub_string_to_date("September 8 at 3:50 PM")
         curr_datetime = datetime.datetime.now(tz=datetime.timezone.utc)
         curr_year = curr_datetime.year
-        if curr_datetime.month < 9:
+        if curr_datetime.month < 9 or (curr_datetime.month == 9 and curr_datetime.day < 8):
             curr_year -= 1
         self.assertEqual(curr_year, date.year)
         self.assertEqual(9, date.month)
