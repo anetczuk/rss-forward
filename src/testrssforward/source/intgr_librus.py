@@ -43,7 +43,6 @@ import argparse
 from rssforward import logger
 from rssforward.source.librus import LibusGenerator
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

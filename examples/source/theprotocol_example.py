@@ -28,7 +28,6 @@ from rssforward import logger
 from rssforward.source.theprotocol import get_generator
 from rssforward.utils import write_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

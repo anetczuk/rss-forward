@@ -46,7 +46,6 @@ from rssforward.source.facebookpages import (
 
 from rssforward.rssgenerator import RSSGenerator
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -24,7 +24,6 @@ from rssforward.utils import convert_to_html, string_to_date, escape_html, norma
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

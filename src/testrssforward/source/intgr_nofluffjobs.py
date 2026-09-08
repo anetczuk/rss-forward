@@ -42,7 +42,6 @@ from rssforward import logger
 from rssforward.source.nofluffjobs import get_offers_content
 from rssforward.utils import write_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

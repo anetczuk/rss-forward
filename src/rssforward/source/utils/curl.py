@@ -17,7 +17,6 @@ from urllib.parse import urlencode
 import pycurl
 import certifi
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -31,8 +30,8 @@ def get_curl_session(user_agent=None):
     session.setopt(pycurl.CONNECTTIMEOUT, 60)  ## connection phase timeout
     #         session.setopt( pycurl.TIMEOUT, 60 )                 ## whole request timeout (transfer?)
     #         c.setopt( c.VERBOSE, 1 )
-    session.setopt(pycurl.COOKIEJAR, "/tmp/cookie.txt")  ## save cookies to a file
-    session.setopt(pycurl.COOKIEFILE, "/tmp/cookie.txt")  ## load cookies from a file
+    session.setopt(pycurl.COOKIEJAR, "/tmp/cookie.txt")  # nosec  ## save cookies to a file
+    session.setopt(pycurl.COOKIEFILE, "/tmp/cookie.txt")  # nosec  ## load cookies from a file
 
     session.setopt(pycurl.CAINFO, certifi.where())
     session.setopt(pycurl.SSL_VERIFYPEER, 0)

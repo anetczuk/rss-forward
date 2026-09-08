@@ -43,7 +43,6 @@ from rssforward import logger
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.source.untswawpl import get_generator, get_news_links, extract_news_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

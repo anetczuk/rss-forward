@@ -29,7 +29,6 @@ from rssforward.utils import read_recent_date, convert_to_html, string_to_date, 
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -119,8 +118,8 @@ def generate_content(client: Client) -> dict[str, str]:
 
     _LOGGER.info("accessing attendance")
     first_semester, second_semester = get_attendance(client)
-    attendence = first_semester + second_semester
-    gen_data = generate_attendance_feed(attendence)
+    attendance = first_semester + second_semester
+    gen_data = generate_attendance_feed(attendance)
     ret_dict.update(gen_data)
 
     _LOGGER.info("accessing messages")
@@ -271,12 +270,12 @@ Semestr: {semester}
     feed_item.pubDate(item_date)
 
 
-def generate_attendance_feed(attendence):
+def generate_attendance_feed(attendance):
     feed_gen = init_feed_gen(MAIN_URL)
     feed_gen.title("Frekwencja")
     feed_gen.description("frekwencja")
 
-    for item in attendence:
+    for item in attendance:
         data_dict = {
             "item_date": item.date,
             "teacher": item.teacher,
@@ -288,7 +287,7 @@ def generate_attendance_feed(attendence):
         add_attendance(feed_gen, data_dict)
 
     content = dumps_feed_gen(feed_gen)
-    return {"attendence.xml": content}
+    return {"attendance.xml": content}
 
 
 def add_attendance(feed_gen, data_dict):

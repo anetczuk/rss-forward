@@ -22,7 +22,6 @@ from rssforward.utils import convert_to_html, stringisoz_to_date, escape_html, n
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -204,7 +203,7 @@ def get_description(url):
             if response.status_code in (200, 204):
                 # got response - break the loop
                 break
-            # sometimes server responds witn code 500 - in this case send another request
+            # sometimes server responds with code 500 - in this case send another request
             _LOGGER.warning("unable to get description from url: %s response: %s", url, response.status_code)
         except requests.exceptions.ReadTimeout as exc:
             _LOGGER.warning("unable to get description from url: %s exception: %s", url, exc)

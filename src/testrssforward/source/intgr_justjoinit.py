@@ -42,7 +42,6 @@ from rssforward import logger
 from rssforward.source.justjoinit import get_description
 from rssforward.utils import write_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

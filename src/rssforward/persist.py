@@ -13,7 +13,6 @@ import zipfile
 import filecmp
 import pickle
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

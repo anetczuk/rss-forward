@@ -44,7 +44,6 @@ from rssforward import logger
 from rssforward.utils import write_data
 from rssforward.source.theprotocol import get_offers_links, extract_offer_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

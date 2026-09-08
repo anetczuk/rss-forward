@@ -8,6 +8,5 @@
 
 import os
 
-
 PKG_DIR = os.path.dirname(os.path.realpath(__file__))
 TMP_DIR = os.path.abspath(os.path.join(PKG_DIR, os.pardir, os.pardir, "tmp"))

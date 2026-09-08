@@ -24,7 +24,6 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -77,7 +76,7 @@ def get_news_links(posts_num, *, throw=True):
 
     content_bytes = response.content
     content = content_bytes.decode("utf-8")
-    write_data("/tmp/waw4free.html", content)
+    write_data("/tmp/waw4free.html", content)  # nosec
 
     soup = BeautifulSoup(content, "html.parser")
 

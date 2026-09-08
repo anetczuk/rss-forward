@@ -29,7 +29,6 @@ from xml.sax.saxutils import escape  # nosec
 
 import yt_dlp
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

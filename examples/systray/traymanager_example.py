@@ -25,7 +25,6 @@ import logging
 from rssforward import logger
 from rssforward.systray.traymanager import TrayManager
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

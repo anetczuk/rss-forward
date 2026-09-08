@@ -19,7 +19,6 @@ from rssforward.access.keepassxcauth import get_auth_data as get_keepassxc_auth_
 
 import rssforward.source
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

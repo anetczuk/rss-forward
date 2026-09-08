@@ -14,7 +14,6 @@ import toml
 
 from rssforward.utils import get_app_datadir
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

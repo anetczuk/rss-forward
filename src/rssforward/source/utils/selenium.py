@@ -14,7 +14,6 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 from rssforward.utils import read_data, write_data
 
-
 lib_logger = logging.getLogger("selenium.webdriver")
 lib_logger.setLevel(logging.WARNING)
 
@@ -32,7 +31,7 @@ def init_selenium_driver(*, headless=True) -> webdriver.Firefox:
 
     driver = None
 
-    gecko_config_path = "/tmp/gecko_path.txt"
+    gecko_config_path = "/tmp/gecko_path.txt"  # nosec
 
     try:
         gecko_path = read_data(gecko_config_path)

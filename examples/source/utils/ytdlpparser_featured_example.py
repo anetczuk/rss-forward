@@ -27,7 +27,6 @@ import pprint
 from rssforward import logger
 from rssforward.source.utils.ytdlpparser import parse_playlist
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -31,7 +31,6 @@ from rssforward.utils import write_data
 from rssforward.access.earlystageapi import get_auth_data, get_attendances, get_homeworks, get_grades
 from rssforward.keepass.keepassauth import get_auth_data as get_keepasxc_auth_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

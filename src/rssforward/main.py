@@ -20,7 +20,6 @@ from rssforward.rssmanager import RSSManager, ThreadedRSSManager
 from rssforward.configfile import load_config, ConfigField, ConfigKey
 from rssforward.systray.traymanager import TrayManager
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -27,7 +27,7 @@ def main():
     logger.configure()
 
     parameters = {
-        "general": {"dataroot": "/tmp/simonsays-example"},
+        "general": {"dataroot": "/tmp/simonsays-example"},  # nosec
         "item": [
             {
                 "generator": "simonsays",

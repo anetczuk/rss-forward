@@ -21,7 +21,6 @@ from appdirs import user_data_dir
 
 import rssforward.persist
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

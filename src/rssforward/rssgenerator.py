@@ -10,7 +10,6 @@ import logging
 
 from abc import ABC, abstractmethod
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -27,7 +27,6 @@ from rssforward.source.pracujpl import get_generator, add_offer
 from rssforward.utils import write_data
 from rssforward.rss.utils import init_feed_gen
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

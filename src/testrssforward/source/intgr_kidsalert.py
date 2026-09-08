@@ -43,7 +43,6 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.source.kidsalert import get_generator, MAIN_NAME, extract_news_data
 from rssforward.utils import write_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

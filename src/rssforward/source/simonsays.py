@@ -20,7 +20,6 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 from rssforward.source.utils.curl import get_curl_session, curl_post, curl_get, get_status_code
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -427,7 +426,7 @@ def add_document(feed_gen, data_dict):
     item_id = f"simonsays-document-{doc_id}-{data_hash}"
     feed_item.id(item_id)
 
-    feed_item.title(f"Dokument: {title}")
+    feed_item.title(f"Dokument: {title}")  # codespell:ignore
     feed_item.author({"name": "simonsays", "email": "simonsays"})
 
     # fill description

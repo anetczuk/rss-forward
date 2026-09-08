@@ -11,7 +11,6 @@ import sys
 import logging
 from logging import handlers
 
-
 script_dir = os.path.dirname(__file__)
 logger_file = None
 

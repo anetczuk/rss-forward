@@ -27,7 +27,6 @@ from rssforward.source.utils.react import extract_data_dict, get_nested_dict
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
 from rssforward.source.utils.selenium import selenium_get_content
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -19,7 +19,6 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.access.facebookscraper import FacebookScraper
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -18,7 +18,6 @@ from keepassxc_browser import Connection, Identity, ProtocolError
 
 from rssforward.utils import get_app_datadir
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -173,7 +172,6 @@ def ensure_auth():
 
 def get_auth_data(access_url, entry_title: str = None):
     # ruff: noqa: PLW0603
-    global auth  # pylint: disable=W0602
     ensure_auth()
 
     while True:
@@ -196,7 +194,6 @@ def get_auth_data(access_url, entry_title: str = None):
 
 def close():
     # ruff: noqa: PLW0602
-    global auth  # pylint: disable=W0602
     if auth:
         _LOGGER.info("closing keepass connection")
         auth.disconnect()

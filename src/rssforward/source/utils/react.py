@@ -11,7 +11,6 @@
 import logging
 import json
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

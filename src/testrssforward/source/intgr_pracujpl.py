@@ -47,7 +47,6 @@ from rssforward.source.pracujpl import (
 )
 from rssforward.utils import write_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

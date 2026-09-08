@@ -44,7 +44,6 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.source.umursynow import get_generator, get_content, MAIN_NAME, get_news_links
 from rssforward.utils import write_data
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

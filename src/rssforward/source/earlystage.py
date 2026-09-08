@@ -14,7 +14,6 @@ from rssforward.rssgenerator import RSSGenerator
 from rssforward.access.earlystageapi import get_auth_data, get_attendances, get_homeworks, get_grades
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

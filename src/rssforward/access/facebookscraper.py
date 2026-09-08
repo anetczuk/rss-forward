@@ -24,7 +24,6 @@ from selenium.webdriver.common.by import By
 from rssforward.utils import add_timezone, calculate_str_hash
 from rssforward.source.utils.selenium import init_selenium_driver
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -336,7 +335,7 @@ class FacebookScraper:
         return False
 
     def _take_screenshot(self, screenshot_id):
-        screenshot_path = f"/tmp/screenshot_{screenshot_id}.png"
+        screenshot_path = f"/tmp/screenshot_{screenshot_id}.png"  # nosec
         self.driver.save_screenshot(screenshot_path)
         _LOGGER.debug("screenshot stored in %s", screenshot_path)
 
@@ -362,7 +361,7 @@ class FacebookScraper:
                 return
 
     def _hide_login_bar(self):
-        _LOGGER.debug("hidding login bar")
+        _LOGGER.debug("hiding login bar")
         ## bottom bar
         bottom_list = self.driver.find_elements(By.CSS_SELECTOR, "div[data-nosnippet]")
         for item in bottom_list:
@@ -379,8 +378,8 @@ def pub_string_to_date(pub_text) -> datetime.datetime:
     with setlocale("C"):
         ## try to parse date in format "<days number>d", eg. "5d"
         if len(pub_text) <= 3 and pub_text.endswith("d"):
-            sufix = pub_text.index("d")
-            num_day = int(pub_text[:sufix])
+            suffix = pub_text.index("d")
+            num_day = int(pub_text[:suffix])
             today_date = datetime.datetime.now(tz=datetime.timezone.utc).astimezone()
             midnight = datetime.datetime.combine(today_date, datetime.time())
             midnight = midnight - datetime.timedelta(days=num_day)

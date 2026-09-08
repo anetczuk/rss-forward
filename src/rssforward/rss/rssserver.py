@@ -29,7 +29,6 @@ import posixpath
 
 from http.server import SimpleHTTPRequestHandler
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

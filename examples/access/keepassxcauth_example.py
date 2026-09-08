@@ -28,7 +28,6 @@ from rssforward import logger
 from rssforward.access.keepassxcauth import KeepassxcAuth
 from rssforward.source.earlystage import MAIN_URL
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -43,7 +43,6 @@ from rssforward import logger
 
 from rssforward.access.facebookscraper import FacebookScraper
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -11,7 +11,6 @@ from typing import Any
 
 from feedgen.feed import FeedGenerator
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

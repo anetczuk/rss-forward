@@ -12,7 +12,6 @@ import logging
 import json
 import requests
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
