@@ -60,10 +60,11 @@ if [ "$DEV_MODE" = false ]; then
     ## install in standard mode
     ##
 
-    ## creates "*.egg-info" and "build" directory along package dir
-    
-    pip3 install "$PIP_ARGS" "$SCRIPT_DIR"
-    
+    echo "Installing application in standard mode"
+    echo
+
+    python3 -m pip install "$PIP_ARGS" '.'
+
 else
     ##
     ## install in development mode 
@@ -72,16 +73,19 @@ else
     echo "Installing application in developer mode"
     echo
 
-    pip3 install "$PIP_ARGS" -e "$SCRIPT_DIR"
+    python3 -m pip install "$PIP_ARGS" -e '.[dev]'
 fi
 
 
-echo "Removing $SCRIPT_DIR/build direcotry"
-rm -r "$SCRIPT_DIR/build" || true
-rm -r "$SCRIPT_DIR"/*.egg-info || true
-
-
-"$SCRIPT_DIR"/install-deps.sh --break-system-packages
+## remove build directories
+for build_dir in "${ROOT_DIR}"/src/*.egg-info/; do
+    if [[ ! -d "${build_dir}" ]]; then
+        ## dir not exists
+        continue
+    fi
+    echo "removing build dir: ${build_dir}"
+    rm -r "${build_dir}"
+done
 
 
 echo

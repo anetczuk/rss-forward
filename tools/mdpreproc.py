@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
+"""Markdown preprocessor.
+
+Allows inserting dynamic content into the document. Handy in case of embedding program
+command-line descriptions or code snippets.
+"""
+
 #
-# Copyright (c) 2023, Arkadiusz Netczuk <dev.arnet@gmail.com>
+# Copyright (c) 2025, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
 #
 # This source code is licensed under the BSD 3-Clause license found in the
@@ -22,18 +28,24 @@ import re
 
 import xmltodict
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
 class MDPreprocessor:
+    """Markdown preprocessor.
+
+    Looks for predefined HTML comment tags and replaces it with proper content.
+    """
+
     def __init__(self):
+        """Spawn new object."""
         self._base_dir = None
         self._input_content = None
         self._output_content = None
         self._items = None
 
     def process(self, md_path):
+        """Process given Markdown document."""
         self._base_dir = os.path.dirname(md_path)
         content = load_content(md_path)
         self._input_content = content
@@ -132,17 +144,20 @@ class MDPreprocessor:
 # ==============================================
 
 
-def load_content(file_path):
+def load_content(file_path: str):
+    """Load content from file."""
     with open(file_path, encoding="utf-8") as file:
         return file.read()
 
 
-def save_content(file_path, content):
+def save_content(file_path: str, content: str):
+    """Save content to file."""
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(content)
 
 
 def main():
+    """Entry point for script."""
     parser = argparse.ArgumentParser(
         description="Markdown preprocessor",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,

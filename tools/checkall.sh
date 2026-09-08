@@ -18,7 +18,10 @@ echo
 
 ./typecheck.sh
 
+echo
+echo
 ./mdcheck.sh
 
 
-echo -e "\neverything is fine"
+echo
+echo "everything is fine"

@@ -1,11 +1,20 @@
 #!/bin/bash
 
 set -eu
-#set -u
 
 
 ## works both under bash and sh
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+
+
+## leave empty to resolve by PATH
+## set variable in case of virtual environment - it will check and ensure that tool installation is added to pyproject.toml
+COMMAND_PATH=""
+# shellcheck disable=SC2236
+if [ ! -z ${VIRTUAL_ENV+x} ]; then
+    ## Python virtual environment detected -- use command from venv
+    COMMAND_PATH="${VIRTUAL_ENV}/bin/"
+fi
 
 
 FIX_ERROR=0
@@ -34,8 +43,12 @@ fi
 check_dirs+=("$SCRIPT_DIR")
 
 
+## ============================================
+
+
 echo "running black"
-black --line-length=120 "${check_dirs[@]}"
+## replaces double quotes with single quote
+"${COMMAND_PATH}"black --line-length=120 "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -45,27 +58,13 @@ fi
 echo "black -- no warnings found"
 
 
-## E115 intend of comment
-## E126 continuation line over-indented for hanging indent
-## E201 whitespace after '('
-## E202 whitespace before ')'
-## E203 whitespace before ':' - black formatter adds space before
-## E221 multiple spaces before equal operator
-## E241 multiple spaces after ':'
-## E262 inline comment should start with '# '
-## E265 block comment should start with '# '
-## E266 too many leading '#' for block comment
-## E402 module level import not at top of file
-## E501 line too long (80 > 79 characters)
-## W391 blank line at end of file
-## D    all docstyle checks
-ignore_errors=E115,E126,E201,E202,E203,E221,E241,E262,E265,E266,E402,E501,W391,D
+## ============================================
 
 
 echo
 echo "running pycodestyle"
 echo "to ignore warning inline add comment at the end of line: # noqa: <warning-code>"
-pycodestyle --show-source --statistics --count --ignore="$ignore_errors" "${check_dirs[@]}"
+"${COMMAND_PATH}"pycodestyle --config="${SCRIPT_DIR}/../.pycodestyle" "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -75,19 +74,13 @@ fi
 echo "pycodestyle -- no warnings found"
 
 
-## F401 'PyQt5.QtCore' imported but unused
-## Q000 Double quotes found but single quotes preferred -- black replaces double quotes to single ones
-## I100 Import statements are in the wrong order. 'import os' should be before 'import sys'
-## I101 Imported names are in the wrong order. Should be get_attendances, get_auth_data, get_grades, get_homeworks
-## I201 Missing newline between import groups. 'import requests' is identified as Third Party and 'import json' is identified as Stdlib.
-## I202 Additional newline in a group of imports. 'import os' is identified as Stdlib and 'import contextlib' is identified as Stdlib.
-ignore_errors=$ignore_errors,F401,Q000,I100,I101,I201,I202
+## ============================================
 
 
 echo
 echo "running flake8"
 echo "to ignore warning for one line put following comment in end of line: # noqa: <warning-code>"
-python3 -m flake8 --show-source --statistics --count --ignore="$ignore_errors" "${check_dirs[@]}"
+python3 -m flake8 --config="${SCRIPT_DIR}/../.flake8" "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -96,6 +89,9 @@ if [ $exit_code -ne 0 ]; then
 fi
 
 echo "flake8 -- no warnings found"
+
+
+## ============================================
 
 
 check_files=""
@@ -116,7 +112,7 @@ echo "running pylint3"
 echo "to ignore warning for module put following line on top of file: # pylint: disable=<check_id>"
 echo "to ignore warning for one line put following comment in end of line: # pylint: disable=<check_id>"
 # shellcheck disable=SC2086
-pylint --rcfile="$SCRIPT_DIR/pylint3.config" $check_files
+"${COMMAND_PATH}"pylint $check_files
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
@@ -125,10 +121,13 @@ echo "pylint3 -- no warnings found"
 popd > /dev/null
 
 
+## ============================================
+
+
 echo
 echo "running ruff"
 echo "to ignore warning for module put following line on top of file: # ruff: noqa: <check_id>"
-echo "to ignore warning for one line put following comment in line before: # ruff: noqa: <check_id>"
+echo "to ignore warning for one line put following comment at end of line: # noqa: <check_id>"
 run_ruff() {
     local check_dir="${1}"
     echo "checking ${check_dir}"
@@ -144,12 +143,6 @@ run_ruff() {
     ignore_errors+=(ANN201)     ## ANN201 Missing return type annotation for public function
     ignore_errors+=(ANN202)     ## ANN202 Missing return type annotation for private function
     ignore_errors+=(ANN204)     ## ANN204 Missing return type annotation for special method
-    ignore_errors+=(D100)       ## D100 Missing docstring in public module
-    ignore_errors+=(D101)       ## D101 Missing docstring in public class
-    ignore_errors+=(D102)       ## D102 Missing docstring in public method
-    ignore_errors+=(D103)       ## D103 Missing docstring in public function
-    ignore_errors+=(D104)       ## D104 Missing docstring in public package
-    ignore_errors+=(D107)       ## D107 Missing docstring in `__init__`
     ignore_errors+=(D203)       ## incorrect-blank-line-before-class
     ignore_errors+=(D213)       ## multi-line-summary-second-line
     ignore_errors+=(E501)       ## E501 Line too long (111 > 88)
@@ -158,11 +151,24 @@ run_ruff() {
     ignore_errors+=(PT009)      ## PT009 Use a regular `assert` instead of unittest-style `assertEqual`
     ignore_errors+=(RUF013)     ## RUF013 PEP 484 prohibits implicit `Optional`
     ignore_errors+=(RUF100)     ## RUF100 [*] Unused `noqa` directive (unused: `F811`)
+    ignore_errors+=(TRY400)     ## TRY400 Use `logging.exception` instead of `logging.error`
+    ignore_errors+=(PT027)      ## PT027 Use `pytest.raises` instead of unittest-style `assertRaises`
+
+    ## TODO: fix
+    ignore_errors+=(C405)       ## C405 Unnecessary list literal (rewrite as a set literal)
+    ignore_errors+=(FIX002)     ## FIX002 Line contains TODO, consider resolving the issue
+    ignore_errors+=(N802)       ## N802 Function name `test_checkMarkdown_codeblock` should be lowercase
+    ignore_errors+=(N816)       ## N816 Variable `testResult` in global scope should not be mixedCase
     ignore_errors+=(TD002)      ## TD002 Missing author in TODO; try: `# TODO(<author_name>): ...` or `# TODO @<author_name>: ...`
     ignore_errors+=(TD003)      ## TD003 Missing issue link for this TODO
-    ignore_errors+=(TRY400)     ## TRY400 Use `logging.exception` instead of `logging.error`
-    
+    ignore_errors+=(S108)       ## S108 Probable insecure usage of temporary file or directory: "/tmp/other_file.md"
+    ignore_errors+=(PTH207)     ## PTH207 Replace `glob` with `Path.glob` or `Path.rglob`
+    ignore_errors+=(PLR0912)    ## PLR0912 Too many branches (20 > 12)
+    ignore_errors+=(PLR0911)    ## PLR0911 Too many return statements (19 > 6)
+    ignore_errors+=(C901)       ## C901 `_checkHref` is too complex (20 > 10)
+
     ignore_errors+=(DTZ007)     ## DTZ007 Naive datetime constructed using `datetime.datetime.strptime()` without %z
+    ignore_errors+=(DTZ011)     ## DTZ011 `datetime.date.today()` used
     ignore_errors+=(I001)       ## I001 [*] Import block is un-sorted or un-formatted
     ignore_errors+=(PTH100)     ## PTH100 `os.path.abspath()` should be replaced by `Path.resolve()`
     ignore_errors+=(PTH103)     ## PTH103 `os.makedirs()` should be replaced by `Path.mkdir(parents=True)`
@@ -175,30 +181,37 @@ run_ruff() {
     ignore_errors+=(PTH122)     ## PTH122 `os.path.splitext()` should be replaced by `Path.suffix`, `Path.stem`, and `Path.parent`
     ignore_errors+=(PTH123)     ## PTH123 `open()` should be replaced by `Path.open()
     ignore_errors+=(PTH208)     ## PTH208 Use `pathlib.Path.iterdir()` instead.
-    ignore_errors+=(PTH104)     ## PTH104 `os.rename()` should be replaced by `Path.rename()`
-    ignore_errors+=(PTH107)     ## PTH107 `os.remove()` should be replaced by `Path.unlink()`
-    ignore_errors+=(PTH110)     ## PTH110 `os.path.exists()` should be replaced by `Path.exists()`
-    ignore_errors+=(PTH119)     ## PTH119 `os.path.basename()` should be replaced by `Path.name`
-    
-    ignore_errors+=(S108)       ## S108 Probable insecure usage of temporary file or directory: "/tmp/"
+
     ignore_errors+=(TC001)      ## TC001 Move application import `rssforward.rssgenerator.RSSGenerator` into a type-checking block
     ignore_errors+=(TC002)      ## TC002 Move third-party import `feedgen.feed.FeedGenerator` into a type-checking block
-    ignore_errors+=(FIX002)     ## FIX002 Line contains TODO, consider resolving the issue
+    ignore_errors+=(UP017)      ## UP017 [*] Use `datetime.UTC` alias
+    ignore_errors+=(CPY001)     ## CPY001 Missing copyright notice at top of file
+    ignore_errors+=(PTH104)     ## PTH104 `os.rename()` should be replaced by `Path.rename()`
+    ignore_errors+=(PTH107)     ## PTH107 `os.remove()` should be replaced by `Path.unlink()`
+    ignore_errors+=(PTH119)     ## PTH119 `os.path.basename()` should be replaced by `Path.name`
+    ignore_errors+=(UP035)      ## UP035 [*] Import from `collections.abc` instead: `Callable`
     ignore_errors+=(S301)       ## S301 `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
+    ignore_errors+=(PLR0915)    ## PLR0915 Too many statements (51 > 50)
 
-    ## TODO: fix    
-    ignore_errors+=(C901)       ## C901 `convert_to_section` is too complex (24 > 10)
-    ignore_errors+=(PLR0911)    ## PLR0911 Too many return statements (24 > 6)
-    ignore_errors+=(PLR0912)    ## PLR0912 Too many branches (23 > 12)
-    ignore_errors+=(PLR0915)    ## PLR0915 Too many statements (69 > 50)
+    ## docstring
+    ignore_errors+=(D100)       ## D100 Missing docstring in public module
+    ignore_errors+=(D101)       ## D101 Missing docstring in public class
+    ignore_errors+=(D102)       ## D102 Missing docstring in public method
+    ignore_errors+=(D103)       ## D103 Missing docstring in public function
+    ignore_errors+=(D104)       ## D104 Missing docstring in public package
+    ignore_errors+=(D107)       ## D107 Missing docstring in `__init__`
+    ignore_errors+=(INP001)     ## INP001 File `tools/utils.py` is part of an implicit namespace package. Add an `__init__.py`.
+    ignore_errors+=(PTH110)     ## PTH110 `os.path.exists()` should be replaced by `Path.exists()`
 
     ignore_string="${ignore_errors[*]}"
     ignore_string="${ignore_string//${IFS:0:1}/,}"
 
+    ignore_tests="test*/**/test_*:D"
+
     if [ ${#RUFF_ARGS[@]} -ne 0 ]; then
-        ruff check --select ALL --ignore "${ignore_string}" "${RUFF_ARGS[*]}"
+        "${COMMAND_PATH}"ruff check --select ALL --ignore "${ignore_string}" --per-file-ignores "${ignore_tests}" "${RUFF_ARGS[*]}"
     else
-        ruff check --select ALL --ignore "${ignore_string}"
+        "${COMMAND_PATH}"ruff check --select ALL --ignore "${ignore_string}" --per-file-ignores "${ignore_tests}"
     fi
 
     exit_code=$?
@@ -215,11 +228,15 @@ done
 echo "ruff -- no warnings found"
 
 
+## ============================================
+
 echo
 echo "running complexipy"
-complexipy -d low -mx 70 "${check_dirs[@]}"
+"${COMMAND_PATH}"complexipy --max-complexity-allowed 70 "${check_dirs[@]}"
 echo "complexipy -- no warnings found"
 
+
+## ============================================
 
 echo
 echo "running bandit"
@@ -231,7 +248,7 @@ skip_list="B301,B403"
 
 #echo "to ignore warning for one line put following comment in end of line: # nosec
 # shellcheck disable=SC2086
-bandit --skip "${skip_list}" -r "${check_dirs[@]}" -x "$src_dir/test*"
+"${COMMAND_PATH}"bandit --skip "${skip_list}" -r "${check_dirs[@]}" -x "$src_dir/test*"
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
@@ -239,11 +256,13 @@ fi
 echo "bandit -- no warnings found"
 
 
+## ============================================
+
 echo
 req_path="$src_dir/requirements.txt"
 if [ -f "$req_path" ]; then
     echo "running safety"
-    safety check -r "$req_path"
+    "${COMMAND_PATH}"safety check -r "$req_path"
     exit_code=$?
     if [ $exit_code -ne 0 ]; then
         exit $exit_code
@@ -254,9 +273,25 @@ else
 fi
 
 
+## ============================================
+
+echo
+echo "running codespell"
+echo "to ignore warning for one line put following comment in end of line: # codespell:ignore"
+
+"${COMMAND_PATH}"codespell --toml "${src_dir}/../pyproject.toml" "${src_dir}" -f -S "*.html"
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+echo "codespell -- no warnings found"
+
+
+## ============================================
+
 ## check shell scripts
 echo
-found_files=$(find "$src_dir/../" -not -path "*/venv/*" -not -path "*/tmp/*" -type f -name '*.sh' -o -name '*.bash')
+found_files=$(find "$src_dir/../" -not -path "*/venv/*" -not -path "*/.venv/*" -not -path "*/.venv_release/*" -not -path "*/tmp/*" -type f -name '*.sh' -o -name '*.bash')
 echo "found sh files to check: $found_files"
 
 ## SC2002 (style): Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead.
@@ -267,7 +302,8 @@ EXCLUDE_LIST="SC2002,SC2129,SC2155"
 echo
 echo "to suppress line warning add before the line: # shellcheck disable=<code>"
 # shellcheck disable=SC2068
-shellcheck -a -x --exclude "$EXCLUDE_LIST" ${found_files[@]}
+"${COMMAND_PATH}"shellcheck -a -x --exclude "$EXCLUDE_LIST" ${found_files[@]}
 echo "shellcheck -- no warnings found"
 
-echo -e "\nall checks completed"
+echo
+echo "all checks completed"

@@ -1,0 +1,27 @@
+[flake8]
+
+# Ignore specific error/warning codes
+## E115 intend of comment
+## E126 continuation line over-indented for hanging indent
+## E201 whitespace after '('
+## E202 whitespace before ')'
+## E203 whitespace before ':' - black formatter adds space before
+## E221 multiple spaces before equal operator
+## E241 multiple spaces after ':'
+## E262 inline comment should start with '# '
+## E265 block comment should start with '# '
+## E266 too many leading '#' for block comment
+## E402 module level import not at top of file
+## E501 line too long (80 > 79 characters)
+## F401 'PyQt5.QtCore' imported but unused
+## Q000 Double quotes found but single quotes preferred -- black replaces double quotes to single ones
+## W391 blank line at end of file
+## D    all docstyle checks
+#TODO: fix
+## I100 Import statements are in the wrong order. 'import os' should be before 'import sys'
+## I101 Imported names are in the wrong order. Should be get_attendances, get_auth_data, get_grades, get_homeworks
+## I201 Missing newline between import groups. 'from feedgen.feed import FeedGenerator' is identified as Third Party and 'from bs4 import BeautifulSoup' is identified as Third Party.
+## I202 Additional newline in a group of imports. 'import logging' is identified as Stdlib and 'import contextlib' is identified as Stdlib.
+ignore = E115,E126,E201,E202,E203,E221,E241,E262,E265,E266,E402,E501,W391,D,
+         F401,Q000,
+         I100,I101,I201,I202

@@ -1,0 +1,35 @@
+[pycodestyle]
+
+# Ignore specific error/warning codes
+## E115 intend of comment
+## E126 continuation line over-indented for hanging indent
+## E201 whitespace after '('
+## E202 whitespace before ')'
+## E203 whitespace before ':' - black formatter adds space before
+## E221 multiple spaces before equal operator
+## E241 multiple spaces after ':'
+## E262 inline comment should start with '# '
+## E265 block comment should start with '# '
+## E266 too many leading '#' for block comment
+## E402 module level import not at top of file
+## E501 line too long (80 > 79 characters)
+## W391 blank line at end of file
+## D    all docstyle checks
+ignore = E115,E126,E201,E202,E203,E221,E241,E262,E265,E266,E402,E501,W391,D
+
+# Exclude files and directories
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    venv
+
+# Count total number of errors
+count = True
+
+# Show source code for each error
+show-source = True
+
+# Display statistics at the end
+statistics = True

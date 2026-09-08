@@ -3,7 +3,9 @@
 set -eu
 
 
-## SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+##
+## usage example: ./tool/profiler.sh --cprofile <Python-script> <Python-script-args>
+##
 
 
 ARGS=()
@@ -22,7 +24,7 @@ while :; do
       --mtprof)     PROFILER="mtprof" 
                     shift ;;
 
-      --vizviewer)  PROFILER="vizviewer" 
+      --viztracer)  PROFILER="viztracer" 
                     shift ;;
 
       *)  ARGS+=("$1")
@@ -32,62 +34,64 @@ done
 
 
 if [ "$PROFILER" == "cprofile" ]; then
-	tmpdir=$(dirname "$(mktemp -u)")
-	timestamp=$(date +%s)
+    tmpdir=$(dirname "$(mktemp -u)")
+    timestamp=$(date +%s)
 
-	out_file=$(mktemp "${tmpdir}/out.${timestamp}.XXXXXX.prof")
-	#out_file="$(pwd)/out.prof"
+    out_file=$(mktemp "${tmpdir}/out.${timestamp}.XXXXXX.prof")
+    #out_file="$(pwd)/out.prof"
 
-	echo "Starting cprofile"
-	echo "executing: python3 -m cProfile -o $out_file ${ARGS[*]}"
+    echo "Starting cprofile"
+    echo "executing: python3 -m cProfile -o $out_file ${ARGS[*]}"
 
-	python3 -m cProfile -o "$out_file" "${ARGS[@]}"
+    python3 -m cProfile -o "$out_file" "${ARGS[@]}"
 
-	echo ""
-	echo "View output: pyprof2calltree -k -i $out_file"
+    echo ""
+    echo "View output: pyprof2calltree -k -i $out_file"
 
-	### browser based, installation: pip3 install snakeviz
-	echo "Borowser-based view output: snakeviz $out_file"
-	
-	exit 0
+    ### browser based, installation: pip3 install snakeviz
+    echo "Borowser-based view output: snakeviz $out_file"
+    
+    exit 0
 fi
+
 
 if [ "$PROFILER" == "mtprof" ]; then
-	tmpdir=$(dirname "$(mktemp -u)")
-	timestamp=$(date +%s)
+    tmpdir=$(dirname "$(mktemp -u)")
+    timestamp=$(date +%s)
 
-	out_file=$(mktemp "${tmpdir}/out.${timestamp}.XXXXXX.prof")
-	#out_file="$(pwd)/out.prof"
+    out_file=$(mktemp "${tmpdir}/out.${timestamp}.XXXXXX.prof")
+    #out_file="$(pwd)/out.prof"
 
-	echo "Starting mtprof"
-	echo "executing: python3 -m mtprof -o $out_file ${ARGS[*]}"
+    echo "Starting mtprof"
+    echo "executing: python3 -m mtprof -o $out_file ${ARGS[*]}"
 
-	python3 -m mtprof -o "$out_file" "${ARGS[@]}"
+    python3 -m mtprof -o "$out_file" "${ARGS[@]}"
 
-	echo ""
-	echo "View output: pyprof2calltree -k -i $out_file"
+    echo ""
+    echo "View output: pyprof2calltree -k -i $out_file"
 
-	### browser based, installation: pip3 install snakeviz
-	echo "Borowser-based view output: snakeviz $out_file"
-	
-	exit 0
-fi
-
-if [ "$PROFILER" == "vizviewer" ]; then
-	tmpdir=$(dirname "$(mktemp -u)")
-	timestamp=$(date +%s)
-
-	out_file=$(mktemp "${tmpdir}/report.${timestamp}.XXXXXX.json")
-	#out_file="$(pwd)/out.prof"
-
-	echo "Starting vizviewer"
-	echo "executing: viztracer -o $out_file ${ARGS[*]}"
-
-	viztracer -o "$out_file" "${ARGS[@]}"
-
-	exit 0
+    ### browser based, installation: pip3 install snakeviz
+    echo "Borowser-based view output: snakeviz $out_file"
+    
+    exit 0
 fi
 
 
-echo "no profiler selected, pass: --cprofile or --mtprof or --vizviewer"
+if [ "$PROFILER" == "viztracer" ]; then
+    tmpdir=$(dirname "$(mktemp -u)")
+    timestamp=$(date +%s)
+
+    out_file=$(mktemp "${tmpdir}/report.${timestamp}.XXXXXX.json")
+    #out_file="$(pwd)/out.prof"
+
+    echo "Starting viztracer"
+    echo "executing: viztracer -o $out_file ${ARGS[*]}"
+
+    viztracer -o "$out_file" -- "${ARGS[@]}"
+
+    exit 0
+fi
+
+
+echo "no profiler selected, pass: --cprofile or --mtprof or --viztracer"
 exit 1

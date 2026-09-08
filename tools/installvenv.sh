@@ -35,6 +35,8 @@ if [ "${#ARGS[@]}" -gt 0 ]; then
 fi
 
 VENV_DIR="$SCRIPT_DIR/../venv/$VENV_SUBDIR"
+mkdir -p "$VENV_DIR"
+VENV_DIR=$(realpath "${VENV_DIR}")
 
 
 ### if directory exists then prompt to delete
@@ -54,11 +56,6 @@ if [ -d "$VENV_DIR" ]; then
 fi
 
 
-mkdir -p "$VENV_DIR"
-
-VENV_DIR=$(realpath "$VENV_DIR")
-    
-
 echo "Creating virtual environment in $VENV_DIR"
 
 python3 -m venv "$VENV_DIR"
@@ -73,6 +70,13 @@ ACTIVATE_VENV_CONTENT='#!/bin/bash
 ## File was generated automatically. Any change will be lost. 
 ##
 
+##
+## Script operates in 3 modes:
+## 1. no imput - start venv in interactive mode
+## 2. with cmd args - execute content of arguments as commands
+## 3. with stdin input - execute content of stdin as commands
+##
+
 set -eu
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
@@ -80,37 +84,59 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 VENV_DIR="$VENV_ROOT_DIR"
 
 
-if [ "$#" -eq 0 ]; then
+execute_commands() {
+    bash <<EOL
+
+    source $VENV_DIR/bin/activate
+    if [ \$? -ne 0 ]; then
+        echo -e "Unable to activate virtual environment, exiting"
+        exit 1
+    fi
+    
+    set -e
+
+    ## executing command
+    echo "Executing inside venv:"
+    echo "$@"
+    eval "$@"
+
+EOL
+}
+
+
+if [[ ! -t 0 ]]; then
     ##
-    ## command not given - start virtual environment in interactive mode
+    ## commands passed as stdin input
     ##
 
-    set +e      ## prevent closing interactive session in case of error of any command
-    echo "Starting virtual env"
-    ## `exec < /dev/tty` prevents immediate exit from interactive mode
-    bash -i <<< "source $VENV_DIR/bin/activate && exec < /dev/tty"
+    ## executing command
+    commands=$(cat)
+    execute_commands "${commands}"
     exit 0
 fi
 
 
-##
-## running given command inside virtual environment
-##
+if [ "$#" -gt 0 ]; then
+    ##
+    ## commands passed as arguments
+    ##
 
-bash <<EOL
-source $VENV_DIR/bin/activate
-if [ \$? -ne 0 ]; then
-    echo -e "Unable to activate virtual environment, exiting"
-    exit 1
+    ## executing command
+    execute_commands "${@}"
+    exit 0
 fi
 
-set -e
 
-## executing command
-echo "Executing inside venv: $@"
-eval "$@"
+## 
+## no args given - start virtual environment in interactive mode
+##
 
-EOL
+set +e      ## prevent closing interactive session in case of error of any command
+echo "Starting virtual env"
+## `exec < /dev/tty` prevents immediate exit from interactive mode
+bash -i <<< "source $VENV_DIR/bin/activate && exec < /dev/tty"
+exit 0
+
 '
 
 # shellcheck disable=SC2016
@@ -144,25 +170,28 @@ set -eu
 }
 
 
-### creating project start scripts
-pushd "${SRC_DIR}" > /dev/null
-# shellcheck disable=SC2010,SC2035
-TEST_DIRS=$(ls -d */ | grep test)
-popd > /dev/null
-TEST_DIRS_NUM=$(echo "${TEST_DIRS}" | wc -l)
-if [[ ${TEST_DIRS_NUM} -ne 1 ]]; then
-    echo "unable to determine tests directory - exiting"
-    exit 1
-fi
-TEST_SCRIPT="${SRC_DIR}/${TEST_DIRS}runtests.py"
-create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; ${TEST_SCRIPT} \$@\"" "$VENV_DIR/runtests.sh"
-
 ## create package starter
 for dir in "${SRC_DIR}"/*/; do
     if [[ -f "${dir}__main__.py" ]]; then
         package_name=$(basename "${dir}")
         starter_path="${VENV_DIR}/start${package_name}.sh"
         create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; python3 -m ${package_name} \$@\"" "${starter_path}"
+    fi
+done
+
+## create tests starter
+for dir in "${SRC_DIR}"/*/; do
+    TEST_SCRIPT="${dir}/runtests.py"
+    if [[ -f "${TEST_SCRIPT}" ]]; then
+        package_name=$(basename "${dir}")
+        starter_path="${VENV_DIR}/runtests-${package_name}.py.sh"
+        create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; ${TEST_SCRIPT} \$@\"" "${starter_path}"
+    fi
+    TEST_SCRIPT="${dir}/runtests.sh"
+    if [[ -f "${TEST_SCRIPT}" ]]; then
+        package_name=$(basename "${dir}")
+        starter_path="${VENV_DIR}/runtests-${package_name}.sh"
+        create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; ${TEST_SCRIPT} \$@\"" "${starter_path}"
     fi
 done
 
@@ -174,9 +203,9 @@ echo "Installing project and dependencies"
 $ACTIVATE_VENV_PATH "python3 -m pip install --upgrade pip"
 
 if [ "$DEV_MODE" = false ]; then
-    $ACTIVATE_VENV_PATH "$SCRIPT_DIR/../src/install-app.sh"
+    $ACTIVATE_VENV_PATH "$SCRIPT_DIR/install-app.sh"
 else
-    $ACTIVATE_VENV_PATH "$SCRIPT_DIR/../src/install-app.sh --dev"
+    $ACTIVATE_VENV_PATH "$SCRIPT_DIR/install-app.sh --dev"
 fi
 
 

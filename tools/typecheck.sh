@@ -7,6 +7,16 @@ set -eu
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
+## leave empty to resolve by PATH
+## set variable in case of virtual environment - it will check and ensure that tool installation is added to pyproject.toml
+COMMAND_PATH=""
+# shellcheck disable=SC2236
+if [ ! -z ${VIRTUAL_ENV+x} ]; then
+    ## Python virtual environment detected -- use command from venv
+    COMMAND_PATH="${VIRTUAL_ENV}/bin/"
+fi
+
+
 CACHE_DIR=$SCRIPT_DIR/../tmp/.mypy_cache
 
 
@@ -32,7 +42,7 @@ echo "ignore line warning using: # type: ignore[code]"
 MYPY_ERR_PATH="/tmp/mypy.err.txt"
 FAILED=0
 # shellcheck disable=SC2086
-mypy --cache-dir "$CACHE_DIR" --no-strict-optional --ignore-missing-imports --pretty --check-untyped-defs \
+"${COMMAND_PATH}"mypy --config-file "${SCRIPT_DIR}/../.mypy.ini" --cache-dir "$CACHE_DIR" \
      $src_examples $all_examples 2> "$MYPY_ERR_PATH" || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
