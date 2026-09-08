@@ -10,6 +10,7 @@
 
 import logging
 import time
+import datetime
 
 import random
 from urllib.parse import urljoin
@@ -18,7 +19,7 @@ import requests
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
 
-from rssforward.utils import normalize_string, string2_to_date
+from rssforward.utils import normalize_string, string2_to_date, write_data
 from rssforward.rssgenerator import RSSGenerator
 from rssforward.rss.utils import init_feed_gen, dumps_feed_gen, add_data_to_feed
 from rssforward.source.utils.htmlbuild import convert_line, convert_list, convert_title, convert_content
@@ -62,7 +63,8 @@ def get_content():
     return content
 
 
-def get_news_links(posts_num, *, throw=True):
+def get_news_links(posts_num, *, throw=True, raw_output=None):
+    _LOGGER.debug("accessing content: %s", MAIN_URL)
     headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0"}
     response = requests.get(MAIN_URL, headers=headers, timeout=10)
 
@@ -75,6 +77,10 @@ def get_news_links(posts_num, *, throw=True):
     content_bytes = response.content
     content = content_bytes.decode("utf-8")
 
+    if raw_output:
+        _LOGGER.debug("writing raw content to %s", raw_output)
+        write_data(raw_output, content)
+
     soup = BeautifulSoup(content, "html.parser")
 
     full_list = []
@@ -83,16 +89,26 @@ def get_news_links(posts_num, *, throw=True):
         if "Aktualności" not in section.text:
             continue
         articles_list = section.find_all("div", attrs={"class": "article"})
+        _LOGGER.debug("found articles: %s", len(articles_list))
         for article in articles_list:
             news_title = article.find_all("h3", attrs={"class": "title"})[0]
             link = news_title.select("a")[0]
             item_url = link["href"]
             full_url = urljoin(MAIN_URL, item_url)
 
-            news_date = article.find_all("span", attrs={"class": "date"})[0]
-            news_date = news_date.text
-            space_index = news_date.index(" ")
-            news_date = news_date[:space_index]
+            news_dates = article.find_all("span", attrs={"class": "date"})
+            _LOGGER.debug("found article dates: %s", len(news_dates))
+
+            ## date span example: "02.09.2026 /   Wojciech Mossakowski"
+            if news_dates:
+                news_date = news_dates[0]
+                news_date = news_date.text
+                space_index = news_date.index(" ")
+                news_date = news_date[:space_index]
+            else:
+                now_time = datetime.datetime.now().astimezone()
+                news_date = now_time.strftime("%d.%m.%Y")
+
             full_list.append((full_url, news_date))
     items_num = min(posts_num, len(full_list))
     return full_list[0:items_num]

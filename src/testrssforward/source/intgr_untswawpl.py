@@ -40,27 +40,15 @@ import logging
 import pprint
 
 from rssforward import logger
-from rssforward.rssgenerator import RSSGenerator
-from rssforward.source.untswawpl import get_generator, get_news_links, extract_news_data
+from rssforward.source.untswawpl import get_news_links, extract_news_data
 
 _LOGGER = logging.getLogger(__name__)
-
-
-page = "szlakgier"
-
-
-def grab_by_generator():
-    generator: RSSGenerator = get_generator()
-    gen_data = generator.generate()
-    _LOGGER.info("gen_data:\n%s", pprint.pformat(gen_data))
 
 
 def main():
     logger.configure_console()
 
-    # grab_by_generator()
-
-    news_links = get_news_links(1, throw=True)
+    news_links = get_news_links(1, throw=True, raw_output="/tmp/content.txt")
     if len(news_links) != 1:
         _LOGGER.error("FAILED")
         sys.exit(1)

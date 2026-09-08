@@ -349,16 +349,20 @@ class FacebookScraper:
 
     def _close_login_popup(self):
         _LOGGER.debug("closing login popup")
-        for _rep in range(3):
-            close_button_list = self.driver.find_elements(By.CSS_SELECTOR, "[aria-label='Close']")
-            for item in close_button_list:
-                button_item = item.find_elements(By.TAG_NAME, "i")
-                if not button_item:
-                    _LOGGER.warning("could not close login popup")
-                    time.sleep(0.5)
-                    break
-                button_item[0].click()
-                return
+        try:
+            for _rep in range(3):
+                close_button_list = self.driver.find_elements(By.CSS_SELECTOR, "[aria-label='Close']")
+                for item in close_button_list:
+                    button_item = item.find_elements(By.TAG_NAME, "i")
+                    if not button_item:
+                        _LOGGER.warning("could not close login popup")
+                        time.sleep(0.5)
+                        break
+                    button_item[0].click()
+                    return
+        except selenium.common.exceptions.ElementClickInterceptedException:
+            self.driver.save_screenshot("/tmp/facebook_click_intercepted.png")  # nosec
+            raise
 
     def _hide_login_bar(self):
         _LOGGER.debug("hiding login bar")
